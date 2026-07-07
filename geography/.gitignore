@@ -1,0 +1,5 @@
+# build tooling — regenerable, not needed to run the app
+tools/node_modules/
+tools/.cache/
+
+.DS_Store

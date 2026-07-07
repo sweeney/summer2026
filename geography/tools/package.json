@@ -1,0 +1,13 @@
+{
+  "name": "geography-data-prep",
+  "private": true,
+  "type": "module",
+  "description": "Regenerates data/countries.json + flags from open datasets. Run by maintainers, not shipped to the app.",
+  "scripts": {
+    "build": "node build-data.mjs",
+    "build:refresh": "node build-data.mjs --refresh"
+  },
+  "dependencies": {
+    "d3-geo": "^3.1.1"
+  }
+}
