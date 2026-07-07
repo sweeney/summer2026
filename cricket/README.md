@@ -3,10 +3,15 @@
 An interactive single-page app to learn the fielding positions in cricket, built
 on top of the classic Wikipedia fielding-positions diagram.
 
-This waypoint turns a **hand-drawn, un-scriptable SVG** into a **data-driven,
-programmatically-addressable** model — and *proves* the conversion is faithful
-by re-rendering the diagram from the extracted data and pixel-diffing it against
-the original (currently **0.000% difference — bit-for-bit identical**).
+This project turns a **hand-drawn, un-scriptable SVG** into a **data-driven,
+programmatically-addressable** model — and *proves* the extraction is faithful by
+re-rendering the diagram from the extracted data and pixel-diffing it against a
+reference (**0.000% difference — bit-for-bit identical**).
+
+We have now begun **intentionally diverging** from the original artwork for the
+trainer's sake (see _Design edits_ below). The fidelity proof is therefore run
+against the **original minus our intended edits**, so it still guarantees the
+extraction is lossless while letting the design evolve.
 
 ## Why this was needed
 
@@ -80,6 +85,17 @@ API.highlight(id)
 Current UI (Explore mode only): **Primary positions only** and **Show labels**
 toggles (when both on, only primary positions are labelled), Show all / Hide all,
 and click-a-dot-to-name-it.
+
+## Design edits (divergence from the original)
+
+Deliberate changes we make to the artwork for the trainer, applied in `build.py`
+so they survive a rebuild:
+
+- **Removed the 30-yard circle** and the **Runner "(R\*)"** marker (source ids in
+  `DESIGN_REMOVE`, recorded in `positions.json` → `designRemoved`; `compare.py`
+  strips the same ids from the reference so the proof stays at 0%).
+- **Bolded "Long stop" and "Straight hit"** labels — the source leaves them
+  un-bolded; we render all `primary` labels bold for consistency.
 
 ## How to rebuild / verify
 

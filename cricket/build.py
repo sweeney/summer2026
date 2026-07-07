@@ -91,6 +91,15 @@ TYPE = {"#b00000": "mandatory", "#ff0000": "primary", "#f8a20c": "variation"}
 for d in dots:
     d["type"] = TYPE.get((d["fill"] or "").lower(), "variation")
 
+# Design edits: elements from the original artwork we deliberately drop from the
+# field background (we've let go of 1:1 fidelity to the source). Keyed by the
+# source element id. compare.py strips the same ids from the original before the
+# fidelity diff, so the extraction proof stays meaningful.
+DESIGN_REMOVE = {
+    "30 yards",   # the dashed 30-yard circle
+    "Batter (R)", "text2453", "text2012", "text2016",  # the Runner "(R*)"
+}
+
 # ---- 2. text labels -----------------------------------------------------
 STRUCT = {"Cricket: Fielding positions for a right-handed batter", "Off side",
           "On (Leg) side", "R", "S", "NS", "U", "Sq L U", "(", ")"}
@@ -235,7 +244,10 @@ for li, lbl in enumerate(fielding_labels):
                 "opacity": d["opacity"], "raw": d["raw"]},
         "label_geom": {
             "x": lbl["x"], "y": lbl["y"], "anchor": lbl["anchor"],
-            "fontSize": lbl["fontSize"], "bold": lbl["bold"],
+            "fontSize": lbl["fontSize"],
+            # primary-position labels render bold; the source leaves "Long stop"
+            # and "Straight hit" un-bolded, so normalise them to match the rest
+            "bold": lbl["bold"] or d["type"] == "primary",
             "tspans": lbl["tspans"], "raw": lbl["raw"]},
     })
 
@@ -255,7 +267,9 @@ for di, d in enumerate(dots):
     })
 
 with open("positions.json", "w") as fh:
-    json.dump({"viewBox": [0, 0, 2010, 2690], "positions": positions}, fh, indent=2)
+    json.dump({"viewBox": [0, 0, 2010, 2690],
+               "designRemoved": sorted(DESIGN_REMOVE),
+               "positions": positions}, fh, indent=2)
 
 # ---- 5. field-base.svg : remove dots + fielding labels ------------------
 base_tree = ET.parse(SRC)
@@ -276,6 +290,10 @@ fielding_texts = {l["srcId"] for l in fielding_labels}
 for tx in list(base_root.iter(ns + "text")):
     if tx.get("id") in fielding_texts:
         b_parent[tx].remove(tx)
+# design edits: drop the elements we've chosen to remove from the artwork
+for el in list(base_root.iter()):
+    if el.get("id") in DESIGN_REMOVE:
+        b_parent[el].remove(el)
 base_tree.write("field-base.svg", xml_declaration=True, encoding="UTF-8")
 
 print(f"dots={len(dots)} fielding_labels={len(fielding_labels)} positions={len(positions)}")

@@ -5,6 +5,13 @@
     2010,
     2690
   ],
+  "designRemoved": [
+    "30 yards",
+    "Batter (R)",
+    "text2012",
+    "text2016",
+    "text2453"
+  ],
   "positions": [
     {
       "id": "short-square-leg",
@@ -422,7 +429,7 @@
         "y": 236.36,
         "anchor": "middle",
         "fontSize": 54,
-        "bold": false,
+        "bold": true,
         "tspans": [
           {
             "text": "Long",
@@ -905,7 +912,7 @@
         "y": 1970.55,
         "anchor": "middle",
         "fontSize": 54,
-        "bold": false,
+        "bold": true,
         "tspans": [
           {
             "text": "Straight",

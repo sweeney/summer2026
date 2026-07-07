@@ -1,13 +1,19 @@
 #!/usr/bin/env python3
 """
-Fidelity proof. Renders the original SVG and our data-driven reproduction.svg to
-PNG (via headless Chrome) at identical size, then reports:
+Fidelity proof. Renders a REFERENCE (the original SVG minus the elements we
+deliberately removed by design) and our data-driven reproduction.svg to PNG (via
+headless Chrome) at identical size, then reports:
   - functional identity: every position present, dot coordinates preserved
   - visual identity: per-pixel diff (count + max delta), plus a diff heatmap
-Outputs original.png, reproduction.png, diff.png and prints a report.
+The reference == original minus positions.json's "designRemoved" ids, so the
+proof stays at ~0% even as we edit the artwork: it verifies the extraction is
+lossless and our edits are exactly what we intended, nothing more.
 """
 import subprocess, os, sys, json
+import xml.etree.ElementTree as ET
 from PIL import Image, ImageChops
+
+SVG = "http://www.w3.org/2000/svg"
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.environ.get("SCRATCH", HERE)
@@ -22,13 +28,31 @@ def render(svg, png):
                     f"file://{os.path.join(HERE, svg)}"],
                    check=True, capture_output=True)
 
+def make_reference():
+    """original SVG minus the design-removed ids -> a temp reference svg"""
+    with open(os.path.join(HERE, "positions.json")) as fh:
+        removed = set(json.load(fh).get("designRemoved", []))
+    ET.register_namespace("", SVG)
+    ns = "{%s}" % SVG
+    tree = ET.parse(os.path.join(HERE, "Cricket_fielding_positions.svg"))
+    root = tree.getroot()
+    par = {c: p for p in root.iter() for c in p}
+    for el in list(root.iter()):
+        if el.get("id") in removed:
+            par[el].remove(el)
+    ref = os.path.join(OUT, "_reference.svg")
+    tree.write(ref, xml_declaration=True, encoding="UTF-8")
+    return ref, sorted(removed)
+
 def main():
     orig = os.path.join(OUT, "original.png")
     repro = os.path.join(OUT, "reproduction.png")
     diffp = os.path.join(OUT, "diff.png")
     repro_svg = sys.argv[1] if len(sys.argv) > 1 else "reproduction.svg"
-    render("Cricket_fielding_positions.svg", orig)
-    render(repro_svg, repro)
+    ref_svg, removed = make_reference()
+    render(ref_svg, orig)
+    render(os.path.join(HERE, repro_svg) if not os.path.isabs(repro_svg) else repro_svg, repro)
+    print(f"(reference = original minus {removed})")
     print(f"(comparing against {repro_svg})")
 
     a = Image.open(orig).convert("RGB")
