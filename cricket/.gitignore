@@ -1,0 +1,9 @@
+# Regenerable render artifacts (produced by render.py from positions.json)
+reproduction.svg
+reproduction-proof.svg
+
+# Rasterised comparison output
+*.png
+
+# OS cruft
+.DS_Store
