@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sweeney Summer 2026</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='white'/%3E%3Ctext x='16' y='23' font-family='Georgia' font-size='24' text-anchor='middle' fill='%23222'%3Es%3C/text%3E%3C/svg%3E" />
+  <style>
+    :root {
+      --teal: #02aaa2; --teal-dark: #017f79; --teal-muted: #e0f5f4;
+      --ink: #222; --body: #444; --muted: #888; --rule: #ccc; --bg: #eee; --white: #fff;
+      --font-serif: Georgia, "Times New Roman", serif;
+      --font-mono: Menlo, "Courier New", monospace;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body { margin: 0; background: var(--bg); color: var(--body); font: 1rem/1.6 var(--font-serif); }
+    .page-topbar { height: 8px; background: var(--teal); margin: 0 1ex; }
+    header { max-width: 820px; margin: 0 auto; padding: 48px 24px 8px; }
+    h1 { font: normal 2.5rem/1.1 var(--font-serif); color: var(--ink); margin: 0 0 0.25em; letter-spacing: -0.01em; }
+    .tagline { color: var(--muted); font-size: 1.05rem; margin: 0; }
+    main {
+      max-width: 820px; margin: 0 auto; padding: 24px;
+      display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    }
+    .card {
+      display: block; text-decoration: none; color: var(--body);
+      background: var(--white); border: 1px solid var(--rule); border-radius: 6px;
+      padding: 24px; transition: border-color 0.15s;
+    }
+    .card:hover { border-color: var(--teal); }
+    .card h2 { font: normal 1.5rem/1.2 var(--font-serif); color: var(--ink); margin: 0 0 0.35em; }
+    .card p { margin: 0 0 0.9em; font-size: 0.95rem; }
+    .go { font: 0.7rem/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.12em; color: var(--teal-dark); }
+    footer { max-width: 820px; margin: 0 auto; padding: 16px 24px 48px; color: var(--muted); font: 0.75rem/1.5 var(--font-mono); }
+  </style>
+</head>
+<body>
+  <div class="page-topbar"></div>
+  <header>
+    <h1>Summer 2026</h1>
+    <p class="tagline">Little web apps for Summer 2026 challenges chez Sweeney.</p>
+  </header>
+  <main>
+    <a class="card" href="geography/">
+      <h2>Geography Competition</h2>
+      <p>Learn the countries of the world — their flags, capitals, names and places — then compete.</p>
+      <span class="go">Open →</span>
+    </a>
+    <a class="card" href="cricket/">
+      <h2>Cricket Fielding Positions</h2>
+      <p>Learn where every fielding position stands on the pitch.</p>
+      <span class="go">Open →</span>
+    </a>
+  </main>
+  <footer>2026.sweeney.io</footer>
+</body>
+</html>
