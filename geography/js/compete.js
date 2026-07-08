@@ -145,9 +145,13 @@ export function initCompete(container, data) {
     }
   }
 
+  // Identifies a "best score" bucket: region + level + mode + type.
+  const bestKey = () =>
+    `${state.region}-${state.maxTier}-${state.mode}-${state.lockType || "mixed"}`;
+
   function finish() {
     state.phase = "done";
-    const key = `${state.maxTier}-${state.mode}-${state.lockType || "mixed"}`;
+    const key = bestKey();
     const best = store.get("competeBest", {});
     const elapsed = Date.now() - state.startTime;
     const prev = best[key];
@@ -176,13 +180,15 @@ export function initCompete(container, data) {
     // Region selector
     const regionRow = el("div", "seg");
     regionRow.append(el("span", "seg-label", "Region"));
-    regionRow.append(
+    const regionOpts = el("div", "seg-opts");
+    regionOpts.append(
       regionSelect(data, state.region, (key) => {
         state.region = key;
         store.set("competeRegion", key);
         render();
       })
     );
+    regionRow.append(regionOpts);
     wrap.append(regionRow);
 
     wrap.append(
@@ -222,8 +228,7 @@ export function initCompete(container, data) {
     start.onclick = () => { buildRound(); render(); };
     wrap.append(start);
 
-    const key = `${state.maxTier}-${state.mode}-${state.lockType || "mixed"}`;
-    const best = (store.get("competeBest", {}) || {})[key];
+    const best = (store.get("competeBest", {}) || {})[bestKey()];
     if (best) wrap.append(el("p", "best-note", `Best for this setup: ${best.score}/${best.total} in ${fmtTime(best.timeMs)}`));
     return wrap;
 
@@ -437,11 +442,13 @@ function regionSelect(data, current, onChange) {
 function segRow(label, options, extraClass = "") {
   const row = el("div", "seg " + extraClass);
   row.append(el("span", "seg-label", label));
+  const opts = el("div", "seg-opts");
   options.forEach((o) => {
     const b = el("button", "seg-btn" + (o.on ? " on" : ""), o.label);
     b.onclick = o.onClick;
-    row.append(b);
+    opts.append(b);
   });
+  row.append(opts);
   return row;
 }
 function shuffle(a) {
