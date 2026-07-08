@@ -65,6 +65,21 @@ body {
   margin: 0;
   letter-spacing: -0.01em;
 }
+.topbar h1 a { color: var(--teal-dark); text-decoration: none; }
+.topbar h1 a:hover { text-decoration: underline; }
+/* On phones the h1 shortens ("2026 → Geography" -> "26/Geography") so the
+   Learn/Compete tabs stay on the same line. */
+.show-narrow { display: none; }
+@media (max-width: 520px) {
+  .hide-narrow { display: none; }
+  .show-narrow { display: inline; }
+  .topbar { padding: 12px 16px; gap: 12px; }
+  .topbar h1 { font-size: 1.35rem; }
+  .mode-tab { padding-left: 12px; padding-right: 12px; }
+  /* phones: tighten so collapsed Options + nav fit one row */
+  .controls-row { gap: 8px; }
+  #view { padding: 12px; }
+}
 .modes { display: flex; gap: 8px; }
 .mode-tab {
   font: 0.95rem/1 var(--font-serif);
@@ -83,8 +98,19 @@ body {
 .loading, .error { text-align: center; color: var(--muted); padding: 96px 24px; }
 .error h2 { color: var(--ink); font-weight: normal; }
 
-/* ---- controls bar ---- */
-.controls { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 18px; }
+/* ---- controls bar (Options banner → options panel → nav) ---- */
+.controls { display: flex; flex-direction: column; gap: 12px; margin-bottom: 18px; }
+.options-toggle {
+  align-self: flex-start; /* stay a small banner; panel + nav stretch full width */
+  font: 0.8rem/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.08em;
+  border: 1px solid var(--rule); background: var(--white); color: var(--body);
+  padding: 8px 12px; border-radius: 3px; cursor: pointer;
+}
+.options-toggle:hover { border-color: var(--teal); }
+.options-panel { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+/* collapsed: Options banner + nav share one row */
+.controls-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.controls-row .options-toggle { align-self: center; }
 .seg { display: flex; align-items: center; gap: 5px; }
 .seg-label { margin-right: 2px; }
 .seg-btn {
@@ -121,8 +147,11 @@ body {
   justify-content: center;
 }
 .map-panel { background: var(--sea); padding: 8px; }
-.info { display: flex; flex-direction: column; gap: 16px; }
-.info .panel { flex: 1; min-height: 88px; }
+.info { display: flex; flex-direction: column; gap: 8px; }
+.info .panel { min-height: 88px; }
+/* Fixed height so the box doesn't resize when "Reveal…" swaps to the answer;
+   tight vertical padding (4px) — height still fits a two-line country name. */
+.name-panel, .capital-panel { height: 84px; min-height: 0; padding: 4px 16px; }
 
 /* map svg — cap height so the whole card fits above the fold.
    dvh (dynamic viewport height) avoids the iOS Safari toolbar 100vh bug. */
@@ -145,16 +174,19 @@ body {
 
 /* content pieces */
 .flag-wrap { width: 100%; display: flex; justify-content: center; }
-.flag { width: 100%; max-width: 220px; height: auto; border-radius: 3px; border: 1px solid var(--rule); }
+/* Explicit height keeps flags a uniform size and keeps the layout stable when
+   the card re-renders (so revealing doesn't jump the scroll position). */
+.flag { height: 120px; width: auto; max-width: 100%; border-radius: 3px; border: 1px solid var(--rule); }
 .name { font: normal 2rem/1.1 var(--font-serif); color: var(--ink); text-align: center; }
-.capital { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.cap-label { font: 0.7rem/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); }
-.cap-value { font: normal 1.6rem/1.2 var(--font-serif); color: var(--ink); }
+/* labelled attribute (grey mono label + serif value) — used by Country & Capital */
+.attr { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.attr-label { font: 0.7rem/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); }
+.attr-value { font: normal 1.6rem/1.2 var(--font-serif); color: var(--ink); }
 
 /* hidden panel reveal */
 .panel.hidden { border-style: dashed; background: var(--white); }
 .reveal-btn {
-  width: 100%; height: 100%; min-height: 72px;
+  width: 100%; height: 100%;
   border: none; background: transparent; color: var(--muted);
   font: 1.05rem/1.4 var(--font-serif); cursor: pointer; border-radius: 3px;
 }
@@ -203,7 +235,7 @@ body {
 .prompt-panel { min-height: 120px; }
 .prompt-panel.map-panel { width: 100%; }
 .quiz-prompt .map { max-height: 72vh; max-height: 72dvh; }
-.quiz-prompt .flag { max-width: 100%; }
+.quiz-prompt .flag { height: auto; width: 100%; max-width: 100%; }
 .q-text { font: normal 1.5rem/1.3 var(--font-serif); color: var(--ink); }
 
 .choices { display: grid; gap: 12px; }
@@ -258,19 +290,19 @@ body {
 @media (pointer: coarse) {
   .seg-btn, .mode-tab, .nav-btn { padding-top: 11px; padding-bottom: 11px; font-size: 1rem; }
   .region-select { padding-top: 11px; padding-bottom: 11px; font-size: 1rem; }
+  .options-toggle { padding-top: 11px; padding-bottom: 11px; }
   .choice { padding: 18px; }
-  .reveal-btn { min-height: 88px; }
 }
 
 /* ---- responsive: stack columns on tablet portrait / phones ---- */
 @media (max-width: 820px) {
-  .card { grid-template-columns: 1fr; }
+  .card { grid-template-columns: 1fr; gap: 12px; }
   .quiz-body { grid-template-columns: 1fr; }
   /* keep the map from eating the whole screen when stacked */
   .map { max-height: 44vh; max-height: 44dvh; }
   .quiz-prompt .map { max-height: 44vh; max-height: 44dvh; }
   .name { font-size: 1.6rem; }
-  .cap-value { font-size: 1.3rem; }
+  .attr-value { font-size: 1.3rem; }
   .recap-row { grid-template-columns: 22px 1fr; }
   .recap-t, .recap-a { display: none; }
 }

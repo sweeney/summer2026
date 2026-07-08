@@ -294,8 +294,8 @@ export function initCompete(container, data) {
     } else if (q.type.prompt === "name") {
       panel.append(el("div", "name", q.country.name));
     } else if (q.type.prompt === "capital") {
-      const d = el("div", "capital");
-      d.append(el("span", "cap-label", "Capital"), el("span", "cap-value", q.country.capital));
+      const d = el("div", "attr");
+      d.append(el("span", "attr-label", "Capital"), el("span", "attr-value", q.country.capital));
       panel.append(d);
     }
     return panel;

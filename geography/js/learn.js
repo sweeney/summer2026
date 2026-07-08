@@ -5,6 +5,7 @@ import { createMap } from "./map.js";
 import * as store from "./store.js";
 
 const FIELDS = ["flag", "name", "capital"]; // hideable attributes (map stays visible)
+const REVEAL_LABEL = { flag: "Flag", name: "Country", capital: "Capital" }; // shown on the reveal button
 
 export function initLearn(container, data) {
   const map = createMap(data);
@@ -13,6 +14,7 @@ export function initLearn(container, data) {
     region: store.get("learnRegion", "europe"),
     maxTier: store.get("learnTier", 1),
     hide: store.get("learnHide", { flag: false, name: true, capital: true }),
+    optionsOpen: true, // config panel expanded? collapses when navigating
     index: 0,
     order: [],
     revealed: new Set(),
@@ -31,6 +33,7 @@ export function initLearn(container, data) {
   function go(delta) {
     state.index = (state.index + delta + state.order.length) % state.order.length;
     state.revealed.clear();
+    state.optionsOpen = false; // stepping through collapses the options panel
     render();
   }
   function reveal(field) {
@@ -44,16 +47,40 @@ export function initLearn(container, data) {
 
   // ---- rendering ----------------------------------------------------------
   function render() {
+    const scrollY = window.scrollY; // rebuilding the view resets scroll — restore it
     const c = current();
     container.replaceChildren(buildControls(), buildCard(c));
     map.setRegion(state.region);
     map.highlight(c.cca3);
+    window.scrollTo(0, scrollY);
   }
 
   function buildControls() {
     const bar = el("div", "controls");
 
-    // Region selector
+    const toggle = el("button", "options-toggle", `Options ${state.optionsOpen ? "▾" : "▸"}`);
+    toggle.setAttribute("aria-expanded", state.optionsOpen ? "true" : "false");
+    toggle.onclick = () => {
+      state.optionsOpen = !state.optionsOpen;
+      render();
+    };
+
+    if (state.optionsOpen) {
+      // Options banner, then the options panel, then the nav (options above nav).
+      bar.append(toggle, buildOptionsPanel(), buildNav());
+    } else {
+      // Collapsed: keep the Options banner on the same row as the nav.
+      const row = el("div", "controls-row");
+      row.append(toggle, buildNav());
+      bar.append(row);
+    }
+    return bar;
+  }
+
+  // Collapsible panel of Region / Level / Hide controls.
+  function buildOptionsPanel() {
+    const panel = el("div", "options-panel");
+
     const regionGroup = el("div", "seg");
     regionGroup.append(el("span", "seg-label", "Region"));
     regionGroup.append(
@@ -65,9 +92,7 @@ export function initLearn(container, data) {
         render();
       })
     );
-    bar.append(regionGroup);
 
-    // Tier selector
     const tierGroup = el("div", "seg");
     tierGroup.append(el("span", "seg-label", "Level"));
     TIERS.forEach((t) => {
@@ -82,7 +107,6 @@ export function initLearn(container, data) {
       tierGroup.append(b);
     });
 
-    // Hide toggles
     const hideGroup = el("div", "seg");
     hideGroup.append(el("span", "seg-label", "Hide"));
     FIELDS.forEach((f) => {
@@ -96,8 +120,8 @@ export function initLearn(container, data) {
       hideGroup.append(b);
     });
 
-    bar.append(tierGroup, hideGroup, buildNav());
-    return bar;
+    panel.append(regionGroup, tierGroup, hideGroup);
+    return panel;
   }
 
   function buildCard(c) {
@@ -123,19 +147,9 @@ export function initLearn(container, data) {
       })
     );
 
-    // Name
-    info.append(
-      panel("name", shown("name"), () => el("div", "name", c.name))
-    );
-
-    // Capital
-    info.append(
-      panel("capital", shown("capital"), () => {
-        const d = el("div", "capital");
-        d.append(el("span", "cap-label", "Capital"), el("span", "cap-value", c.capital || "—"));
-        return d;
-      })
-    );
+    // Country + Capital share the same labelled-value style.
+    info.append(panel("name", shown("name"), () => labeledValue("Country", c.name)));
+    info.append(panel("capital", shown("capital"), () => labeledValue("Capital", c.capital || "—")));
 
     card.append(info);
     return card;
@@ -148,7 +162,7 @@ export function initLearn(container, data) {
       p.append(contentFn());
     } else {
       p.classList.add("hidden");
-      const btn = el("button", "reveal-btn", `Reveal ${field} <span class="q">?</span>`);
+      const btn = el("button", "reveal-btn", `Reveal ${REVEAL_LABEL[field] || field} <span class="q">?</span>`);
       btn.onclick = () => reveal(field);
       p.append(btn);
     }
@@ -161,10 +175,8 @@ export function initLearn(container, data) {
     prev.onclick = () => go(-1);
     const next = el("button", "nav-btn primary", "Next ›");
     next.onclick = () => go(1);
-    const revealBtn = el("button", "nav-btn", "Reveal");
-    revealBtn.onclick = revealAll;
     const count = el("span", "counter", `${state.index + 1} / ${state.order.length}`);
-    nav.append(prev, count, revealBtn, next);
+    nav.append(prev, count, next);
     return nav;
   }
 
@@ -201,6 +213,11 @@ function el(tag, className, html) {
   return n;
 }
 const cap = (s) => s[0].toUpperCase() + s.slice(1);
+function labeledValue(label, value) {
+  const d = el("div", "attr");
+  d.append(el("span", "attr-label", label), el("span", "attr-value", value));
+  return d;
+}
 function regionSelect(data, current, onChange) {
   const sel = document.createElement("select");
   sel.className = "region-select";
