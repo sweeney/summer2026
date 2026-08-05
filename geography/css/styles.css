@@ -172,6 +172,39 @@ body {
 .marker-dot { fill: var(--active-line); pointer-events: none; }
 @keyframes pulse { from { transform: scale(0.4); opacity: 0.9; } to { transform: scale(1.7); opacity: 0; } }
 
+/* ---- map mode (printable) ---- */
+.map-sheet {
+  background: var(--white);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 12px;
+}
+.map-sheet-title {
+  font: normal 1.25rem/1 var(--font-serif);
+  color: var(--ink);
+  margin: 4px 0 12px;
+  text-align: center;
+}
+/* Height-driven so the SVG box matches the map's aspect ratio — a width-driven
+   box letterboxes, leaving white bands beside the sea. */
+.map-sheet .map {
+  width: auto; max-width: 100%; margin: 0 auto;
+  height: calc(100vh - 230px); height: calc(100dvh - 230px);
+  max-height: none;
+}
+.sea-rect { fill: var(--sea); }
+/* Names sit above the land; the stroke (sized in map.js) is painted underneath
+   the fill as a halo so labels stay legible over borders. */
+.labels {
+  fill: var(--ink);
+  stroke: var(--white);
+  paint-order: stroke;
+  stroke-linejoin: round;
+  font-family: var(--font-serif);
+  text-anchor: middle;
+  pointer-events: none;
+}
+
 /* content pieces */
 .flag-wrap { width: 100%; display: flex; justify-content: center; }
 /* Explicit height keeps flags a uniform size and keeps the layout stable when
@@ -292,6 +325,23 @@ body {
   .region-select { padding-top: 11px; padding-bottom: 11px; font-size: 1rem; }
   .options-toggle { padding-top: 11px; padding-bottom: 11px; }
   .choice { padding: 18px; }
+}
+
+/* ---- print: just the map sheet, filling the page ----
+   (@page orientation is set per region by js/mapview.js) */
+@media print {
+  body { background: var(--white); }
+  .page-topbar, .topbar, .no-print { display: none !important; }
+  #view { max-width: none; margin: 0; padding: 0; }
+  .map-sheet { border: none; border-radius: 0; padding: 0; }
+  .map-sheet-title { margin: 0 0 6px; }
+  /* Fill the page in whichever direction binds first: height drives the size,
+     max-width reins it back in for wide regions. Keeps every map on one sheet. */
+  .map-sheet .map {
+    width: auto; height: 92vh; max-width: 100%; max-height: 92vh;
+    margin: 0 auto; border-radius: 0;
+  }
+  .marker, .marker-dot { display: none !important; }
 }
 
 /* ---- responsive: stack columns on tablet portrait / phones ---- */

@@ -3,11 +3,13 @@
 import { loadData } from "./data.js";
 import { initLearn } from "./learn.js";
 import { initCompete } from "./compete.js";
+import { initMapView } from "./mapview.js";
 import * as store from "./store.js";
 
 const MODES = [
   { id: "learn", label: "Learn", init: initLearn },
   { id: "compete", label: "Compete", init: initCompete },
+  { id: "map", label: "Map", init: initMapView },
 ];
 
 const view = document.getElementById("view");
