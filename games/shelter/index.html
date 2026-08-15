@@ -1,0 +1,1439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Animal Shelter">
+<meta name="mobile-web-app-capable" content="yes">
+<title>2026 → Games → Every Animal Shelter</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext x='16' y='25' font-size='26' text-anchor='middle'%3E%F0%9F%90%B4%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#3a2c4f;
+    --paper:#fffdf5;
+    --sky1:#a9e4ff;
+    --sky2:#d7f6c9;
+    --berry:#e0568f;
+    --berry-dark:#b53a6d;
+    --gold:#ffc93c;
+    --mint:#57c9a4;
+    --shadow:rgba(58,44,79,.25);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    touch-action:manipulation;
+    -webkit-user-select:none; user-select:none;
+    font-family:'Baloo 2', 'Trebuchet MS', system-ui, sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(circle at 12% 12%, #fff8 0 22%, #fff0 23%),
+      linear-gradient(180deg, var(--sky1) 0%, #cdefff 45%, var(--sky2) 100%);
+    background-attachment:fixed;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:14px 12px 26px;
+    -webkit-tap-highlight-color:transparent;
+  }
+  h1{
+    font-family:'Press Start 2P', 'Courier New', monospace;
+    font-size:clamp(13px, 3.4vw, 22px);
+    letter-spacing:.5px;
+    margin:2px 0 2px;
+    color:var(--paper);
+    text-shadow:2px 2px 0 var(--berry-dark), 4px 4px 0 var(--shadow);
+  }
+  .tagline{margin:0 0 12px;font-weight:600;font-size:15px;opacity:.85}
+  .crumb{
+    margin:0 0 6px;font-weight:700;font-size:13px;letter-spacing:.04em;
+    text-transform:uppercase;color:var(--berry-dark);
+  }
+  .crumb a{color:var(--berry-dark)}
+  .crumb a:hover{color:var(--mint)}
+
+  .layout{
+    width:100%;
+    max-width:1040px;
+    display:flex;
+    gap:16px;
+    align-items:flex-start;
+    justify-content:center;
+    flex-wrap:wrap;
+  }
+  .panel{
+    background:var(--paper);
+    border:4px solid var(--ink);
+    box-shadow:0 6px 0 var(--shadow);
+  }
+  .stage{flex:1 1 520px; min-width:280px; max-width:720px; padding:8px}
+  .screen{position:relative}
+  .veil{
+    display:none;position:absolute;inset:0;
+    background:rgba(58,44,79,.62);
+    flex-direction:column;align-items:center;justify-content:center;gap:10px;
+    cursor:pointer;
+  }
+  body.paused .veil{display:flex}
+  .veil span{
+    font-family:'Press Start 2P',monospace;font-size:clamp(14px,3.4vw,24px);
+    color:var(--paper);text-shadow:3px 3px 0 var(--berry-dark);
+  }
+  .veil small{font-weight:700;font-size:15px;color:#ffe9f2}
+  canvas{
+    display:block;width:100%;height:auto;
+    image-rendering:pixelated;
+    image-rendering:crisp-edges;
+    background:#8ed05a;
+    touch-action:none;
+  }
+  .statusbar{
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    padding:8px 4px 2px;font-weight:700;font-size:15px;
+  }
+  .who{
+    display:inline-flex;align-items:center;gap:6px;
+    background:#ffe9f2;border:3px solid var(--berry);padding:2px 10px;
+  }
+  .who b{font-family:'Press Start 2P',monospace;font-size:10px;letter-spacing:.5px}
+  .count{margin-left:auto;display:flex;gap:12px;font-size:14px}
+  .count span{background:#f2f6ff;border:3px solid #9fb6e6;padding:2px 8px}
+  #foxFlag:empty{display:none}
+
+  .side{flex:0 1 280px;min-width:250px;padding:12px 14px 14px}
+  .side h2{
+    font-family:'Press Start 2P',monospace;font-size:11px;margin:2px 0 10px;
+    color:var(--berry-dark);
+  }
+  ul.jobs{list-style:none;margin:0;padding:0}
+  ul.jobs li{
+    display:flex;gap:9px;align-items:flex-start;
+    font-size:15.5px;font-weight:600;line-height:1.25;
+    padding:7px 0;border-bottom:2px dotted #e2dcd0;
+  }
+  ul.jobs li:last-child{border-bottom:0}
+  .box{
+    flex:0 0 20px;width:20px;height:20px;margin-top:1px;
+    border:3px solid var(--ink);background:#fff;
+    display:flex;align-items:center;justify-content:center;
+    font-size:13px;line-height:1;color:var(--gold);
+  }
+  li.done{color:#8a9f7e}
+  li.done .box{background:var(--gold);border-color:#b8860b;color:#fff}
+  .prog{margin-top:12px;font-size:14px;font-weight:700}
+  .prog i{font-style:normal;color:var(--berry)}
+
+  .keys{margin-top:14px;font-size:14px;line-height:1.55;border-top:3px solid #eee6d8;padding-top:10px}
+  kbd{
+    font-family:'Press Start 2P',monospace;font-size:9px;
+    background:#f4efe2;border:2px solid var(--ink);border-bottom-width:3px;
+    padding:3px 5px;margin:0 1px;display:inline-block;
+  }
+  .btnrow{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  button{
+    font-family:'Baloo 2',sans-serif;font-weight:800;font-size:14px;
+    color:var(--ink);background:#ffe9f2;
+    border:3px solid var(--ink);box-shadow:0 4px 0 var(--shadow);
+    padding:7px 12px;cursor:pointer;
+  }
+  button:active{transform:translateY(3px);box-shadow:0 1px 0 var(--shadow)}
+  button:focus-visible{outline:3px solid var(--berry);outline-offset:3px}
+
+  /* touch pad */
+  .touch{
+    display:none;width:100%;margin-top:10px;
+    justify-content:space-between;align-items:center;gap:12px;
+  }
+  body.istouch .touch{display:flex}
+  @media (pointer:coarse){ .touch{display:flex} }
+  .dpad{display:grid;grid-template-columns:repeat(3,64px);grid-template-rows:repeat(3,64px);gap:5px}
+  .dpad button{font-size:24px;padding:0;background:var(--paper)}
+  .dpad .sp{visibility:hidden}
+  .acts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .acts button{width:104px;height:60px;font-size:15px;background:#ffe9f2}
+  .acts button:first-child{grid-column:1 / -1;width:auto}
+  .acts button.wide{grid-column:1 / -1;width:auto}
+  .touch button{touch-action:none;-webkit-touch-callout:none}
+  @media (max-width:430px){
+    .dpad{grid-template-columns:repeat(3,52px);grid-template-rows:repeat(3,52px)}
+    .acts button{width:84px;height:52px;font-size:14px}
+  }
+  .touchhint{display:none;margin:8px 0 0;font-size:14px;font-weight:600;opacity:.85}
+  body.istouch .touchhint{display:block}
+
+  .cheer{
+    position:fixed;inset:0;display:none;place-items:center;pointer-events:none;z-index:5;
+  }
+  .cheer div{
+    font-family:'Press Start 2P',monospace;font-size:clamp(12px,3.6vw,20px);
+    background:var(--paper);border:4px solid var(--ink);box-shadow:0 8px 0 var(--shadow);
+    padding:18px 22px;text-align:center;color:var(--berry-dark);line-height:1.7;
+  }
+  @media (prefers-reduced-motion: reduce){ *{animation:none!important;transition:none!important} }
+</style>
+</head>
+<body>
+
+<p class="crumb"><a href="../../">2026</a> → <a href="../">Games</a> → Shelter</p>
+<h1>Every Animal Shelter</h1>
+<p class="tagline">Lead the ponies, feed the rabbits, find toys for the gerbils — and look after Wotsit.</p>
+
+<div class="layout">
+  <section class="panel stage">
+    <div class="screen">
+      <canvas id="game" width="960" height="600" aria-label="Shelter field with ponies, rabbits, gerbils and a dog"></canvas>
+      <div class="veil" id="veil"><span>Paused</span><small>Tap here to carry on</small></div>
+    </div>
+    <div class="statusbar">
+      <span class="who">You're leading <b id="whoName">Wotsit</b></span>
+      <span class="count">
+        <span>🥕 <b id="cCarrot">0</b></span>
+        <span>🦴 <b id="cBone">0</b></span>
+        <span>🧸 <b id="cToy">0</b>/4</span>
+        <span id="foxFlag" style="background:#ffe0e0;border-color:#e8434f"></span>
+        <span>💗 <b id="cPet">0</b>/<b id="cPetMax">10</b></span>
+      </span>
+    </div>
+    <p id="gateMsg" style="margin:2px 4px 0;min-height:20px;font-weight:700;font-size:14px;color:#b53a6d"></p>
+  </section>
+
+  <aside class="panel side">
+    <h2>Today's jobs</h2>
+    <ul class="jobs" id="jobs"></ul>
+    <p class="prog">Stars earned: <i id="stars">0</i> of <i id="starTotal">7</i></p>
+
+    <p class="touchhint">Tap an animal to lead it. Tap a gate to open or shut it. Use the arrows below the field to walk.</p>
+    <div class="keys">
+      <kbd>← ↑ → ↓</kbd> walk<br>
+      <kbd>space</kbd> pet &amp; call friends<br>
+      <kbd>tab</kbd> or click an animal to lead it<br>
+      <kbd>g</kbd> open or shut the gate you're beside (or tap the gate)<br>
+      <kbd>p</kbd> pause and carry on
+      <p style="margin:10px 0 0;font-size:13.5px;opacity:.85">If a fox turns up, run away from it and shut your gates. Nobody gets hurt — a fright just knocks them over for a second. Lead Wotsit at the fox and she'll bark it away.</p>
+      <p style="margin:10px 0 0;font-size:13.5px;opacity:.85">Follow the dirt path: the stable door is at the bottom of the barn, the paddock gate on its left-hand rail. Wotsit's kennel and pink bed are beside the barn, the rabbits' hutch has a blue roof on the right, and the gerbils' cage is at the bottom left.</p>
+    </div>
+    <div class="btnrow">
+      <button id="pauseBtn" type="button">⏸ Pause</button>
+      <button id="soundBtn" type="button">🔊 Sound on</button>
+      <button id="resetBtn" type="button">Start a new day</button>
+    </div>
+  </aside>
+</div>
+
+<div class="touch">
+  <div class="dpad">
+    <button class="sp"></button><button data-dir="up" type="button">▲</button><button class="sp"></button>
+    <button data-dir="left" type="button">◀</button><button class="sp"></button><button data-dir="right" type="button">▶</button>
+    <button class="sp"></button><button data-dir="down" type="button">▼</button><button class="sp"></button>
+  </div>
+  <div class="acts">
+    <button id="petBtn" type="button">💗 Pet</button>
+    <button id="gateBtn" type="button">🚪 Gate</button>
+    <button id="swapBtn" type="button">🔁 Swap</button>
+    <button id="pauseBtn2" class="wide" type="button">⏸ Pause</button>
+  </div>
+</div>
+
+<div class="cheer" id="cheer"><div id="cheerText"></div></div>
+
+<script>
+"use strict";
+/* ------------------------------------------------------------------ */
+/*  Every Animal Shelter — a tiny pixel sandbox. No build step.        */
+/* ------------------------------------------------------------------ */
+
+const W = 320, H = 200;                 // logical pixel size of the world
+const cv = document.getElementById('game');
+const ctx = cv.getContext('2d');
+const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- pixel sprite helpers ---------- */
+function makeSprite(rows, pal){
+  const w = rows[0].length, h = rows.length;
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const g = c.getContext('2d');
+  for(let r=0;r<h;r++){
+    for(let x=0;x<w;x++){
+      const ch = rows[r][x];
+      const col = pal[ch];
+      if(!col) continue;
+      g.fillStyle = col; g.fillRect(x,r,1,1);
+    }
+  }
+  return c;
+}
+function flipSprite(src){
+  const c = document.createElement('canvas'); c.width=src.width; c.height=src.height;
+  const g = c.getContext('2d');
+  g.translate(src.width,0); g.scale(-1,1); g.drawImage(src,0,0);
+  return c;
+}
+
+const PONY = [
+"................",
+"..........BBBB..",
+".........MBBBBB.",
+".........MMBBEB.",
+"........MMBBBBN.",
+"..BBBBBBBBBBBBN.",
+".BBBBBBBBBBBBB..",
+"TBBBBBBBBBBBBB..",
+"TTBBBBBBBBBBBB..",
+"T.BB..BB..BB....",
+"..BB..BB..BB....",
+"..HH..HH..HH....",
+"................"];
+
+const RABBIT = [
+"............",
+".......B.B..",
+".......B.B..",
+"......BBBBB.",
+"......BBEBB.",
+"..BBBBBBBBN.",
+".WBBBBBBBB..",
+".WBBBBBBB...",
+"...HH.HH...."];
+
+const GERBIL = [
+".......BB..",
+"......BBBB.",
+"T.....BBEBB",
+"TT...BBBBBN",
+".BBBBBBBBB.",
+".WWWWWWWW..",
+"..H..HH...."];
+
+const DOG = [
+"..............",
+"........B..B..",
+"........BBBB..",
+"T.......BBEBB.",
+"TT....BBBBBBN.",
+".BBBBBBBBBBB..",
+".BBBBBBBBBB...",
+".BBBBBBBBBB...",
+".BB..BB..BB...",
+".BB..BB..BB...",
+".WW..WW..WW..."];
+
+const FOXART = [
+"..........B.B..",
+"..........BBB..",
+"WT.......BBBEB.",
+"WTT....BBBBBBN.",
+".TBBBBBBBBBB...",
+".BBBBBBBBBBB...",
+".BWWWWWWWB.....",
+".BB..BB..BB....",
+".HH..HH..HH...."];
+const FOXPAL = {B:'#e07a3c',T:'#c95f2a',W:'#fffdf5',N:'#3a2c4f',E:'#3a2c4f',H:'#4a3b3f'};
+
+const KINDS = {
+  pony:   {rows:PONY,   w:16, h:13, speed:40, foot:12},
+  rabbit: {rows:RABBIT, w:12, h:9,  speed:46, foot:8},
+  gerbil: {rows:GERBIL, w:11, h:7,  speed:50, foot:7},
+  dog:    {rows:DOG,    w:14, h:11, speed:54, foot:10}
+};
+
+/* ---------- the animals ---------- */
+const CAST = [
+  {kind:'dog', name:'Wotsit', pal:{B:'#33303e',T:'#33303e',W:'#e8e4ee',N:'#6f6a7d',E:'#ffe9a8',H:'#e8e4ee'}, x:132,y:96},
+  {kind:'pony', name:'Lemon', pal:{B:'#f6dfae',M:'#c98b4b',T:'#c98b4b',N:'#e0b57e',E:'#3a2c4f',H:'#8a6b45'}, x:150,y:120},
+  {kind:'pony', name:'Oakly', pal:{B:'#9c6233',M:'#4a2f18',T:'#4a2f18',N:'#b8804a',E:'#3a2c4f',H:'#3d2a17'}, x:176,y:112},
+  {kind:'pony', name:'Pepper',   pal:{B:'#b9b7cb',M:'#5d5a74',T:'#5d5a74',N:'#8c8aa3',E:'#3a2c4f',H:'#4a4860'}, x:118,y:142},
+  {kind:'pony', name:'Snowdrop', pal:{B:'#fffaf0',M:'#e0a6c2',T:'#e0a6c2',N:'#f0d6dd',E:'#3a2c4f',H:'#b9a68f'}, x:178,y:150},
+  {kind:'rabbit', name:'Clover', pal:{B:'#d9c4a8',W:'#fffdf5',N:'#e79ab0',E:'#3a2c4f',H:'#b39a7c'}, x:240,y:120},
+  {kind:'rabbit', name:'Biscuit',pal:{B:'#c88f5c',W:'#fffdf5',N:'#e79ab0',E:'#3a2c4f',H:'#9a6c42'}, x:262,y:150},
+  {kind:'rabbit', name:'Nibbles',pal:{B:'#8e8496',W:'#fffdf5',N:'#e79ab0',E:'#3a2c4f',H:'#6b6376'}, x:214,y:168},
+  {kind:'gerbil', name:'Peanut',  pal:{B:'#a0703f',T:'#fffdf5',W:'#fffdf5',N:'#e79ab0',E:'#3a2c4f',H:'#fffdf5'}, x:70,y:130},
+  {kind:'gerbil', name:'Marmite', pal:{B:'#2f2b38',T:'#2f2b38',W:'#4a4554',N:'#c98aa0',E:'#ffe9a8',H:'#4a4554'}, x:96,y:124}
+];
+
+/* ---------- places ---------- */
+const STABLE = {x:26,y:14,w:60,h:50, inner:{x:33,y:21,w:46,h:36}};
+const DOOR = {x:44,y:58,w:24,h:6};      // the way in, on the field side of the barn
+const PADDOCK = {x:196,y:16,w:110,h:76, inner:{x:200,y:20,w:102,h:68}};
+const CAGE = {x:34,y:138,w:56,h:40, inner:{x:39,y:145,w:46,h:31}};
+const TREE = {x:150,y:44};
+const KENNEL = {x:100,y:26,w:22,h:16};
+const BED = {x:98,y:45,w:26,h:13, zone:{x:99,y:45,w:24,h:13}};
+const HUTCH = {x:222,y:100,w:44,h:24, inner:{x:226,y:106,w:36,h:18}};
+const PEN = {x:92,y:22,w:37,h:40};
+
+// Every way in and out. rect is the opening itself, which turns solid when shut.
+const GATES = [
+  {id:'stable',  label:'stable door',  open:true, wobble:0, dir:'h', rect:{x:44, y:58, w:24, h:6}},
+  {id:'paddock', label:'paddock gate', open:true, wobble:0, dir:'v', rect:{x:196,y:46, w:3,  h:20}},
+  {id:'hutch',   label:'hutch door',   open:true, wobble:0, dir:'h', rect:{x:234,y:124,w:20, h:4}},
+  {id:'kennel',  label:'kennel gate',  open:true, wobble:0, dir:'h', rect:{x:102,y:59, w:20, h:3}},
+  {id:'cage',    label:'cage door',    open:true, wobble:0, dir:'h', rect:{x:52, y:174,w:20, h:4}}
+];
+
+const SOLIDS = [
+  // stable walls (opening at the bottom = the doorway)
+  {x:26,y:14,w:60,h:6}, {x:26,y:14,w:6,h:50}, {x:80,y:14,w:6,h:50},
+  {x:26,y:58,w:18,h:6}, {x:68,y:58,w:18,h:6},
+  // paddock fence (gap in the left rail = the gate)
+  {x:196,y:16,w:110,h:3}, {x:303,y:16,w:3,h:76}, {x:196,y:89,w:110,h:3},
+  {x:196,y:16,w:3,h:30}, {x:196,y:66,w:3,h:26},
+  // apple tree trunk
+  {x:146,y:38,w:8,h:8},
+  // Wotsit's kennel
+  {x:100,y:26,w:22,h:16},
+  // her pen, with a gap at the bottom for the gate
+  {x:92,y:22,w:37,h:3}, {x:92,y:22,w:3,h:40}, {x:126,y:22,w:3,h:40},
+  {x:92,y:59,w:10,h:3}, {x:122,y:59,w:7,h:3},
+  // rabbit hutch: walls with a hop-in door at the bottom
+  {x:222,y:100,w:44,h:6}, {x:222,y:100,w:4,h:24}, {x:262,y:100,w:4,h:24},
+  {x:222,y:124,w:12,h:4}, {x:254,y:124,w:12,h:4},
+  // gerbil cage: walls with a door at the bottom
+  {x:34,y:138,w:56,h:7}, {x:34,y:138,w:5,h:40}, {x:85,y:138,w:5,h:40},
+  {x:34,y:174,w:18,h:4}, {x:72,y:174,w:18,h:4}
+];
+
+/* ---------- state ---------- */
+let animals=[], grass=[], carrots=[], bones=[], toys=[], bits=[], flutters=[];
+let sel=0, petted=new Set(), carrotsEaten=0, bonesEaten=0, toysFound=0, pets=0, tCall=0, time=0;
+const FOX = {on:false, x:-20, y:120, flip:false, warn:0, life:0, fleeing:false, hop:0, target:null};
+let foxTimer=34, foxScares=0, foxSentPacking=false, foxSprite=null, foxSpriteF=null;
+let jobs=[], allDone=false;
+const spriteCache = new Map();
+
+function sprite(a){
+  const key = a.name + (a.flip?'_f':'');
+  if(spriteCache.has(key)) return spriteCache.get(key);
+  const base = makeSprite(KINDS[a.kind].rows, a.pal);
+  const s = a.flip ? flipSprite(base) : base;
+  spriteCache.set(key, s);
+  return s;
+}
+
+function newDay(){
+  animals = CAST.map(c => ({
+    kind:c.kind, name:c.name, pal:c.pal,
+    x:c.x, y:c.y, flip:false, bob:0, hop:0,
+    state:'wander', t:rnd(0,2), tx:c.x, ty:c.y, follow:0, target:null, heart:0, dizzy:0, safeT:0, stuck:0
+  }));
+  grass = [];
+  for(let i=0;i<16;i++){
+    let p = freeSpot(); grass.push({x:p.x, y:p.y, grown:true, t:0});
+  }
+  carrots = [];
+  for(let i=0;i<8;i++){
+    carrots.push({x:214 + (i%4)*26 + rnd(-4,4), y:150 + Math.floor(i/4)*22 + rnd(-4,4), grown:true, t:0});
+  }
+  bones = [];
+  for(let i=0;i<3;i++){ const p = freeSpot(); bones.push({x:p.x, y:p.y, grown:true, t:0}); }
+  toys = [];
+  for(let i=0;i<4;i++){ const p = freeSpot(); toys.push({x:p.x, y:p.y, kind:i%4, grown:true, t:0}); }
+  flutters = [];
+  for(let i=0;i<4;i++) flutters.push({x:rnd(20,300), y:rnd(20,180), a:rnd(0,6), sp:rnd(6,12)});
+  bits=[]; sel=0; petted=new Set(); carrotsEaten=0; bonesEaten=0; toysFound=0; pets=0; allDone=false;
+  GATES.forEach(g=>{ g.open=true; g.wobble=0; });
+  FOX.on=false; FOX.warn=0; FOX.fleeing=false; FOX.target=null;
+  foxTimer=34; foxScares=0; foxSentPacking=false;
+  sayT=0; document.getElementById('gateMsg').textContent='';
+  jobs = [
+    {id:'bones',   text:'Find 3 bones for Wotsit',        done:false},
+    {id:'bed',     text:"Settle Wotsit in her bed",       done:false},
+    {id:'paddock', text:'Walk 2 ponies into the paddock', done:false},
+    {id:'stable',  text:'Tuck a pony into the stable',    done:false},
+    {id:'carrots', text:'Let the rabbits munch 5 carrots',done:false},
+    {id:'hutch',   text:'Hop 2 rabbits home to the hutch',done:false},
+    {id:'toys',    text:'Find 4 toys for the gerbils',    done:false},
+    {id:'cage',    text:'Pop both gerbils into their cage',done:false},
+    {id:'pets',    text:'Say hello to every animal',      done:false},
+    {id:'fox',     text:'Send the fox packing with Wotsit', done:false},
+    {id:'bedtime', text:'Everyone in bed, all five gates shut', done:false}
+  ];
+  drawJobs(); refreshHud();
+  document.getElementById('cheer').style.display='none';
+}
+
+function rnd(a,b){ return a + Math.random()*(b-a); }
+function freeSpot(){
+  for(let i=0;i<60;i++){
+    const x = rnd(16,304), y = rnd(70,192);
+    if(inRect(x,y,PADDOCK) || inRect(x,y,STABLE)) continue;
+    if(inRect(x,y,KENNEL) || inRect(x,y,BED) || inRect(x,y,PEN)) continue;
+    if(inRect(x,y,{x:HUTCH.x-4,y:HUTCH.y-8,w:HUTCH.w+8,h:HUTCH.h+14})) continue;
+    if(inRect(x,y,{x:CAGE.x-4,y:CAGE.y-4,w:CAGE.w+8,h:CAGE.h+12})) continue;
+    if(x>200 && y>130) continue;              // keep the carrot patch clear
+    return {x:Math.round(x), y:Math.round(y)};
+  }
+  return {x:160,y:120};
+}
+function inRect(x,y,r){ return x>r.x && x<r.x+r.w && y>r.y && y<r.y+r.h; }
+function inCage(a){ return a.kind==='gerbil' && inRect(a.x,a.y,CAGE.inner); }
+function inPaddock(a){ return inRect(a.x,a.y,PADDOCK.inner); }
+function inStable(a){ return inRect(a.x,a.y,STABLE.inner); }
+function inBed(a){ return a.kind==='dog' && inRect(a.x,a.y,BED.zone); }
+function inHutch(a){ return a.kind==='rabbit' && inRect(a.x,a.y,HUTCH.inner); }
+
+/* ---------- where everybody sleeps ---------- */
+function isHome(a){
+  if(a.kind==='pony')   return inPaddock(a) || inStable(a);
+  if(a.kind==='rabbit') return inHutch(a);
+  if(a.kind==='gerbil') return inCage(a);
+  return inBed(a) || inRect(a.x,a.y,PEN);
+}
+function allTuckedIn(){ return animals.every(isHome); }
+function homePoint(a){
+  if(a.kind==='pony')   return {x:250, y:56};
+  if(a.kind==='rabbit') return {x:244, y:116};
+  if(a.kind==='gerbil') return {x:62,  y:160};
+  return {x:111, y:53};
+}
+
+/* ---------- the fox ---------- */
+function foxImg(){
+  if(!foxSprite){ foxSprite = makeSprite(FOXART, FOXPAL); foxSpriteF = flipSprite(foxSprite); }
+  return FOX.flip ? foxSpriteF : foxSprite;
+}
+function spawnFox(){
+  const side = Math.floor(rnd(0,4));            // slips in at the edge of the field
+  if(side===0){ FOX.x=12;    FOX.y=rnd(100,180); }
+  else if(side===1){ FOX.x=W-12; FOX.y=rnd(100,180); }
+  else if(side===2){ FOX.x=rnd(130,300); FOX.y=H-8; }
+  else { FOX.x=152; FOX.y=22; }
+  FOX.on=true; FOX.fleeing=false; FOX.life=22; FOX.target=null; refreshHud();
+  say('A fox is on the prowl! Keep away from it.');
+  sfx('alert');
+}
+function startle(a){
+  a.dizzy = 2; a.follow = 0; a.target = null; a.hop = 0;
+  foxScares++;
+  puff(a.x, a.y-12, 9, 'star'); sfx('scare');
+  say(a.name + ' got a fright! Hang on…');
+}
+function updateFox(dt){
+  if(!FOX.on){
+    if(FOX.warn > 0){ FOX.warn -= dt; if(FOX.warn<=0) spawnFox(); return; }
+    foxTimer -= dt;
+    if(foxTimer <= 0){
+      if(allTuckedIn()){ foxTimer = 14; return; }   // nobody out to chase
+      FOX.warn = 2.2; say('Listen… something is rustling in the hedge.'); sfx('rustle');
+    }
+    return;
+  }
+
+  FOX.life -= dt;
+  const dog = animals.find(a=>a.kind==='dog');
+  const dogClose = dog && FOX.life < 20.5 && Math.hypot(dog.x-FOX.x, dog.y-FOX.y) < 34;
+
+  if(!FOX.fleeing && (dogClose || FOX.life<=0 || allTuckedIn())){
+    FOX.fleeing = true; refreshHud();
+    if(dogClose){
+      foxSentPacking = true;
+      say('Wotsit barked and the fox bolted!');
+      sfx('bark'); puff(FOX.x, FOX.y-10, 10, 'star');
+    } else {
+      say('The fox gave up and slunk away.');
+    }
+  }
+
+  let dx, dy, speed;
+  if(FOX.fleeing){
+    dx = FOX.x < W/2 ? -1 : 1; dy = .35; speed = 66;
+    if(FOX.x < -18 || FOX.x > W+18 || FOX.y > H+18){
+      FOX.on = false; FOX.target = null; foxTimer = rnd(45,75); refreshHud();
+    }
+  } else {
+    if(!FOX.target || isHome(FOX.target) || FOX.target.dizzy>0 || FOX.target.safeT>0){
+      let best=null, bd=999;
+      for(const a of animals){
+        if(a.kind==='dog' || isHome(a) || a.dizzy>0 || a.safeT>0) continue;
+        const d = Math.hypot(a.x-FOX.x, a.y-FOX.y);
+        if(d<bd){ bd=d; best=a; }
+      }
+      FOX.target = best;
+    }
+    const t = FOX.target;
+    if(!t){ FOX.fleeing = true; refreshHud(); return; }
+    dx = t.x-FOX.x; dy = t.y-FOX.y; speed = 36;
+    if(Math.hypot(dx,dy) < 9) startle(t);
+  }
+
+  const len = Math.hypot(dx,dy) || 1;
+  const nx = FOX.x + dx/len*speed*dt, ny = FOX.y + dy/len*speed*dt;
+  if(FOX.fleeing){ FOX.x = nx; FOX.y = ny; }
+  else {
+    if(canStand(FOX, nx, FOX.y)) FOX.x = nx;
+    if(canStand(FOX, FOX.x, ny)) FOX.y = ny;
+  }
+  if(Math.abs(dx) > 0.25) FOX.flip = dx < 0;
+  FOX.hop += dt*10;
+}
+
+/* ---------- movement + collision ---------- */
+function canStand(a,x,y){
+  if(x<8 || x>W-8 || y<12 || y>H-4) return false;
+  const box = {x:x-5, y:y-5, w:10, h:5};
+  for(const s of SOLIDS){
+    if(box.x < s.x+s.w && box.x+box.w > s.x && box.y < s.y+s.h && box.y+box.h > s.y) return false;
+  }
+  for(const g of GATES){
+    if(g.open) continue;
+    const s = g.rect;
+    if(box.x < s.x+s.w && box.x+box.w > s.x && box.y < s.y+s.h && box.y+box.h > s.y) return false;
+  }
+  return true;
+}
+function step(a,dx,dy,dt,speed){
+  const len = Math.hypot(dx,dy);
+  if(len < 0.001) return false;
+  dx/=len; dy/=len;
+  const nx = a.x + dx*speed*dt, ny = a.y + dy*speed*dt;
+  let moved=false;
+  if(canStand(a,nx,a.y)){ a.x=nx; moved=true; }
+  if(canStand(a,a.x,ny)){ a.y=ny; moved=true; }
+  if(Math.abs(dx)>0.25) a.flip = dx<0;
+  return moved;
+}
+
+/* ---------- input ---------- */
+const keys = {};
+const DIRK = {ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right',
+              w:'up',s:'down',a:'left',d:'right',W:'up',S:'down',A:'left',D:'right'};
+addEventListener('keydown', e=>{
+  if(DIRK[e.key]){ keys[DIRK[e.key]]=true; e.preventDefault(); }
+  else if(e.key===' '){ doPet(); e.preventDefault(); }
+  else if(e.key==='p' || e.key==='P' || e.key==='Escape'){ setPaused(!paused); e.preventDefault(); }
+  else if(e.key==='g' || e.key==='G'){
+    const me = animals[sel];
+    if(!toggleGate(gateNear(me.x, me.y, 34))) say('Walk closer to a gate first.');
+    e.preventDefault();
+  }
+  else if(e.key==='Tab'){ swap(); e.preventDefault(); }
+  wakeAudio();
+});
+addEventListener('keyup', e=>{ if(DIRK[e.key]) keys[DIRK[e.key]]=false; });
+addEventListener('blur', ()=>{ for(const k in keys) keys[k]=false; });
+
+document.querySelectorAll('.dpad button[data-dir]').forEach(b=>{
+  const d = b.dataset.dir;
+  const on = e=>{ e.preventDefault(); keys[d]=true; wakeAudio(); };
+  const off= e=>{ e.preventDefault(); keys[d]=false; };
+  b.addEventListener('pointerdown',on); b.addEventListener('pointerup',off);
+  b.addEventListener('pointerleave',off); b.addEventListener('pointercancel',off);
+});
+document.getElementById('petBtn').onclick = ()=>{ wakeAudio(); doPet(); };
+document.getElementById('gateBtn').onclick = ()=>{
+  wakeAudio();
+  const me = animals[sel];
+  if(!toggleGate(gateNear(me.x, me.y, 34))) say('Walk closer to a gate first.');
+};
+document.getElementById('swapBtn').onclick = ()=>{ wakeAudio(); swap(); };
+document.getElementById('resetBtn').onclick = ()=>{ wakeAudio(); newDay(); };
+
+cv.addEventListener('pointerdown', e=>{
+  wakeAudio();
+  const r = cv.getBoundingClientRect();
+  const x = (e.clientX-r.left)/r.width*W, y = (e.clientY-r.top)/r.height*H;
+
+  // an animal under your finger always wins, even when it's stood in a gateway
+  let best=-1, bd=18;
+  animals.forEach((a,i)=>{
+    const d = Math.hypot(a.x-x, a.y-(y+4));
+    if(d<bd){ bd=d; best=i; }
+  });
+  if(best>=0 && bd<=12){
+    if(best!==sel){ sel=best; sfx('select'); refreshHud(); }
+    return;
+  }
+  if(toggleGate(gateNear(x, y, 15))) return;
+  if(best>=0 && best!==sel){ sel=best; sfx('select'); refreshHud(); }
+});
+
+function gateNear(x,y,reach){
+  let best=null, bd=reach;
+  for(const g of GATES){
+    const d = Math.hypot(g.rect.x+g.rect.w/2-x, g.rect.y+g.rect.h/2-y);
+    if(d<bd){ bd=d; best=g; }
+  }
+  return best;
+}
+function blockerIndex(g){
+  for(let i=0;i<animals.length;i++){
+    const a = animals[i];
+    const bx=a.x-6, by=a.y-8, bw=12, bh=9, s=g.rect;
+    if(bx < s.x+s.w && bx+bw > s.x && by < s.y+s.h && by+bh > s.y) return i;
+  }
+  return -1;
+}
+function toggleGate(g){
+  if(!g) return false;
+  const bi = g.open ? blockerIndex(g) : -1;
+  if(bi >= 0){                          // don't shut it on somebody's tail
+    g.wobble = .45; sfx('bump');
+    const who = animals[bi].name;
+    if(sel !== bi){ sel = bi; refreshHud(); }
+    say(who + ' is in the ' + g.label + " — you're leading " + who + ' now. Walk clear, then shut it.');
+    return true;
+  }
+  g.open = !g.open; g.wobble = .3;
+  sfx(g.open ? 'gateOpen' : 'gateShut');
+  say((g.open ? 'Opened the ' : 'Shut the ') + g.label + '.');
+  return true;
+}
+let sayT = 0;
+function say(msg){
+  const el = document.getElementById('gateMsg');
+  el.textContent = msg; sayT = 2.6;
+}
+
+function swap(){ sel = (sel+1)%animals.length; sfx('select'); refreshHud(); }
+
+function doPet(){
+  const me = animals[sel];
+  let touched=false;
+  animals.forEach((a,i)=>{
+    if(i===sel) return;
+    const d = Math.hypot(a.x-me.x, a.y-me.y);
+    if(d < 26){
+      a.follow = 9; a.heart = 1.2; touched=true;
+      if(!petted.has(a.name)){ petted.add(a.name); pets++; }
+      puff(a.x, a.y-12, 6, 'heart');
+    } else if(d < (a.kind==='dog' ? 130 : 70)){
+      a.follow = a.kind==='dog' ? 11 : 7;              // heard the call, comes over
+    }
+  });
+  if(!petted.has(me.name)){ petted.add(me.name); pets++; }
+  me.heart = 1.2; puff(me.x, me.y-14, 6, 'heart');
+  sfx(touched ? 'pet' : 'call');
+  tCall = .5;
+  refreshHud();
+}
+
+/* ---------- particles ---------- */
+function puff(x,y,n,kind){
+  if(REDUCED) n = Math.min(n,3);
+  for(let i=0;i<n;i++){
+    bits.push({x, y, vx:rnd(-12,12), vy:rnd(-26,-10), life:rnd(.6,1.1), kind});
+  }
+}
+
+/* ---------- audio ---------- */
+let actx=null, muted=false;
+function wakeAudio(){
+  if(!actx){ try{ actx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} }
+  if(actx && actx.state==='suspended') actx.resume();
+}
+function tone(f,t0,dur,vol,type){
+  if(!actx || muted) return;
+  const o = actx.createOscillator(), g = actx.createGain();
+  o.type = type||'square'; o.frequency.value=f;
+  g.gain.setValueAtTime(0.0001, actx.currentTime+t0);
+  g.gain.exponentialRampToValueAtTime(vol, actx.currentTime+t0+0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime+t0+dur);
+  o.connect(g); g.connect(actx.destination);
+  o.start(actx.currentTime+t0); o.stop(actx.currentTime+t0+dur+0.02);
+}
+function sfx(n){
+  if(n==='pet'){ tone(660,0,.09,.05); tone(880,.08,.12,.05); }
+  if(n==='call'){ tone(520,0,.08,.04); }
+  if(n==='select'){ tone(420,0,.05,.035); }
+  if(n==='munch'){ tone(300,0,.05,.035,'triangle'); tone(240,.05,.06,.03,'triangle'); }
+  if(n==='star'){ [523,659,784,1046].forEach((f,i)=>tone(f,i*.09,.16,.05,'square')); }
+  if(n==='gateOpen'){ tone(300,0,.09,.04,'triangle'); tone(430,.07,.12,.04,'triangle'); }
+  if(n==='gateShut'){ tone(430,0,.07,.04,'triangle'); tone(240,.06,.14,.05,'triangle'); }
+  if(n==='bump'){ tone(160,0,.12,.05,'sawtooth'); }
+  if(n==='toy'){ tone(880,0,.06,.04); tone(1180,.05,.09,.04); }
+  if(n==='rustle'){ tone(180,0,.14,.03,'triangle'); tone(150,.12,.16,.03,'triangle'); }
+  if(n==='alert'){ tone(392,0,.14,.05); tone(311,.14,.2,.05); }
+  if(n==='scare'){ [700,560,440,340].forEach((f,i)=>tone(f,i*.06,.1,.045,'square')); }
+  if(n==='bark'){ tone(220,0,.07,.06,'square'); tone(180,.08,.1,.06,'square'); }
+}
+const soundBtn = document.getElementById('soundBtn');
+soundBtn.onclick = ()=>{
+  muted = !muted; wakeAudio();
+  soundBtn.textContent = muted ? '🔇 Sound off' : '🔊 Sound on';
+};
+
+/* ---------- jobs / HUD ---------- */
+function drawJobs(){
+  const ul = document.getElementById('jobs');
+  ul.innerHTML = '';
+  jobs.forEach(j=>{
+    const li = document.createElement('li');
+    li.className = j.done ? 'done' : '';
+    li.innerHTML = '<span class="box">'+(j.done?'★':'')+'</span><span>'+j.text+'</span>';
+    ul.appendChild(li);
+  });
+  document.getElementById('stars').textContent = jobs.filter(j=>j.done).length;
+  document.getElementById('starTotal').textContent = jobs.length;
+}
+function refreshHud(){
+  document.getElementById('whoName').textContent = animals[sel].name;
+  document.getElementById('cCarrot').textContent = carrotsEaten;
+  document.getElementById('cBone').textContent = bonesEaten;
+  document.getElementById('cToy').textContent = toysFound;
+  document.getElementById('cPet').textContent = pets;
+  document.getElementById('cPetMax').textContent = animals.length;
+  document.getElementById('foxFlag').textContent = FOX.on && !FOX.fleeing ? '🦊 Fox about!' : '';
+}
+function finish(id){
+  const j = jobs.find(j=>j.id===id);
+  if(!j || j.done) return;
+  j.done = true; drawJobs(); sfx('star');
+  const a = animals[sel];
+  for(let i=0;i<10;i++) puff(a.x+rnd(-10,10), a.y-10, 1, 'star');
+  if(jobs.every(j=>j.done) && !allDone){
+    allDone = true;
+    document.getElementById('cheerText').innerHTML = 'All '+jobs.length+' stars!<br>Every animal is happy.<br><span style="font-size:.8em">Keep playing as long as you like.</span>';
+    const c = document.getElementById('cheer');
+    c.style.display='grid';
+    setTimeout(()=>{ c.style.display='none'; }, 5200);
+  }
+}
+function checkJobs(){
+  if(bonesEaten >= 3) finish('bones');
+  if(animals.some(a=>inBed(a))) finish('bed');
+  if(animals.filter(a=>a.kind==='pony' && inPaddock(a)).length >= 2) finish('paddock');
+  if(animals.some(a=>a.kind==='pony' && inStable(a))) finish('stable');
+  if(carrotsEaten >= 5) finish('carrots');
+  if(animals.filter(a=>inHutch(a)).length >= 2) finish('hutch');
+  if(toysFound >= 4) finish('toys');
+  if(animals.filter(a=>inCage(a)).length >= 2) finish('cage');
+  if(pets >= animals.length) finish('pets');
+  if(foxSentPacking) finish('fox');
+  if(allTuckedIn() && GATES.every(g=>!g.open)) finish('bedtime');
+}
+
+/* ---------- the brains ---------- */
+function think(a,i,dt){
+  a.t -= dt;
+  if(a.heart>0) a.heart -= dt;
+  if(a.safeT>0) a.safeT -= dt;
+
+  if(a.dizzy>0){                       // knocked off their feet, but never hurt
+    a.dizzy -= dt; a.hop = 0;
+    if(a.dizzy<=0){                    // up she pops
+      a.heart = 1.4; a.safeT = 7; a.t = 5;
+      const h = homePoint(a); a.tx = h.x; a.ty = h.y;
+      puff(a.x, a.y-12, 6, 'heart'); sfx('pet');
+      say(a.name + ' is up again, right as rain.');
+    }
+    return;
+  }
+
+  if(i===sel){
+    let dx=0, dy=0;
+    if(keys.left) dx-=1; if(keys.right) dx+=1;
+    if(keys.up) dy-=1; if(keys.down) dy+=1;
+    const moving = step(a, dx, dy, dt, KINDS[a.kind].speed*1.25);
+    a.hop = moving ? a.hop + dt*11 : 0;
+    nibble(a);
+    return;
+  }
+
+  const leader = animals[sel];
+
+  if(a.follow>0){
+    a.follow -= dt;
+    const d = Math.hypot(leader.x-a.x, leader.y-a.y);
+    if(d > 20){
+      const moved = step(a, leader.x-a.x, leader.y-a.y, dt, KINDS[a.kind].speed*.95);
+      a.hop = moved ? a.hop + dt*10 : 0;
+    } else a.hop = 0;
+    if(a.kind!=='pony') nibble(a);
+    return;
+  }
+
+  // settled animals stay put and look pleased
+  const settled = (a.kind==='pony' && (inPaddock(a)||inStable(a))) ||
+                  inCage(a) ||
+                  inBed(a) || inHutch(a);
+  if(settled){
+    a.hop = 0;
+    if(a.t<=0){
+      a.t = rnd(3,7);
+      if(Math.random()<.5){ a.heart=.9; puff(a.x, a.y-12, 1, 'heart'); }
+    }
+    return;
+  }
+
+  // Wotsit noses about after bones, then trots home to her kennel
+  if(a.kind==='dog'){
+    const pennedIn = inRect(a.x,a.y,PEN) && !GATES.find(g=>g.id==='kennel').open;
+    if(pennedIn){
+      if(a.t<=0){ a.t = rnd(2,5); a.tx = rnd(102,120); a.ty = rnd(48,56); }
+    } else {
+      if(!a.target || !a.target.grown){
+        let best=null, bd=999;
+        for(const f of bones){
+          if(!f.grown) continue;
+          const d = Math.hypot(f.x-a.x, f.y-a.y);
+          if(d<bd){ bd=d; best=f; }
+        }
+        a.target = best;
+      }
+      if(a.target){
+        const moved = step(a, a.target.x-a.x, a.target.y-a.y, dt, KINDS[a.kind].speed*.75);
+        a.hop = moved ? a.hop + dt*12 : 0;
+        a.stuck = moved ? 0 : (a.stuck||0)+dt;
+        if(a.stuck > 1.6){ a.target=null; a.stuck=0; a.t=0; }
+        nibble(a);
+        return;
+      }
+      if(a.t<=0){ a.t = rnd(2,4); a.tx = rnd(96,140); a.ty = rnd(62,96); }
+    }
+  }
+
+  // gerbils scurry after whatever toy is nearest
+  if(a.kind==='gerbil'){
+    const cagedIn = inRect(a.x,a.y,CAGE) && !GATES.find(g=>g.id==='cage').open;
+    if(cagedIn){
+      if(a.t<=0){ a.t = rnd(1.5,4); a.tx = rnd(44,80); a.ty = rnd(150,172); }
+    } else {
+      if(!a.target || !a.target.grown){
+        let best=null, bd=999;
+        for(const f of toys){
+          if(!f.grown) continue;
+          const d = Math.hypot(f.x-a.x, f.y-a.y);
+          if(d<bd){ bd=d; best=f; }
+        }
+        a.target = best;
+      }
+      if(a.target){
+        const moved = step(a, a.target.x-a.x, a.target.y-a.y, dt, KINDS[a.kind].speed*.7);
+        a.hop = moved ? a.hop + dt*14 : 0;
+        a.stuck = moved ? 0 : (a.stuck||0)+dt;
+        if(a.stuck > 1.6){ a.target=null; a.stuck=0; a.t=0; }
+        nibble(a);
+        return;
+      }
+    }
+  }
+
+  // hungry rabbits head for the nearest snack
+  if(a.kind==='rabbit'){
+    if(!a.target || !a.target.grown){
+      let best=null, bd=999;
+      for(const f of carrots.concat(grass)){
+        if(!f.grown) continue;
+        const d = Math.hypot(f.x-a.x, f.y-a.y);
+        if(d<bd){ bd=d; best=f; }
+      }
+      a.target = best;
+    }
+    if(a.target){
+      const moved = step(a, a.target.x-a.x, a.target.y-a.y, dt, KINDS[a.kind].speed*.7);
+      a.hop = moved ? a.hop + dt*10 : 0;
+      a.stuck = moved ? 0 : (a.stuck||0)+dt;
+      if(a.stuck > 1.6){ a.target=null; a.stuck=0; a.t=0; }
+      nibble(a);
+      return;
+    }
+  }
+
+  if(a.t<=0){
+    a.t = rnd(2.5,5.5);
+    const p = freeSpot();
+    a.tx = p.x; a.ty = p.y;
+    if(a.kind==='pony' && Math.random()<.4){ a.tx=a.x; a.ty=a.y; }   // stop for a graze
+  }
+  const dist = Math.hypot(a.tx-a.x, a.ty-a.y);
+  if(dist > 4){
+    const moved = step(a, a.tx-a.x, a.ty-a.y, dt, KINDS[a.kind].speed*.55);
+    a.hop = moved ? a.hop + dt*9 : 0;
+    a.stuck = moved ? 0 : (a.stuck||0)+dt;
+    if(a.stuck > 1.6){ a.stuck=0; a.t=0; }
+  } else a.hop = 0;
+}
+
+function nibble(a){
+  if(a.kind==='gerbil'){
+    for(const f of toys){
+      if(f.grown && Math.hypot(f.x-a.x, f.y-a.y) < 8){
+        f.grown=false; f.t=16; toysFound++;
+        puff(f.x, f.y-6, 6, 'star'); sfx('toy'); refreshHud();
+        a.heart = 1; a.target=null; return;
+      }
+    }
+    return;
+  }
+  if(a.kind==='dog'){
+    for(const f of bones){
+      if(f.grown && Math.hypot(f.x-a.x, f.y-a.y) < 9){
+        f.grown=false; f.t=13; bonesEaten++;
+        puff(f.x, f.y-6, 5, 'munch'); sfx('munch'); refreshHud();
+        a.heart = 1; a.target=null; return;
+      }
+    }
+    return;
+  }
+  if(a.kind!=='rabbit') return;
+  for(const f of carrots){
+    if(f.grown && Math.hypot(f.x-a.x, f.y-a.y) < 7){
+      f.grown=false; f.t=25; carrotsEaten++;
+      puff(f.x, f.y-6, 4, 'munch'); sfx('munch'); refreshHud();
+      a.target=null; return;
+    }
+  }
+  for(const f of grass){
+    if(f.grown && Math.hypot(f.x-a.x, f.y-a.y) < 6){
+      f.grown=false; f.t=14;
+      puff(f.x, f.y-4, 3, 'munch'); sfx('munch');
+      a.target=null; return;
+    }
+  }
+}
+
+/* ---------- static scenery, drawn once ---------- */
+const bg = document.createElement('canvas'); bg.width=W; bg.height=H;
+function paintBackground(){
+  const g = bg.getContext('2d');
+  g.fillStyle='#8ed05a'; g.fillRect(0,0,W,H);
+  // grass speckle
+  let seed = 7;
+  const rand = ()=>{ seed = (seed*1103515245 + 12345) & 0x7fffffff; return seed/0x7fffffff; };
+  for(let i=0;i<900;i++){
+    const x=Math.floor(rand()*W), y=Math.floor(rand()*H);
+    g.fillStyle = rand()<.5 ? '#82c750' : '#9ada64';
+    g.fillRect(x,y,1,1);
+  }
+  // dirt path from stable to paddock
+  g.fillStyle='#d9bd8c';
+  for(let x=44;x<200;x+=1){
+    const y = 70 + Math.sin(x/26)*8;
+    g.fillRect(x, Math.floor(y), 1, 6);
+  }
+  g.fillRect(DOOR.x+2, 62, DOOR.w-4, 22);                 // branch up to the stable door
+  for(let t=0;t<27;t++){                                   // branch up to the paddock gate
+    g.fillRect(Math.round(176+t), Math.round(78-t*0.9), 1, 6);
+  }
+  // gerbil cage: plastic base, wire walls, bedding and a wheel
+  g.fillStyle='#e8d3a8'; g.fillRect(CAGE.inner.x, CAGE.inner.y-3, CAGE.inner.w, CAGE.inner.h+3);
+  for(let i=0;i<40;i++){
+    g.fillStyle = rand()<.5 ? '#dcbe86' : '#f2e2c2';
+    g.fillRect(CAGE.inner.x+Math.floor(rand()*(CAGE.inner.w-2)), CAGE.inner.y+Math.floor(rand()*CAGE.inner.h), 2, 1);
+  }
+  g.fillStyle='#c9c6d4';                                   // wire frame
+  g.fillRect(CAGE.x,CAGE.y,CAGE.w,7);
+  g.fillRect(CAGE.x,CAGE.y,5,CAGE.h); g.fillRect(CAGE.x+CAGE.w-5,CAGE.y,5,CAGE.h);
+  g.fillRect(CAGE.x,CAGE.y+CAGE.h-4,18,4); g.fillRect(CAGE.x+CAGE.w-18,CAGE.y+CAGE.h-4,18,4);
+  g.fillStyle='#8f8ca0';
+  for(let x=CAGE.x+7;x<CAGE.x+CAGE.w-7;x+=5) g.fillRect(x,CAGE.y+1,1,5);   // bars along the top
+  g.fillStyle='#5aa9d6'; g.fillRect(CAGE.x-2,CAGE.y-6,CAGE.w+4,7);         // blue lid
+  g.fillStyle='#8fd0ea'; g.fillRect(CAGE.x-2,CAGE.y-6,CAGE.w+4,2);
+  g.fillStyle='#3f7fa8'; g.fillRect(CAGE.x+CAGE.w/2-5,CAGE.y-9,10,3);      // carry handle
+  // exercise wheel
+  g.fillStyle='#e0568f';
+  for(let a2=0;a2<32;a2++){
+    const r2=8, x=Math.round(70+Math.cos(a2/32*6.283)*r2), y=Math.round(158+Math.sin(a2/32*6.283)*r2);
+    g.fillRect(x,y,1,1);
+  }
+  g.fillStyle='#b53a6d'; g.fillRect(69,157,3,3);
+  // water bottle
+  g.fillStyle='#8fd0ea'; g.fillRect(45,148,5,10); g.fillStyle='#5aa9d6'; g.fillRect(46,156,3,4);
+  g.fillStyle='#c9c6d4'; g.fillRect(46,158,2,3);
+  g.fillStyle='#d9bd8c'; g.fillRect(CAGE.x+22, CAGE.y+CAGE.h, 12, 10);     // path to the door
+
+  // stable
+  g.fillStyle='#c8a06a'; g.fillRect(STABLE.x, STABLE.y, STABLE.w, STABLE.h);
+  g.fillStyle='#e8d3a8'; g.fillRect(STABLE.inner.x-1, STABLE.inner.y-1, STABLE.inner.w+2, STABLE.inner.h+2);
+  for(let i=0;i<44;i++){                    // straw
+    const x = STABLE.inner.x + Math.floor(rand()*STABLE.inner.w);
+    const y = STABLE.inner.y + Math.floor(rand()*STABLE.inner.h);
+    g.fillStyle='#dcbe86'; g.fillRect(x,y,2,1);
+  }
+  g.fillStyle='#a8703f';                    // wall trim, split either side of the doorway
+  g.fillRect(STABLE.x,STABLE.y,STABLE.w,3);
+  g.fillRect(STABLE.x,STABLE.y,3,STABLE.h); g.fillRect(STABLE.x+STABLE.w-3,STABLE.y,3,STABLE.h);
+  g.fillRect(STABLE.x, STABLE.y+STABLE.h-3, DOOR.x-STABLE.x, 3);
+  g.fillRect(DOOR.x+DOOR.w, STABLE.y+STABLE.h-3, STABLE.x+STABLE.w-DOOR.x-DOOR.w, 3);
+
+  // the doorway: straw floor carries out onto the grass so the opening reads clearly
+  g.fillStyle='#e8d3a8'; g.fillRect(DOOR.x, DOOR.y-3, DOOR.w, DOOR.h+3);
+  g.fillStyle='#d9bd8c'; g.fillRect(DOOR.x, DOOR.y+DOOR.h-1, DOOR.w, 1);
+  for(let i=0;i<14;i++){
+    g.fillStyle='#dcbe86';
+    g.fillRect(DOOR.x+1+Math.floor(rand()*(DOOR.w-3)), DOOR.y+DOOR.h+Math.floor(rand()*6), 2, 1);
+  }
+  g.fillStyle='#6b4526'; g.fillRect(DOOR.x-2, DOOR.y-3, 2, DOOR.h+4);   // door posts
+  g.fillRect(DOOR.x+DOOR.w, DOOR.y-3, 2, DOOR.h+4);
+  g.fillStyle='#e05a63'; g.fillRect(STABLE.x-2, STABLE.y-6, STABLE.w+4, 7);   // roof strip
+  g.fillStyle='#f4949a'; g.fillRect(STABLE.x-2, STABLE.y-6, STABLE.w+4, 2);
+  g.fillStyle='#fff3c4'; g.fillRect(STABLE.x+26, STABLE.y-4, 8, 3);           // little sign
+  // hay bales inside
+  g.fillStyle='#e3c069'; g.fillRect(36,24,10,7); g.fillStyle='#c9a44f'; g.fillRect(36,28,10,1);
+  g.fillStyle='#e3c069'; g.fillRect(66,24,10,7); g.fillStyle='#c9a44f'; g.fillRect(66,28,10,1);
+
+  // paddock fence
+  const rail=(x,y,w,h)=>{ g.fillStyle='#b98452'; g.fillRect(x,y,w,h); g.fillStyle='#8e6237'; g.fillRect(x,y+h-1,w,1); };
+  rail(PADDOCK.x,PADDOCK.y,PADDOCK.w,3);
+  rail(PADDOCK.x,PADDOCK.y+PADDOCK.h-3,PADDOCK.w,3);
+  rail(PADDOCK.x+PADDOCK.w-3,PADDOCK.y,3,PADDOCK.h);
+  rail(PADDOCK.x,PADDOCK.y,3,30);
+  rail(PADDOCK.x,PADDOCK.y+50,3,26);
+  for(let x=PADDOCK.x;x<PADDOCK.x+PADDOCK.w;x+=14){          // posts
+    g.fillStyle='#8e6237'; g.fillRect(x,PADDOCK.y-2,3,7); g.fillRect(x,PADDOCK.y+PADDOCK.h-4,3,7);
+  }
+  // gate: two posts, with the gate itself drawn live
+  g.fillStyle='#6b4526'; g.fillRect(PADDOCK.x-1,PADDOCK.y+26,5,5); g.fillRect(PADDOCK.x-1,PADDOCK.y+48,5,5);
+  g.fillStyle='#d9bd8c'; g.fillRect(PADDOCK.x-3,PADDOCK.y+35,12,10);          // trodden earth in the gateway
+  // water trough in the paddock
+  g.fillStyle='#8e6237'; g.fillRect(276,70,20,9);
+  g.fillStyle='#5cbfe4'; g.fillRect(278,72,16,5);
+
+  // apple tree
+  g.fillStyle='#8a5a34'; g.fillRect(TREE.x-4,TREE.y-6,8,10);
+  const blob=(cx,cy,r,c)=>{ g.fillStyle=c; for(let y=-r;y<=r;y++){ const w=Math.floor(Math.sqrt(r*r-y*y)); g.fillRect(cx-w,cy+y,w*2,1);} };
+  blob(TREE.x, TREE.y-18, 15, '#3f8f4a');
+  blob(TREE.x-9, TREE.y-12, 10, '#4aa155');
+  blob(TREE.x+9, TREE.y-13, 10, '#4aa155');
+  blob(TREE.x, TREE.y-22, 9, '#5cb862');
+  [[-8,-20],[6,-16],[0,-26],[11,-22],[-12,-13]].forEach(([dx,dy])=>{
+    g.fillStyle='#e8434f'; g.fillRect(TREE.x+dx,TREE.y+dy,2,2);
+  });
+
+  // Wotsit's pen fence, with posts and a gap at the bottom for her gate
+  const prail=(x,y,w,h)=>{ g.fillStyle='#b98452'; g.fillRect(x,y,w,h); g.fillStyle='#8e6237'; g.fillRect(x,y+h-1,w,1); };
+  prail(PEN.x,PEN.y,PEN.w,3); prail(PEN.x,PEN.y,3,PEN.h); prail(PEN.x+PEN.w-3,PEN.y,3,PEN.h);
+  prail(PEN.x,PEN.y+37,10,3); prail(PEN.x+30,PEN.y+37,7,3);
+  g.fillStyle='#6b4526';
+  g.fillRect(PEN.x+9,PEN.y+35,3,6); g.fillRect(PEN.x+29,PEN.y+35,3,6);
+  g.fillStyle='#d9bd8c'; g.fillRect(PEN.x+13,PEN.y+40,12,10);
+
+  // Wotsit's kennel, bed and bowl
+  g.fillStyle='#a8703f'; g.fillRect(KENNEL.x, KENNEL.y+3, KENNEL.w, KENNEL.h-3);
+  g.fillStyle='#c98a4b'; g.fillRect(KENNEL.x+1, KENNEL.y+4, KENNEL.w-2, KENNEL.h-5);
+  g.fillStyle='#8e6237';
+  for(let i=1;i<KENNEL.w-1;i+=4) g.fillRect(KENNEL.x+i, KENNEL.y+5, 1, KENNEL.h-6);
+  g.fillStyle='#e8434f'; g.fillRect(KENNEL.x-2, KENNEL.y-1, KENNEL.w+4, 5);     // little red roof
+  g.fillStyle='#f4949a'; g.fillRect(KENNEL.x-2, KENNEL.y-1, KENNEL.w+4, 2);
+  g.fillStyle='#4a3b2a'; g.fillRect(KENNEL.x+7, KENNEL.y+7, 8, 9);              // kennel mouth
+  g.fillStyle='#fff3c4'; g.fillRect(KENNEL.x+3, KENNEL.y+5, 2, 2);             // name plaque
+  g.fillRect(KENNEL.x+KENNEL.w-5, KENNEL.y+5, 2, 2);
+  // cushion
+  g.fillStyle='#b53a6d'; g.fillRect(BED.x, BED.y, BED.w, BED.h);
+  g.fillStyle='#e0568f'; g.fillRect(BED.x+1, BED.y+1, BED.w-2, BED.h-2);
+  g.fillStyle='#f088b4'; g.fillRect(BED.x+3, BED.y+3, BED.w-6, BED.h-6);
+  g.fillStyle='#b53a6d';
+  for(let i=0;i<BED.w-6;i+=5) g.fillRect(BED.x+3+i, BED.y+3, 1, BED.h-6);
+  // bowl
+  g.fillStyle='#5aa9d6'; g.fillRect(BED.x+BED.w+2, BED.y+6, 9, 5);
+  g.fillStyle='#8fd0ea'; g.fillRect(BED.x+BED.w+3, BED.y+7, 7, 2);
+  g.fillStyle='#3f7fa8'; g.fillRect(BED.x+BED.w+2, BED.y+10, 9, 1);
+
+  // rabbit hutch, on stilts with a straw floor and an open doorway
+  g.fillStyle='#8e6237'; g.fillRect(HUTCH.x, HUTCH.y, HUTCH.w, HUTCH.h);
+  g.fillStyle='#e8d3a8'; g.fillRect(HUTCH.inner.x, HUTCH.inner.y-2, HUTCH.inner.w, HUTCH.inner.h+2);
+  for(let i=0;i<26;i++){
+    g.fillStyle='#dcbe86';
+    g.fillRect(HUTCH.inner.x+Math.floor(rand()*(HUTCH.inner.w-2)), HUTCH.inner.y+Math.floor(rand()*HUTCH.inner.h), 2, 1);
+  }
+  g.fillStyle='#b98452';                                  // frame
+  g.fillRect(HUTCH.x,HUTCH.y,HUTCH.w,6);
+  g.fillRect(HUTCH.x,HUTCH.y,4,HUTCH.h); g.fillRect(HUTCH.x+HUTCH.w-4,HUTCH.y,4,HUTCH.h);
+  g.fillRect(HUTCH.x,HUTCH.y+HUTCH.h,12,4); g.fillRect(HUTCH.x+HUTCH.w-12,HUTCH.y+HUTCH.h,12,4);
+  g.fillStyle='#6b4526';
+  g.fillRect(HUTCH.x+11,HUTCH.y+HUTCH.h,2,4); g.fillRect(HUTCH.x+HUTCH.w-13,HUTCH.y+HUTCH.h,2,4);
+  g.fillStyle='#5aa9d6'; g.fillRect(HUTCH.x-4,HUTCH.y-9, HUTCH.w+8, 8);   // blue roof
+  g.fillStyle='#8fd0ea'; g.fillRect(HUTCH.x-4,HUTCH.y-9, HUTCH.w+8, 3);
+  g.fillStyle='#3f7fa8'; g.fillRect(HUTCH.x-4,HUTCH.y-2, HUTCH.w+8, 1);
+  g.fillStyle='#ffd1e6'; g.fillRect(HUTCH.x+HUTCH.w/2-3, HUTCH.y-7, 6, 4); // little heart window
+  g.fillStyle='#b53a6d'; g.fillRect(HUTCH.x+HUTCH.w/2-2, HUTCH.y-6, 4, 2);
+  g.fillStyle='#d9bd8c'; g.fillRect(HUTCH.x+14, HUTCH.y+HUTCH.h+2, 16, 10); // hopping-in path
+
+  // flowers
+  const FLOWER=['#fff3c4','#ffd1e6','#e2ccff','#ffe28a'];
+  for(let i=0;i<34;i++){
+    const x=Math.floor(rand()*(W-20))+10, y=Math.floor(rand()*(H-90))+80;
+    if(inRect(x,y,CAGE) || inRect(x,y,PADDOCK) || inRect(x,y,STABLE)) continue;
+    const c = FLOWER[Math.floor(rand()*4)];
+    g.fillStyle='#5aa348'; g.fillRect(x,y,1,2);
+    g.fillStyle=c; g.fillRect(x-1,y-1,3,1); g.fillRect(x,y-2,1,1);
+  }
+  // fence posts along the bottom edge for a framed look
+  for(let x=6;x<W;x+=20){ g.fillStyle='#b98452'; g.fillRect(x,H-6,3,6); }
+  g.fillStyle='#b98452'; g.fillRect(0,H-5,W,2);
+}
+paintBackground();
+
+/* ---------- drawing ---------- */
+function drawTuft(x,y,grown){
+  if(grown){
+    ctx.fillStyle='#4f9e4a';
+    ctx.fillRect(x-2,y-3,1,3); ctx.fillRect(x,y-4,1,4); ctx.fillRect(x+2,y-3,1,3);
+    ctx.fillStyle='#6dbf5e'; ctx.fillRect(x-1,y-1,4,1);
+  } else {
+    ctx.fillStyle='#7bb84b'; ctx.fillRect(x-1,y-1,3,1);
+  }
+}
+function drawCarrot(x,y,grown){
+  if(grown){
+    ctx.fillStyle='#3f8f4a'; ctx.fillRect(x-2,y-5,1,4); ctx.fillRect(x,y-6,1,5); ctx.fillRect(x+2,y-5,1,4);
+    ctx.fillStyle='#f2903c'; ctx.fillRect(x-1,y-1,4,3);
+    ctx.fillStyle='#d9701f'; ctx.fillRect(x,y+2,2,1);
+  } else {
+    ctx.fillStyle='#8a6b45'; ctx.fillRect(x-1,y,3,1);
+  }
+}
+function drawToy(x,y,kind,grown){
+  if(!grown) return;
+  ctx.fillStyle='rgba(58,44,79,.2)'; ctx.fillRect(x-3,y+2,7,1);
+  if(kind===0){                                   // bouncy ball
+    ctx.fillStyle='#e0568f'; ctx.fillRect(x-2,y-3,5,5); ctx.fillRect(x-3,y-2,7,3);
+    ctx.fillStyle='#ffd1e6'; ctx.fillRect(x-1,y-2,2,1);
+  } else if(kind===1){                            // little bell
+    ctx.fillStyle='#ffc93c'; ctx.fillRect(x-2,y-4,5,4); ctx.fillRect(x-3,y-1,7,2);
+    ctx.fillStyle='#b8860b'; ctx.fillRect(x-1,y+1,3,1); ctx.fillRect(x,y-5,1,1);
+  } else if(kind===2){                            // wooden block
+    ctx.fillStyle='#5aa9d6'; ctx.fillRect(x-3,y-4,7,6);
+    ctx.fillStyle='#8fd0ea'; ctx.fillRect(x-3,y-4,7,2);
+    ctx.fillStyle='#fffdf5'; ctx.fillRect(x-1,y-2,3,3);
+  } else {                                        // chew ring
+    ctx.fillStyle='#57c9a4'; ctx.fillRect(x-3,y-3,7,5);
+    ctx.fillStyle='#8ed05a'; ctx.fillRect(x-1,y-2,3,3);
+  }
+}
+function drawGate(g){
+  const r = g.rect;
+  const shake = g.wobble>0 && !REDUCED ? Math.round(Math.sin(time*50)*g.wobble*4) : 0;
+  const plank=(x,y,w,h)=>{
+    ctx.fillStyle='#c98a4b'; ctx.fillRect(x,y,w,h);
+    ctx.fillStyle='#a8703f';
+    if(w>h){ for(let i=2;i<h;i+=3) ctx.fillRect(x,y+i,w,1); }
+    else   { for(let i=2;i<w;i+=3) ctx.fillRect(x+i,y,1,h); }
+    ctx.fillStyle='#8e6237'; ctx.fillRect(x,y+h-1,w,1);
+  };
+  if(g.open){
+    if(g.dir==='h'){                       // both halves swung out below the doorway
+      plank(r.x-12, r.y+r.h+shake, 11, 5);
+      plank(r.x+r.w+1, r.y+r.h+shake, 11, 5);
+      ctx.fillStyle='#6b4526';
+      ctx.fillRect(r.x-2, r.y+r.h+shake, 1, 5); ctx.fillRect(r.x+r.w+11, r.y+r.h+shake, 1, 5);
+    } else {                               // swung out into the field
+      plank(r.x-14+shake, r.y+2, 13, 4);
+      ctx.fillStyle='#6b4526'; ctx.fillRect(r.x-1+shake, r.y+2, 1, 4);
+    }
+  } else {
+    if(g.dir==='h'){
+      plank(r.x, r.y-1+shake, r.w, r.h+1);
+      ctx.fillStyle='#ffd84d'; ctx.fillRect(r.x+r.w-3, r.y+1+shake, 2, 2);   // latch
+    } else {
+      plank(r.x-1+shake, r.y, r.w+3, r.h);
+      ctx.fillStyle='#ffd84d'; ctx.fillRect(r.x+shake, r.y+r.h-4, 2, 2);
+    }
+  }
+}
+function drawBone(x,y,grown){
+  if(!grown) return;
+  ctx.fillStyle='#3a2c4f'; ctx.fillRect(x-4,y+2,9,1);
+  ctx.fillStyle='#fffdf5';
+  ctx.fillRect(x-2,y-1,5,2);
+  ctx.fillRect(x-4,y-2,2,4); ctx.fillRect(x+3,y-2,2,4);
+  ctx.fillStyle='#e6dfcc'; ctx.fillRect(x-2,y+1,5,1);
+}
+function drawHeart(x,y,c){
+  ctx.fillStyle=c;
+  ctx.fillRect(x-2,y-2,2,1); ctx.fillRect(x+1,y-2,2,1);
+  ctx.fillRect(x-3,y-1,7,2); ctx.fillRect(x-2,y+1,5,1); ctx.fillRect(x-1,y+2,3,1); ctx.fillRect(x,y+3,1,1);
+}
+function drawArrow(x,y,dir){
+  const b = REDUCED ? 0 : Math.round(Math.sin(time*4)*1.5);
+  const ox = dir==='right' ? b : 0, oy = dir==='up' ? -b : 0;
+  ctx.fillStyle='rgba(58,44,79,.35)';
+  for(let i=0;i<4;i++){
+    if(dir==='up')    ctx.fillRect(x-i+ox+1, y+i+oy+1, i*2+1, 1);
+    if(dir==='right') ctx.fillRect(x-i+ox+1, y-i+oy+1, 1, i*2+1);
+  }
+  ctx.fillStyle='#fff3c4';
+  for(let i=0;i<4;i++){
+    if(dir==='up')    ctx.fillRect(x-i+ox, y+i+oy, i*2+1, 1);
+    if(dir==='right') ctx.fillRect(x-i+ox, y-i+oy, 1, i*2+1);
+  }
+  if(dir==='up')    ctx.fillRect(x-1+ox, y+4+oy, 3, 3);
+  if(dir==='right') ctx.fillRect(x-6+ox, y-1+oy, 3, 3);
+}
+function drawStarBit(x,y){
+  ctx.fillStyle='#ffd84d';
+  ctx.fillRect(x-2,y,5,1); ctx.fillRect(x,y-2,1,5); ctx.fillRect(x-1,y-1,3,3);
+}
+
+function render(){
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.imageSmoothingEnabled = false;
+  const s = cv.width / W;
+  ctx.setTransform(s,0,0,s,0,0);
+  ctx.clearRect(0,0,W,H);
+  ctx.drawImage(bg,0,0);
+
+  // food
+  for(const f of grass) drawTuft(Math.round(f.x), Math.round(f.y), f.grown);
+  for(const f of carrots) drawCarrot(Math.round(f.x), Math.round(f.y), f.grown);
+  for(const f of bones) drawBone(Math.round(f.x), Math.round(f.y), f.grown);
+  for(const f of toys) drawToy(Math.round(f.x), Math.round(f.y), f.kind, f.grown);
+  for(const g of GATES) drawGate(g);
+
+  // gentle signposts, until the job is done
+  if(!jobs.find(j=>j.id==='stable').done) drawArrow(DOOR.x+DOOR.w/2, DOOR.y+13, 'up');
+  if(!jobs.find(j=>j.id==='paddock').done) drawArrow(PADDOCK.x-8, PADDOCK.y+40, 'right');
+  if(!jobs.find(j=>j.id==='bed').done) drawArrow(BED.x+BED.w/2, BED.y+BED.h+7, 'up');
+  if(!jobs.find(j=>j.id==='hutch').done) drawArrow(HUTCH.x+HUTCH.w/2, HUTCH.y+HUTCH.h+7, 'up');
+  if(!jobs.find(j=>j.id==='cage').done) drawArrow(CAGE.x+CAGE.w/2, CAGE.y+CAGE.h+7, 'up');
+
+  // butterflies
+  for(const b of flutters){
+    ctx.fillStyle = '#fff0a8';
+    const w = Math.sin(time*14+b.a) > 0 ? 3 : 2;
+    ctx.fillRect(Math.round(b.x), Math.round(b.y), w, 2);
+    ctx.fillStyle = '#ffd1e6';
+    ctx.fillRect(Math.round(b.x)+2, Math.round(b.y)-1, 2, 2);
+  }
+
+  // animals, back to front
+  const order = animals.map((a,i)=>i).sort((p,q)=>animals[p].y-animals[q].y);
+  for(const i of order){
+    const a = animals[i];
+    const k = KINDS[a.kind];
+    let lift = 0;
+    if(!REDUCED){
+      if(a.kind==='rabbit') lift = Math.abs(Math.sin(a.hop)) * 3;
+      else if(a.kind==='gerbil') lift = Math.abs(Math.sin(a.hop)) * 1.6;
+      else lift = Math.abs(Math.sin(a.hop)) * 1;
+    }
+    const px = Math.round(a.x - k.w/2), py = Math.round(a.y - k.h - lift);
+
+    ctx.fillStyle='rgba(58,44,79,.18)';
+    ctx.fillRect(px+2, Math.round(a.y-1), k.w-4, 2);
+    ctx.drawImage(sprite(a), px, py);
+
+    if(a.dizzy>0){
+      for(let k=0;k<3;k++){
+        const ang = time*7 + k*2.09;
+        drawStarBit(Math.round(a.x + Math.cos(ang)*7), Math.round(py - 3 + Math.sin(ang)*2));
+      }
+    }
+    if(a.heart>0) drawHeart(Math.round(a.x+6), py-4, '#e0568f');
+
+    if(i===sel){
+      const b = REDUCED ? 0 : Math.round(Math.sin(time*6)*1.5);
+      const ax = Math.round(a.x), ay = py - 6 + b;
+      ctx.fillStyle='#e0568f';
+      ctx.fillRect(ax-3, ay, 7, 1); ctx.fillRect(ax-2, ay+1, 5, 1);
+      ctx.fillRect(ax-1, ay+2, 3, 1); ctx.fillRect(ax, ay+3, 1, 1);
+      ctx.fillStyle='#fff';  ctx.fillRect(ax-1, ay, 2, 1);
+    }
+  }
+
+  // the fox
+  if(FOX.on){
+    const lift = REDUCED ? 0 : Math.abs(Math.sin(FOX.hop))*1.5;
+    const fx = Math.round(FOX.x-7), fy = Math.round(FOX.y-9-lift);
+    ctx.fillStyle='rgba(58,44,79,.18)'; ctx.fillRect(fx+2, Math.round(FOX.y-1), 11, 2);
+    ctx.drawImage(foxImg(), fx, fy);
+    if(!FOX.fleeing){
+      const b = REDUCED ? 0 : Math.round(Math.sin(time*9)*1);
+      ctx.fillStyle='#3a2c4f'; ctx.fillRect(Math.round(FOX.x)-1, fy-8+b, 3, 6);
+      ctx.fillRect(Math.round(FOX.x)-1, fy-1+b, 3, 2);
+      ctx.fillStyle='#e8434f'; ctx.fillRect(Math.round(FOX.x), fy-8+b, 1, 4);
+      ctx.fillRect(Math.round(FOX.x), fy-1+b, 1, 1);
+    }
+  }
+
+  // sparkles and hearts
+  for(const b of bits){
+    if(b.kind==='heart') drawHeart(Math.round(b.x), Math.round(b.y), '#ff7fb2');
+    else if(b.kind==='star') drawStarBit(Math.round(b.x), Math.round(b.y));
+    else { ctx.fillStyle='#fff6c9'; ctx.fillRect(Math.round(b.x),Math.round(b.y),2,2); }
+  }
+
+  // call ripple
+  if(tCall>0){
+    const a = animals[sel];
+    const r = Math.round((0.5-tCall)*90) + 14;
+    ctx.strokeStyle='rgba(224,86,143,'+(tCall*1.4)+')';
+    ctx.lineWidth=1; ctx.beginPath(); ctx.arc(a.x, a.y-4, r, 0, Math.PI*2); ctx.stroke();
+  }
+}
+
+/* ---------- pause ---------- */
+let paused = false;
+function setPaused(v){
+  paused = v;
+  document.body.classList.toggle('paused', paused);
+  for(const k in keys) keys[k] = false;      // don't keep walking when we come back
+  const label = paused ? '▶ Carry on' : '⏸ Pause';
+  document.getElementById('pauseBtn').textContent = label;
+  document.getElementById('pauseBtn2').textContent = label;
+  if(paused) sfx('select');
+}
+document.getElementById('pauseBtn').onclick  = ()=>{ wakeAudio(); setPaused(!paused); };
+document.getElementById('pauseBtn2').onclick = ()=>{ wakeAudio(); setPaused(!paused); };
+document.getElementById('veil').addEventListener('pointerdown', e=>{ e.preventDefault(); setPaused(false); });
+// stepping away pauses by itself, so nothing happens while nobody is watching
+document.addEventListener('visibilitychange', ()=>{ if(document.hidden) setPaused(true); });
+addEventListener('blur', ()=>setPaused(true));
+
+/* ---------- loop ---------- */
+let last = performance.now();
+function frame(now){
+  let dt = (now-last)/1000; last = now;
+  dt = Math.min(dt, 0.05);
+  if(paused){ requestAnimationFrame(frame); return; }   // world on hold, picture stays put
+  time += dt;
+  if(tCall>0) tCall -= dt;
+  for(const g of GATES) if(g.wobble>0) g.wobble -= dt;
+  if(sayT>0){ sayT -= dt; if(sayT<=0) document.getElementById('gateMsg').textContent=''; }
+
+  animals.forEach((a,i)=>think(a,i,dt));
+  updateFox(dt);
+
+  for(const f of grass){ if(!f.grown){ f.t-=dt; if(f.t<=0) f.grown=true; } }
+  for(const f of carrots){ if(!f.grown){ f.t-=dt; if(f.t<=0) f.grown=true; } }
+  for(const f of bones){
+    if(!f.grown){ f.t-=dt; if(f.t<=0){ const p=freeSpot(); f.x=p.x; f.y=p.y; f.grown=true; } }
+  }
+  for(const f of toys){
+    if(!f.grown){ f.t-=dt; if(f.t<=0){ const p=freeSpot(); f.x=p.x; f.y=p.y; f.grown=true; } }
+  }
+
+  for(let i=bits.length-1;i>=0;i--){
+    const b=bits[i];
+    b.x += b.vx*dt; b.y += b.vy*dt; b.vy += 14*dt; b.life -= dt;
+    if(b.life<=0) bits.splice(i,1);
+  }
+  for(const b of flutters){
+    b.a += dt*1.2;
+    b.x += Math.cos(b.a)*b.sp*dt*3; b.y += Math.sin(b.a*1.7)*b.sp*dt*2;
+    if(b.x<8||b.x>W-8) b.a += 2; if(b.y<14||b.y>H-10) b.a += 2;
+    b.x = Math.max(8,Math.min(W-8,b.x)); b.y = Math.max(14,Math.min(H-10,b.y));
+  }
+
+  checkJobs();
+  render();
+  requestAnimationFrame(frame);
+}
+
+/* ---------- size the canvas to whole pixels ---------- */
+function resize(){
+  const wrap = cv.parentElement.clientWidth - 16;
+  let scale = Math.max(1, Math.min(4, Math.floor(wrap / W)));
+  if(wrap < W) scale = 1;
+  cv.width = W*scale; cv.height = H*scale;
+  ctx.imageSmoothingEnabled = false;
+}
+addEventListener('resize', resize);
+
+// On a touchscreen, show the buttons and tuck them straight under the field
+if(('ontouchstart' in window) || (navigator.maxTouchPoints||0) > 0){
+  document.body.classList.add('istouch');
+  document.querySelector('.stage').appendChild(document.querySelector('.touch'));
+}
+
+resize();
+newDay();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
