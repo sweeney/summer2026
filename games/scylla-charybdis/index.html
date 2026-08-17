@@ -1,0 +1,1424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>2026 → Games → Scylla &amp; Charybdis</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext x='16' y='25' font-size='26' text-anchor='middle'%3E%F0%9F%90%99%3C/text%3E%3C/svg%3E">
+<style>
+  :root{
+    --ink:#17110d;
+    --ink2:#241a13;
+    --terra:#b5451f;
+    --ochre:#c98a34;
+    --cream:#efdcb2;
+    --sea:#17394d;
+    --foam:#dff0ee;
+    --gold:#e8b64c;
+    --wine:#6b1f2a;
+    --stone:#2b2119;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:
+     radial-gradient(circle at 50% 0%, #2a1e15 0%, #140f0b 70%);
+     color:var(--cream);
+     font-family:"Palatino Linotype","Book Antiqua",Palatino,Georgia,serif;
+     -webkit-text-size-adjust:100%;
+  }
+  body{padding:14px 12px 40px;min-height:100vh}
+  .wrap{max-width:1080px;margin:0 auto}
+
+  header{text-align:center;margin-bottom:14px}
+  .eyebrow{
+    font-family:ui-monospace,"Courier New",monospace;
+    font-size:11px;letter-spacing:.42em;color:var(--ochre);
+    text-transform:uppercase;margin:0 0 6px;
+  }
+  .crumb{
+    font-family:ui-monospace,"Courier New",monospace;
+    font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--ochre);opacity:.7;margin:0 0 10px;
+  }
+  .crumb a{color:var(--ochre)}
+  .crumb a:hover{color:var(--terra)}
+  h1{
+    margin:0;font-size:clamp(22px,5.5vw,38px);letter-spacing:.06em;
+    color:var(--cream);font-weight:600;
+    text-shadow:0 2px 0 #000;
+  }
+  h1 .amp{color:var(--terra);font-style:italic}
+  .rule{
+    height:8px;margin:10px auto 0;max-width:420px;
+    background:repeating-linear-gradient(90deg,var(--terra) 0 8px,transparent 8px 12px,var(--ochre) 12px 20px,transparent 20px 24px);
+    opacity:.75;
+  }
+
+  .board{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
+  .screen{flex:1 1 420px;min-width:300px}
+  canvas{
+    width:100%;height:auto;display:block;
+    aspect-ratio:4 / 3;
+    image-rendering:pixelated;image-rendering:crisp-edges;
+    background:#0d2130;
+    border:4px solid var(--stone);
+    border-radius:2px;
+    box-shadow:0 0 0 2px #6b4a24, 0 14px 40px rgba(0,0,0,.6);
+    touch-action:none;
+  }
+
+  /* ---- stele / control panel ---- */
+  .stele{
+    flex:0 1 268px;min-width:240px;
+    background:
+      linear-gradient(#3a2c20,#2a1f17);
+    border:3px solid #6b4a24;
+    border-radius:2px;
+    padding:14px 14px 16px;
+    box-shadow:inset 0 0 0 1px #12100c, 0 10px 26px rgba(0,0,0,.5);
+  }
+  .stele h2{
+    margin:0 0 2px;font-size:15px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--gold);
+  }
+  .stele .sub{
+    font-family:ui-monospace,"Courier New",monospace;
+    font-size:10px;letter-spacing:.08em;color:#a08a6a;margin:0 0 14px;line-height:1.5;
+  }
+  .ctl{margin-bottom:13px}
+  .ctl label{
+    display:flex;justify-content:space-between;align-items:baseline;
+    font-family:ui-monospace,"Courier New",monospace;
+    font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--cream);
+  }
+  .ctl label b{color:var(--ochre);font-weight:normal;letter-spacing:.04em}
+  .ctl .hint{
+    font-family:ui-monospace,"Courier New",monospace;
+    font-size:9px;color:#8d7a5e;letter-spacing:.02em;margin-top:2px;display:block
+  }
+  input[type=range]{
+    -webkit-appearance:none;appearance:none;width:100%;margin:7px 0 0;background:transparent;
+  }
+  input[type=range]::-webkit-slider-runnable-track{
+    height:8px;background:#191410;border:1px solid #6b4a24;
+    box-shadow:inset 0 2px 0 #000;
+  }
+  input[type=range]::-moz-range-track{
+    height:8px;background:#191410;border:1px solid #6b4a24;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;width:12px;height:18px;margin-top:-6px;
+    background:var(--terra);border:1px solid #efdcb2;
+  }
+  input[type=range]::-moz-range-thumb{
+    width:12px;height:18px;border-radius:0;
+    background:var(--terra);border:1px solid #efdcb2;
+  }
+  input[type=range]:focus-visible{outline:2px solid var(--gold);outline-offset:4px}
+
+  .omen{
+    margin-top:14px;padding:9px 10px;border:1px dashed #6b4a24;background:#1d160f;
+    font-family:ui-monospace,"Courier New",monospace;font-size:10px;line-height:1.6;
+  }
+  .omen .big{font-size:16px;letter-spacing:.08em;display:block;margin-bottom:2px}
+  .omen.impious .big{color:#d06a8a}
+  .omen.homeric .big{color:var(--gold)}
+  .omen.heroic  .big{color:#7fd0a0}
+  .omen span.note{color:#9a8465}
+
+  .btnrow{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  button{
+    font-family:ui-monospace,"Courier New",monospace;
+    font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--cream);background:#4a2f1a;border:1px solid #8a6230;
+    padding:8px 10px;cursor:pointer;border-radius:2px;flex:1 1 auto;
+  }
+  button:hover{background:#5d3b20}
+  button:active{transform:translateY(1px)}
+  button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+
+  /* ---- touch pad ---- */
+  .pad{display:none;gap:8px;margin-top:10px}
+  .pad button{padding:16px 8px;font-size:14px;letter-spacing:0}
+  @media (pointer:coarse){ .pad{display:flex} }
+
+  .notes{
+    margin-top:24px;padding-top:16px;border-top:1px solid #3d2e20;
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px;
+  }
+  .notes section h3{
+    font-family:ui-monospace,"Courier New",monospace;
+    font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--terra);
+    margin:0 0 7px;
+  }
+  .notes p{margin:0 0 8px;font-size:13.5px;line-height:1.6;color:#c9b791}
+  .notes b{color:var(--cream);font-weight:600}
+  .keycap{
+    font-family:ui-monospace,"Courier New",monospace;font-size:11px;
+    background:#241a13;border:1px solid #6b4a24;padding:1px 5px;color:var(--gold);
+  }
+  @media (prefers-reduced-motion:reduce){ *{animation:none !important} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="crumb"><a href="../../">2026</a> → <a href="../">Games</a> → Scylla &amp; Charybdis</p>
+    <p class="eyebrow">Odyssey · Book XII</p>
+    <h1>Scylla <span class="amp">&amp;</span> Charybdis</h1>
+    <div class="rule"></div>
+  </header>
+
+  <div class="board">
+    <div class="screen">
+      <canvas id="game" width="320" height="240" aria-label="The strait. Charybdis to port, Scylla to starboard."></canvas>
+      <div class="pad">
+        <button id="bLeft" aria-label="Steer to port">◀ PORT</button>
+        <button id="bSlow" aria-label="Slower">− OARS</button>
+        <button id="bFast" aria-label="Faster">+ OARS</button>
+        <button id="bRight" aria-label="Steer to starboard">STBD ▶</button>
+      </div>
+    </div>
+
+    <div class="stele">
+      <h2>Charybdis</h2>
+      <p class="sub">Thrice a day she swallows the black water, and thrice she spews it up again. Set her humour before you sail.</p>
+
+      <div class="ctl">
+        <label for="sWidth">Width of the gulf <b id="vWidth">120 fathoms</b></label>
+        <input id="sWidth" type="range" min="40" max="170" value="120" step="1">
+        <span class="hint">How far her pull reaches across the strait.</span>
+      </div>
+
+      <div class="ctl">
+        <label for="sDepth">Depth of the throat <b id="vDepth">70 orgyiai</b></label>
+        <input id="sDepth" type="range" min="20" max="130" value="70" step="1">
+        <span class="hint">How hard she hauls, and how wide the killing eye.</span>
+      </div>
+
+      <div class="ctl">
+        <label for="sSpeed">Speed of her breath <b id="vSpeed">10.0 s cycle</b></label>
+        <input id="sSpeed" type="range" min="1" max="10" value="5" step="1">
+        <span class="hint">How fast she runs swallow → still → spew.</span>
+      </div>
+
+      <div class="omen homeric" id="omen">
+        <span class="big" id="omenMult">×1.00</span>
+        <span id="omenName">HOMERIC — the strait as Circe described it.</span><br>
+        <span class="note" id="omenNote">Tame her and your score shrinks. Enrage her and it grows.</span>
+      </div>
+
+      <div class="btnrow">
+        <button id="bHomer">Restore Homer's strait</button>
+        <button id="bSound">Sound: on</button>
+      </div>
+      <div class="btnrow">
+        <button id="bStart">Cast off</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <section>
+      <h3>Your ship</h3>
+      <p><span class="keycap">←</span> <span class="keycap">→</span> put the rudder over. <span class="keycap">↑</span> <span class="keycap">↓</span> call the oar-stroke. <span class="keycap">SPACE</span> to begin.</p>
+      <p>Rowing hard carries you through the danger sooner, but a fast hull answers the rudder slowly — and the gulf pulls a heavy ship just the same.</p>
+      <p>Twelve oars, twelve men. Watch the benches: every man Scylla takes leaves his oar trailing dead in the water, and you can count what you have left without looking away from the strait.</p>
+    </section>
+    <section>
+      <h3>What Homer says</h3>
+      <p><b>Scylla</b> has six necks, six heads, three rows of teeth in each, and twelve dangling feet. Her voice is the yelp of a newborn puppy — <i>skylax</i> — which is where her name comes from.</p>
+      <p><b>Charybdis</b> swallows and spews three times a day. To be swallowed is death; the spew merely throws you.</p>
+    </section>
+    <section>
+      <h3>Circe's counsel</h3>
+      <p>Hug Scylla's cliff and lose <b>six men</b> — one to each head — rather than lose the whole ship in the gulf. The strait is a bowshot wide: at Homer's settings there is no safe lane between them.</p>
+      <p>Odysseus survived Charybdis only once, alone, by clinging to a wild fig tree above the vortex until his mast was vomited back up. You can see that fig leaning over the gulf; if she takes your ship, <span class="keycap">SPACE</span> or a tap is the only control you get.</p>
+    </section>
+  </div>
+</div>
+
+<script>
+"use strict";
+(function(){
+
+/* ================= constants ================= */
+const W = 320, H = 240;
+const cv  = document.getElementById('game');
+const ctx = cv.getContext('2d');
+let SCALE = 1;
+
+/* Render at the display's real resolution and scale the 320x240 world up with a
+   transform, so text is drawn as glyphs at full size instead of stretched pixels. */
+let resizeQueued = false;
+function resize(){
+  resizeQueued = false;
+  const dpr  = Math.min(3, window.devicePixelRatio || 1);
+  const cssW = cv.clientWidth || W;
+  const bw   = Math.max(W, Math.round(cssW * dpr));
+  SCALE = bw / W;
+  if(bw === cv.width) return;            // nothing changed — don't touch the DOM
+  cv.width  = bw;
+  cv.height = Math.round(bw * H / W);
+  ctx.imageSmoothingEnabled = false;
+}
+function queueResize(){
+  if(resizeQueued) return;
+  resizeQueued = true;
+  requestAnimationFrame(resize);         // defer out of the observer callback
+}
+addEventListener('resize', queueResize);
+if(window.ResizeObserver) new ResizeObserver(queueResize).observe(cv.parentNode || cv);
+resize();
+
+const P = {
+  ink:'#17110d', ink2:'#241a13', terra:'#b5451f', ochre:'#c98a34',
+  cream:'#efdcb2', gold:'#e8b64c', wine:'#6b1f2a', foam:'#dff0ee',
+  sea0:'#0f2c3d', sea1:'#17394d', sea2:'#20546a', sea3:'#2d7286',
+  rock:'#7a5330', rock2:'#5a3b21', rockLit:'#a3743f', dark:'#0a1620'
+};
+
+const START_Y = 1060, EXIT_Y = 130;
+const CHAR_X = 110, CHAR_Y = 740;       // Charybdis
+const SCY_X  = 302, SCY_Y  = 745;       // Scylla's cave mouth
+const LEFT_WALL = 18, RIGHT_WALL = 300;
+const CREW_START = 12;
+const HEAD_REACH = 200;
+
+const DEF = { width:120, depth:70, speed:5 };
+
+/* ================= audio ================= */
+let AC=null, master=null, soundOn=true, rumbleGain=null, noiseBuf=null;
+function initAudio(){
+  if(AC) return;
+  try{
+    AC = new (window.AudioContext||window.webkitAudioContext)();
+    master = AC.createGain(); master.gain.value = 0.22; master.connect(AC.destination);
+    noiseBuf = AC.createBuffer(1, AC.sampleRate*2, AC.sampleRate);
+    const d = noiseBuf.getChannelData(0);
+    for(let i=0;i<d.length;i++) d[i] = (Math.random()*2-1);
+    // continuous whirlpool rumble
+    const src = AC.createBufferSource(); src.buffer=noiseBuf; src.loop=true;
+    const lp = AC.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=170;
+    rumbleGain = AC.createGain(); rumbleGain.gain.value=0;
+    src.connect(lp); lp.connect(rumbleGain); rumbleGain.connect(master); src.start();
+  }catch(e){ AC=null; }
+}
+function beep(f0,f1,dur,type,vol){
+  if(!AC||!soundOn) return;
+  const o=AC.createOscillator(), g=AC.createGain();
+  o.type=type||'square'; o.frequency.setValueAtTime(f0,AC.currentTime);
+  o.frequency.exponentialRampToValueAtTime(Math.max(30,f1),AC.currentTime+dur);
+  g.gain.setValueAtTime(vol||0.25,AC.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+dur);
+  o.connect(g); g.connect(master); o.start(); o.stop(AC.currentTime+dur+0.02);
+}
+
+/* --- breath and throat: the pieces an animal noise is built from --- */
+function breath(at, f0, f1, dur, vol, type, q){
+  if(!AC||!soundOn) return;
+  const src=AC.createBufferSource(); src.buffer=noiseBuf; src.loop=true;
+  const flt=AC.createBiquadFilter(), g=AC.createGain();
+  flt.type=type||'bandpass'; flt.Q.value=q||3;
+  flt.frequency.setValueAtTime(f0, at);
+  flt.frequency.exponentialRampToValueAtTime(Math.max(40,f1), at+dur);
+  g.gain.setValueAtTime(0.0001, at);
+  g.gain.exponentialRampToValueAtTime(vol, at+dur*0.15);
+  g.gain.exponentialRampToValueAtTime(0.0001, at+dur);
+  src.connect(flt); flt.connect(g); g.connect(master);
+  src.start(at); src.stop(at+dur+0.05);
+}
+function throat(at, f0, f1, dur, vol, detune){
+  if(!AC||!soundOn) return;
+  [1, detune||1.008].forEach(m=>{                 // two detuned saws grind against each other
+    const o=AC.createOscillator(), lp=AC.createBiquadFilter(), g=AC.createGain();
+    o.type='sawtooth'; lp.type='lowpass';
+    o.frequency.setValueAtTime(f0*m, at);
+    o.frequency.exponentialRampToValueAtTime(Math.max(25,f1*m), at+dur);
+    lp.frequency.setValueAtTime(2400, at);
+    lp.frequency.exponentialRampToValueAtTime(420, at+dur);
+    g.gain.setValueAtTime(0.0001, at);
+    g.gain.exponentialRampToValueAtTime(vol, at+Math.min(0.03,dur*0.15));
+    g.gain.exponentialRampToValueAtTime(0.0001, at+dur);
+    o.connect(lp); lp.connect(g); g.connect(master);
+    o.start(at); o.stop(at+dur+0.05);
+  });
+}
+
+/* Scylla's voice. Homer gives her a newborn puppy's yelp — so it stays a yelp,
+   but one coming out of a throat far too big for it, with something under it. */
+function yelp(){
+  if(!AC||!soundOn) return;
+  const t0 = AC.currentTime;
+  const yip = (at, hi, lo, vol) => {
+    throat(at, hi, lo, 0.13, vol, 1.011);
+    breath(at, 1900, 520, 0.10, vol*0.55, 'bandpass', 2.5);
+  };
+  yip(t0,      880, 360, 0.15);
+  yip(t0+0.13, 720, 260, 0.12);
+  throat(t0, 74, 46, 0.75, 0.085, 1.02);          // the size of the thing underneath
+}
+/* Six necks' worth of muscle committing to the drop. */
+function lunge(){
+  if(!AC||!soundOn) return;
+  const t0 = AC.currentTime;
+  throat(t0, 190, 42, 0.55, 0.16, 1.03);          // guttural, falling
+  breath(t0, 2800, 240, 0.45, 0.13, 'bandpass', 1.4);   // the air she moves coming down
+}
+/* Jaws closing on a man. */
+function chomp(){
+  if(!AC||!soundOn) return;
+  const t0 = AC.currentTime;
+  breath(t0, 5200, 900, 0.055, 0.30, 'highpass', 1);    // the crunch
+  throat(t0+0.01, 130, 38, 0.28, 0.20, 1.04);           // the weight behind it
+  breath(t0+0.03, 700, 260, 0.30, 0.05, 'bandpass', 7); // a short cry, cut off
+}
+function splash(){ beep(420,90,0.25,'sawtooth',0.2); }
+function boom(){ beep(150,40,0.9,'sawtooth',0.35); }
+function lyre(up){
+  if(!AC||!soundOn) return;
+  const n = up?[392,494,587,784]:[392,330,294,196];
+  n.forEach((f,i)=>setTimeout(()=>beep(f,f,0.4,'triangle',0.16), i*140));
+}
+
+/* ================= settings + score multiplier ================= */
+const els = {
+  sWidth:document.getElementById('sWidth'), sDepth:document.getElementById('sDepth'),
+  sSpeed:document.getElementById('sSpeed'), vWidth:document.getElementById('vWidth'),
+  vDepth:document.getElementById('vDepth'), vSpeed:document.getElementById('vSpeed'),
+  omen:document.getElementById('omen'), omenMult:document.getElementById('omenMult'),
+  omenName:document.getElementById('omenName'), omenNote:document.getElementById('omenNote'),
+  bHomer:document.getElementById('bHomer'), bSound:document.getElementById('bSound'),
+  bStart:document.getElementById('bStart')
+};
+const cfg = {width:DEF.width, depth:DEF.depth, speed:DEF.speed, mult:1};
+
+function cyclePeriod(){ return 16 - cfg.speed*1.2; }   // seconds
+function refreshCfg(){
+  cfg.width = +els.sWidth.value;
+  cfg.depth = +els.sDepth.value;
+  cfg.speed = +els.sSpeed.value;
+  els.vWidth.textContent = cfg.width + ' fathoms';
+  els.vDepth.textContent = cfg.depth + ' orgyiai';
+  els.vSpeed.textContent = cyclePeriod().toFixed(1) + ' s cycle';
+
+  const d = 0.40*(cfg.width/DEF.width) + 0.35*(cfg.depth/DEF.depth) + 0.25*(cfg.speed/DEF.speed);
+  cfg.mult = Math.max(0.2, Math.min(2.5, Math.round(d*100)/100));
+  els.omenMult.textContent = '×' + cfg.mult.toFixed(2);
+  els.omen.className = 'omen ' + (cfg.mult < 0.98 ? 'impious' : cfg.mult > 1.02 ? 'heroic' : 'homeric');
+  els.omenName.textContent =
+      cfg.mult < 0.98 ? 'IMPIOUS — you have calmed the gulf. Poseidon notes it.'
+    : cfg.mult > 1.02 ? 'HEROIC — you sail a worse strait than Odysseus did.'
+    : 'HOMERIC — the strait as Circe described it.';
+  els.omenNote.textContent = cfg.mult < 0.98
+    ? 'Every point you win is docked to ×' + cfg.mult.toFixed(2) + '.'
+    : 'Every point you win is paid at ×' + cfg.mult.toFixed(2) + '.';
+}
+['sWidth','sDepth','sSpeed'].forEach(k=> els[k].addEventListener('input', refreshCfg));
+els.bHomer.addEventListener('click', ()=>{
+  els.sWidth.value=DEF.width; els.sDepth.value=DEF.depth; els.sSpeed.value=DEF.speed; refreshCfg();
+});
+els.bSound.addEventListener('click', ()=>{
+  soundOn=!soundOn; els.bSound.textContent='Sound: '+(soundOn?'on':'off');
+  if(rumbleGain) rumbleGain.gain.value = 0;
+});
+els.bStart.addEventListener('click', ()=>{ initAudio(); startRun(); });
+refreshCfg();
+
+/* ================= game state ================= */
+const G = {
+  mode:'title',      // title | play | figtree | over
+  t:0, elapsed:0,
+  ship:{x:152,y:START_Y,ang:0,speed:70,vx:0,vy:-70,alive:true,shake:0}, scyCool:0,
+  crew:CREW_START, odysseus:true, stroke:0, drive:false,
+  seats:[], claimed:[],
+  heads:[], floaters:[], debris:[], texts:[],
+  phase:'calm', phaseT:0, cycT:0,
+  result:null, score:0, best:0,
+  fig:null
+};
+
+function makeHeads(){
+  G.heads = [];
+  for(let i=0;i<6;i++){
+    G.heads.push({
+      ay: SCY_Y - 95 + i*38,      // anchor along the cliff
+      used:false, state:'idle', t:0,
+      tx:0, ty:0, bob:Math.random()*6.28, carry:false
+    });
+  }
+}
+function startRun(){
+  refreshCfg();
+  G.mode='play'; G.t=0; G.elapsed=0;
+  G.ship = {x:152,y:START_Y,ang:0,speed:70,vx:0,vy:-70,alive:true,shake:0};
+  G.scyCool = 0;
+  G.crew=CREW_START; G.odysseus=true; G.stroke=0;
+  G.seats = Array(CREW_START).fill(true); G.claimed = [];
+  G.floaters=[]; G.debris=[]; G.texts=[];
+  G.phase='still'; G.cycT=cyclePeriod()*0.62; G.result=null; G.score=0; G.fig=null;
+  makeHeads();
+  els.bStart.textContent='Cast off again';
+}
+function scoreParts(){
+  const crewPts = G.crew*120;
+  const capPts  = G.odysseus ? 800 : 0;
+  // swiftness is a reward for a fast crossing, not for a fast sinking
+  const swift   = G.result==='through' ? Math.max(0, Math.round(620 - G.elapsed*22)) : 0;
+  return {crewPts, capPts, swift, total: Math.round((crewPts+capPts+swift)*cfg.mult)};
+}
+function endRun(kind){
+  G.mode='over'; G.result=kind;
+  G.score = scoreParts().total;
+  if(G.score > G.best) G.best = G.score;
+  if(G.odysseus) lyre(true); else lyre(false);
+}
+
+/* ================= input ================= */
+const keys={};
+const KEYMAP={ArrowLeft:'l',ArrowRight:'r',ArrowUp:'u',ArrowDown:'d',KeyA:'l',KeyD:'r',KeyW:'u',KeyS:'d',Space:'fire',Enter:'fire'};
+addEventListener('keydown',e=>{
+  const k=KEYMAP[e.code]; if(!k) return;
+  e.preventDefault(); initAudio();
+  if(!keys[k]) press(k);
+  keys[k]=true;
+},{passive:false});
+addEventListener('keyup',e=>{ const k=KEYMAP[e.code]; if(k){ keys[k]=false; } });
+
+function press(k){
+  // Outside of sailing, every control is the same button: grab / continue.
+  if(G.mode==='play' || G.mode==='sinking') return;
+  if(G.mode==='title' || G.mode==='over') startRun();
+  else if(G.mode==='figtree') figAction();
+}
+function hold(btn,k){
+  const on=e=>{e.preventDefault(); initAudio(); if(!keys[k])press(k); keys[k]=true;};
+  const off=e=>{e.preventDefault(); keys[k]=false;};
+  btn.addEventListener('pointerdown',on); btn.addEventListener('pointerup',off);
+  btn.addEventListener('pointerleave',off); btn.addEventListener('pointercancel',off);
+}
+hold(document.getElementById('bLeft'),'l');
+hold(document.getElementById('bRight'),'r');
+hold(document.getElementById('bFast'),'u');
+hold(document.getElementById('bSlow'),'d');
+cv.addEventListener('pointerdown',e=>{ initAudio(); if(G.mode!=='play'){ press('fire'); } });
+
+/* ================= whirlpool maths ================= */
+function phaseInfo(){
+  const per = cyclePeriod();
+  const f = G.cycT / per;                     // 0..1
+  if(f < 0.36) return {name:'swallow', k:(f/0.36), pull: 1.00, grow:1.22, core:1.10};
+  if(f < 0.72) return {name:'still',   k:((f-0.36)/0.36), pull: 0.30, grow:0.90, core:1.00};
+  return              {name:'spew',    k:((f-0.72)/0.28), pull:-0.60, grow:1.05, core:0.80};
+}
+function whirlRadius(){ return cfg.width * phaseInfo().grow; }
+function coreRadius(){
+  const p = phaseInfo();
+  return whirlRadius() * 1.25 * (0.20 + cfg.depth/350) * p.core;
+}
+/* Velocity of the water itself at a point — the ship rows relative to this. */
+function currentAt(x,y){
+  const p = phaseInfo(), R = whirlRadius();
+  const dx = CHAR_X-x, dy = CHAR_Y-y, d = Math.hypot(dx,dy) || 0.001;
+  if(d >= R) return {x:0, y:0, f:0};
+  const f  = Math.pow(1 - d/R, 0.8);
+  const ux = dx/d, uy = dy/d;
+  const tan = cfg.depth * 1.40 * f * (0.55 + 0.45*Math.abs(p.pull));  // spin
+  const rad = cfg.depth * 1.80 * f * p.pull;                          // in / out
+  return {x: ux*rad - uy*tan, y: uy*rad + ux*tan, f:f};
+}
+
+/* ================= update ================= */
+function update(dt){
+  G.t += dt;
+  if(G.mode==='play')     updatePlay(dt);
+  else if(G.mode==='sinking') updateSink(dt);
+  else if(G.mode==='figtree') updateFig(dt);
+  else { G.cycT = (G.cycT + dt) % cyclePeriod(); }
+
+  // ambient rumble follows the gulf
+  if(rumbleGain){
+    const p=phaseInfo();
+    const near = G.mode==='play' ? Math.max(0, 1 - dist(G.ship.x,G.ship.y,CHAR_X,CHAR_Y)/(whirlRadius()*2.2)) : 0.25;
+    const target = soundOn ? near * (p.name==='swallow'?0.9:p.name==='spew'?0.6:0.18) : 0;
+    rumbleGain.gain.value += (target - rumbleGain.gain.value)*Math.min(1,dt*4);
+  }
+}
+
+function dist(x1,y1,x2,y2){ const a=x1-x2,b=y1-y2; return Math.hypot(a,b); }
+
+function updatePlay(dt){
+  G.elapsed += dt;
+  G.cycT += dt;
+  const per = cyclePeriod();
+  if(G.cycT >= per){ G.cycT -= per; }
+  const p = phaseInfo();
+  const prevPhase = G.phase;
+  G.phase = p.name;
+  if(prevPhase!==G.phase){
+    if(G.phase==='swallow'){ splash(); pushText('SHE SWALLOWS', CHAR_X, CHAR_Y-60, P.terra); }
+    if(G.phase==='spew'){ splash(); spawnDebris(); pushText('SHE SPEWS', CHAR_X, CHAR_Y-60, P.foam); }
+  }
+
+  const s = G.ship;
+
+  /* --- helm --- */
+  const speedNorm = (s.speed-20)/90;
+  const turn = (2.15 - 1.05*speedNorm);          // rad/s — fast hull, lazy rudder
+  if(keys.l) s.ang -= turn*dt;
+  if(keys.r) s.ang += turn*dt;
+  if(keys.u) s.speed = Math.min(110, s.speed + 46*dt);
+  if(keys.d) s.speed = Math.max(20,  s.speed - 46*dt);
+  s.ang = Math.max(-1.25, Math.min(1.25, s.ang));   // can't turn back down the strait
+
+  /* --- the stroke: about 30 to 55 to the minute --- */
+  G.stroke += dt * (2.4 + s.speed*0.034);
+  const nowDrive = Math.cos(G.stroke) < 0;
+  if(nowDrive && !G.drive && G.crew > 0) beep(130, 70, 0.06, 'triangle', 0.05);
+  G.drive = nowDrive;
+
+  /* --- the gulf is a current; the ship rows across it --- */
+  const w = currentAt(s.x, s.y);
+  const drag = 1.9;                                  // how firmly the water holds her
+  const tx = Math.sin(s.ang)*s.speed, ty = -Math.cos(s.ang)*s.speed;
+  s.vx += drag*(tx + w.x - s.vx)*dt;
+  s.vy += drag*(ty + w.y - s.vy)*dt;
+  s.shake = Math.max(s.shake*Math.pow(0.9,dt*60), w.f*(p.name==='swallow'?2.6:1.1));
+
+  s.x += s.vx*dt;
+  s.y += s.vy*dt;
+  if(s.x < LEFT_WALL+6){ s.x = LEFT_WALL+6; s.vx = Math.max(0,s.vx); }
+  if(s.x > RIGHT_WALL-6){ s.x = RIGHT_WALL-6; s.vx = Math.min(0,s.vx); }
+
+  const d = dist(s.x, s.y, CHAR_X, CHAR_Y);
+
+  /* --- swallowed? --- */
+  if(d < coreRadius() && p.name!=='spew'){
+    startSink();
+    return;
+  }
+
+  /* --- Scylla --- */
+  updateScylla(dt);
+
+  /* --- effects --- */
+  for(const f of G.floaters){ f.t+=dt; f.y-=6*dt; }
+  G.floaters = G.floaters.filter(f=>f.t<1.6);
+  for(const t of G.texts){ t.t+=dt; t.y-=8*dt; }
+  G.texts = G.texts.filter(t=>t.t<1.8);
+  for(const b of G.debris){
+    b.t+=dt; b.x+=b.vx*dt; b.y+=b.vy*dt; b.vx*=0.99; b.vy*=0.99;
+  }
+  G.debris = G.debris.filter(b=>b.t<3.2);
+
+  /* --- finish --- */
+  if(s.y <= EXIT_Y){ endRun('through'); }
+}
+
+function pushText(msg,x,y,col){ G.texts.push({msg,x,y,col,t:0}); }
+function spawnDebris(){
+  for(let i=0;i<18;i++){
+    const a=Math.random()*Math.PI*2, sp=40+Math.random()*70;
+    G.debris.push({x:CHAR_X,y:CHAR_Y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp*0.7,t:0,
+      c: Math.random()<0.4?P.rock:P.foam});
+  }
+}
+
+const HEAD_REAR = 0.55, HEAD_STRIKE = 0.34, HEAD_HOLD = 0.32, HEAD_RETRACT = 0.95;
+
+/* Where each man sits: seat 2b is the port rower on bench b, 2b+1 the starboard. */
+function seatLocal(i){
+  if(i < 0) return {x:0, y:12};                    // the captain, at the steering oar
+  const b = Math.floor(i/2);
+  return {x: (i%2) ? 3 : -3, y: -12 + b*4};
+}
+/* That seat's position on the water, allowing for the ship's heading. */
+function seatWorld(i){
+  const l = seatLocal(i), c = Math.cos(G.ship.ang), s = Math.sin(G.ship.ang);
+  return {x: G.ship.x + l.x*c - l.y*s, y: G.ship.y + l.x*s + l.y*c};
+}
+
+function updateScylla(dt){
+  const s=G.ship;
+  G.scyCool = Math.max(0, G.scyCool - dt);
+
+  // Two necks may be working at once — but never from the same lair, and always
+  // staggered, so the cliff is never still and never a volley.
+  const poised = G.heads.filter(h=>h.state==='rear'||h.state==='strike').length;
+  if(poised < 2 && G.scyCool <= 0){
+    let best=null, bd=1e9;
+    for(const h of G.heads){
+      if(h.used || h.state!=='idle') continue;
+      const d = dist(SCY_X, h.ay, s.x, s.y);
+      if(d < HEAD_REACH && d < bd){ bd=d; best=h; }   // the lair nearest the ship
+    }
+    if(best){
+      // she marks a man — any man still at his oar, not already spoken for
+      const free = [];
+      for(let i=0;i<G.seats.length;i++) if(G.seats[i] && G.claimed.indexOf(i)<0) free.push(i);
+      best.seat = free.length ? free[Math.floor(Math.random()*free.length)] : -1;
+      if(best.seat >= 0) G.claimed.push(best.seat);
+      const v = seatWorld(best.seat);
+      best.state='rear'; best.t=0; best.tx=v.x; best.ty=v.y;
+      G.scyCool = 0.45;
+      yelp();                                          // the puppy-yelp, before the drop
+      pushText('yip! yip!', SCY_X-58, best.ay-24, P.cream);
+    }
+  }
+
+  for(const h of G.heads){
+    h.bob += dt*1.1;
+    if(h.state==='rear'){
+      h.t += dt/HEAD_REAR;                        // she gathers herself, high up
+      const v = seatWorld(h.seat);                // following the man she has marked
+      h.tx += (v.x-h.tx)*Math.min(1,dt*3);
+      h.ty += (v.y-h.ty)*Math.min(1,dt*3);
+      if(h.t>=1){ h.t=0; h.state='strike'; lunge(); }
+    } else if(h.state==='strike'){
+      h.t += dt/HEAD_STRIKE;                      // and comes down
+      const v = seatWorld(h.seat);
+      h.tx += (v.x-h.tx)*Math.min(1,dt*9);
+      h.ty += (v.y-h.ty)*Math.min(1,dt*9);
+      if(h.t>=1){
+        h.t=0; h.state='hold'; h.used=true;
+        const ci = G.claimed.indexOf(h.seat);
+        if(ci >= 0) G.claimed.splice(ci,1);
+        if(h.seat >= 0 && G.seats[h.seat]){
+          G.seats[h.seat] = false;                // that bench is empty from now on
+          G.crew--; h.carry=true;
+          G.floaters.push({x:h.tx,y:h.ty,t:0});
+          chomp();
+        } else {
+          h.carry=true; G.odysseus=false;
+          pushText('SHE TAKES YOU', s.x-40, s.y-16, P.terra);
+          boom();
+          endRun('eaten');
+          return;
+        }
+      }
+    } else if(h.state==='hold'){
+      h.t += dt/HEAD_HOLD;                        // jaws closed, lifting him clear
+      if(h.t>=1){ h.t=0; h.state='retract'; }
+    } else if(h.state==='retract'){
+      h.t += dt/HEAD_RETRACT;                     // back up the cliff, unhurried
+      if(h.t>=1){ h.state='spent'; h.carry=false; }
+    }
+  }
+}
+
+/* ================= going down ================= */
+function startSink(){
+  G.mode='sinking';
+  G.sink = {t:0};
+  G.camLock = G.ship.y - H*0.66;
+  boom();
+}
+function updateSink(dt){
+  const s = G.ship;
+  G.sink.t += dt;
+  G.cycT = (G.cycT + dt) % cyclePeriod();
+  const a = Math.atan2(s.y-CHAR_Y, s.x-CHAR_X) + dt*3.4;
+  const d = Math.max(0, dist(s.x,s.y,CHAR_X,CHAR_Y) - 62*dt);
+  s.x = CHAR_X + Math.cos(a)*d;
+  s.y = CHAR_Y + Math.sin(a)*d;
+  s.ang += dt*3.4;
+  G.stroke += dt*7;                       // panicked, out of time with each other
+  s.shake = 3;
+  if(G.sink.t > 1.8){
+    // the ship is gone, and every man aboard with it
+    for(let i=0;i<G.crew;i++){
+      const a = Math.random()*Math.PI*2, r = 10+Math.random()*26;
+      G.floaters.push({x:CHAR_X+Math.cos(a)*r, y:CHAR_Y+Math.sin(a)*r*0.7, t:0});
+    }
+    G.crew = 0; G.seats.fill(false);
+    s.alive = false; G.odysseus = false;
+    startFigTree();
+  }
+}
+
+/* ================= fig tree minigame ================= */
+function startFigTree(){
+  G.mode='figtree';
+  G.fig = {
+    stage:'grab',       // grab | wait | drop | done
+    ang: 0, spin: 2.3 + cfg.speed*0.12,
+    tries: 3, msg:'The gulf has you. GRAB THE FIG TREE as it passes.',
+    timer: 0, waitFor: 2.6 + Math.random()*3.2, window:0, flash:0, ok:false
+  };
+  pushText('',0,0,'#000');
+}
+function figAction(){
+  const f=G.fig; if(!f) return;
+  if(f.stage==='grab'){
+    // branch sits at the top of the rim: angle -PI/2
+    let a = ((f.ang + Math.PI/2) % (Math.PI*2) + Math.PI*2) % (Math.PI*2);
+    const off = Math.min(a, Math.PI*2-a);
+    if(off < 0.55){
+      f.stage='wait'; f.timer=0; f.flash=1; f.ok=true;
+      f.msg='You cling like a bat. Wait for the mast — then let go.';
+      beep(600,900,0.15,'triangle',0.25);
+    } else {
+      f.tries--; f.spin += 0.5; f.flash=1;
+      if(f.tries<=0){ f.stage='done'; endRun('drowned'); }
+      else { f.msg='Missed. '+f.tries+' snatch'+(f.tries===1?'':'es')+' left.'; beep(220,120,0.2,'square',0.2); }
+    }
+  } else if(f.stage==='wait'){
+    if(mastAligned(f)){
+      f.stage='done'; G.odysseus=true;
+      beep(500,1000,0.3,'triangle',0.3);
+      endRun('figtree');
+    } else {
+      f.tries--; f.flash=1;
+      if(f.tries<=0){ f.stage='done'; endRun('drowned'); }
+      else {
+        f.msg = f.mast ? 'You dropped wide of it. '+f.tries+' left.'
+                       : 'Too soon — nothing below you yet. '+f.tries+' left.';
+        beep(200,100,0.2,'square',0.2);
+      }
+    }
+  }
+}
+function updateFig(dt){
+  const f=G.fig; G.cycT=(G.cycT+dt)%cyclePeriod();
+  f.flash = Math.max(0, f.flash-dt*2.5);
+  if(f.stage==='grab'){ f.ang -= f.spin*dt; }        // carried anticlockwise
+  else if(f.stage==='wait'){
+    f.timer += dt;
+    if(f.timer > f.waitFor){
+      if(!f.mast){                                  // she belches the wreck back up
+        f.mast = {ang: Math.PI/2, spin: f.spin*0.62, life:0};
+        splash();
+        f.msg = 'Your mast, riding the current. Drop when it comes under you.';
+      }
+      f.mast.ang -= f.mast.spin*dt;
+      f.mast.life += dt;
+      f.window = mastAligned(f) ? 1 : 0;
+      if(f.mast.life > 15){ f.stage='done'; endRun('drowned'); }   // sucked down again
+    }
+  }
+}
+/* The branch tip is at the top of the rim; the mast is catchable as it passes under it. */
+function mastAligned(f){
+  if(!f.mast) return false;
+  const a = ((f.mast.ang + Math.PI/2) % (Math.PI*2) + Math.PI*2) % (Math.PI*2);
+  return Math.min(a, Math.PI*2-a) < 0.42;
+}
+
+/* ================= drawing helpers ================= */
+function px(x,y,w,h,c){ ctx.fillStyle=c; ctx.fillRect(Math.round(x),Math.round(y),w,h); }
+function hash(n){ const x=Math.sin(n*127.1)*43758.5453; return x-Math.floor(x); }
+function txt(str,x,y,c,align){
+  ctx.font='700 8px ui-monospace, SFMono-Regular, Menlo, "Courier New", monospace';
+  ctx.textAlign=align||'left'; ctx.textBaseline='top';
+  ctx.fillStyle='rgba(0,0,0,0.85)'; ctx.fillText(str,x+0.6,y+0.6);
+  ctx.fillStyle=c; ctx.fillText(str,x,y);
+}
+function bigTxt(str,x,y,c,size){
+  ctx.font='600 '+(size||14)+'px "Palatino Linotype","Book Antiqua",Georgia,serif';
+  ctx.textAlign='center'; ctx.textBaseline='top';
+  ctx.fillStyle='rgba(0,0,0,0.9)'; ctx.fillText(str,x+0.8,y+0.8);
+  ctx.fillStyle=c; ctx.fillText(str,x,y);
+}
+
+/* ================= draw ================= */
+function draw(){
+  ctx.setTransform(SCALE,0,0,SCALE,0,0);
+  ctx.save();
+  if((G.mode==='play'||G.mode==='sinking') && G.ship.shake>0.05){
+    ctx.translate((Math.random()-0.5)*G.ship.shake*2,(Math.random()-0.5)*G.ship.shake*2);
+  }
+  if(G.mode==='figtree') drawFig();
+  else drawStrait();
+  ctx.restore();
+
+  if(G.mode==='title') drawTitle();
+  if(G.mode==='over')  drawOver();
+}
+
+function drawStrait(){
+  const camY = camYOf();
+  const sy = wy => wy - camY;
+
+  // sea
+  px(0,0,W,H,P.sea1);
+  // depth banding towards Charybdis side
+  for(let i=0;i<5;i++) px(0, 0, 26-i*4, H, i%2? P.sea0 : P.sea1);
+
+  // waves (deterministic scroll)
+  const row0 = Math.floor(camY/12)-1;
+  for(let r=row0; r<row0+H/12+3; r++){
+    for(let k=0;k<7;k++){
+      const hx = hash(r*7+k)*W, hy = sy(r*12 + hash(r*3+k)*10);
+      if(hy<-4||hy>H+4) continue;
+      px(hx, hy, 5,1, hash(r+k)<0.5?P.sea2:P.sea3);
+      px(hx+6, hy+1, 3,1, P.sea2);
+    }
+  }
+
+  drawCliffs(sy);
+  drawWhirlpool(sy);
+  drawWildFig(sy);
+  drawScylla(sy);
+
+  // debris
+  for(const b of G.debris){
+    const y=sy(b.y); if(y<-4||y>H+4) continue;
+    px(b.x, y, 2,2, b.c);
+  }
+  // floating sailors
+  for(const f of G.floaters){
+    const y=sy(f.y); if(y<-6||y>H+6) continue;
+    px(f.x, y-Math.sin(f.t*6)*2, 2,3, P.cream);
+  }
+
+  if(G.ship.alive){
+    const shrink = G.mode==='sinking' ? Math.max(0.15, 1 - G.sink.t/1.9) : 1;
+    drawShip(G.ship.x, sy(G.ship.y), G.ship.ang, shrink);
+  }
+  if(G.mode==='sinking'){
+    bigTxt('CHARYBDIS SWALLOWS THE SHIP', W/2, 96, P.terra, 15);
+    txt('the wild fig is your only hold', W/2, 118, P.cream, 'center');
+  }
+
+  // floating texts
+  for(const t of G.texts){
+    if(!t.msg) continue;
+    const y = sy(t.y); if(y<-10||y>H+10) continue;
+    ctx.globalAlpha = Math.max(0, 1 - t.t/1.8);
+    txt(t.msg, t.x, y, t.col, 'center');
+    ctx.globalAlpha = 1;
+  }
+
+  drawHUD();
+}
+
+function drawCliffs(sy){
+  // left cliff
+  for(let y=0;y<H;y+=4){
+    const wy = y + Math.floor(camYOf());
+    const j = Math.floor(hash(wy*0.37)*6);
+    px(0,y,LEFT_WALL-j,4,P.rock2);
+    px(LEFT_WALL-j-2,y,2,4,P.rock);
+  }
+  // right cliff (Scylla's)
+  for(let y=0;y<H;y+=4){
+    const wy = y + Math.floor(camYOf());
+    const j = Math.floor(hash(wy*0.51+9)*6);
+    px(RIGHT_WALL+j,y,W-RIGHT_WALL-j,4,P.rock2);
+    px(RIGHT_WALL+j,y,2,4,P.rockLit);
+  }
+  // the cave mouth
+  const cy = sy(SCY_Y);
+  if(cy>-200 && cy<H+200){
+    ctx.fillStyle=P.dark;
+    ctx.beginPath(); ctx.ellipse(W-6, cy, 26, 118, 0, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle='#000';
+    ctx.beginPath(); ctx.ellipse(W-2, cy, 20, 100, 0, 0, Math.PI*2); ctx.fill();
+  }
+}
+function camYOf(){
+  if(G.mode==='sinking') return G.camLock;
+  return (G.mode==='play'||G.mode==='over') ? G.ship.y - H*0.66 : CHAR_Y - H*0.5;
+}
+
+function drawWhirlpool(sy){
+  const cy = sy(CHAR_Y);
+  const R  = whirlRadius();
+  if(cy < -R-40 || cy > H+R+40) return;
+  const p = phaseInfo();
+  const rot = -G.t * (1.1 + cfg.speed*0.22) * (p.name==='spew'?0.8:1);
+
+  // funnel rings — darker as they descend
+  const rings=7;
+  const cols=[P.sea2,P.sea1,P.sea0,'#0b2331','#081a26','#05121a','#02090e'];
+  for(let i=rings-1;i>=0;i--){
+    const rr = R*((i+1)/rings);
+    const squash = 0.70;
+    const wob = 1 + 0.04*Math.sin(G.t*3 + i);
+    ctx.fillStyle = cols[rings-1-i];
+    ctx.beginPath();
+    ctx.ellipse(CHAR_X + (i*1.5)*Math.cos(rot*0.5), cy + (i*1.2)*Math.sin(rot*0.5),
+                rr*wob, rr*squash*wob, 0, 0, Math.PI*2);
+    ctx.fill();
+  }
+  // spiral arms of foam
+  for(let a=0;a<4;a++){
+    for(let s=0;s<34;s++){
+      const t=s/34;
+      const ang = rot + a*(Math.PI/2) + t*6.6;
+      const rr = R*(0.12+0.88*t);
+      const x = CHAR_X + Math.cos(ang)*rr;
+      const y = cy + Math.sin(ang)*rr*0.70;
+      const bright = t>0.55;
+      px(x,y,2,2, bright?P.foam:'#7fb6b4');
+    }
+  }
+  // the eye — anything inside this black mouth is swallowed
+  const core = coreRadius();
+  ctx.fillStyle='#000';
+  ctx.beginPath(); ctx.ellipse(CHAR_X, cy, core, core*0.7, 0,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='rgba(223,240,238,0.5)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.ellipse(CHAR_X, cy, core+1, (core+1)*0.7, 0,0,Math.PI*2); ctx.stroke();
+  if(p.name==='swallow'){
+    ctx.strokeStyle=P.terra; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.ellipse(CHAR_X, cy, core+2+Math.sin(G.t*9)*2, (core+2)*0.7, 0,0,Math.PI*2); ctx.stroke();
+  }
+  if(p.name==='spew'){
+    for(let i=0;i<10;i++){
+      const a=hash(i+Math.floor(G.t*8))*6.28, rr=core+ (G.t*90)%R;
+      px(CHAR_X+Math.cos(a)*rr, cy+Math.sin(a)*rr*0.7, 2,2, P.foam);
+    }
+  }
+}
+
+/* A fig leaf: broad, deeply lobed, on a short stem. */
+function figLeaf(x,y,c1,c2){
+  px(x-3, y,   7,2, c1);     // the wide middle of the blade
+  px(x-2, y-2, 2,2, c2);     // upper lobes, with the notch between them
+  px(x+1, y-2, 2,2, c2);
+  px(x-4, y+1, 2,2, c1);     // lower lobes, spread wider
+  px(x+3, y+1, 2,2, c1);
+  px(x-1, y+2, 2,1, '#24512c');
+}
+/* A fig: hangs under the branch on a stem, purple-brown with a blush. */
+function figFruit(x,y){
+  px(x, y, 1,1, '#3a2416');
+  px(x-1, y+1, 3,3, '#5d2340');
+  px(x, y+2, 1,1, '#9c4763');
+}
+
+function drawWildFig(sy){
+  // Homer's wild fig: it grows from the cliff and leans out over Charybdis.
+  const fy = sy(CHAR_Y - 6);
+  if(fy < -60 || fy > H+60) return;
+  const sway = Math.sin(G.t*0.9)*1.2;
+  px(7, fy-2, 9,5, '#4a2f1a');            // trunk out of the cliff
+  px(7, fy+3, 6,3, '#3a2416');
+  for(let i=0;i<8;i++){                    // the bough, leaning over the gulf
+    const bx = 16 + i*4;
+    const by = fy - 3 - Math.sin(i/8*1.4)*6 + sway*(i/8);
+    px(bx, by, 4,2, '#4a2f1a');
+    if(i>=2) figLeaf(bx+1, by-3, '#2f6b3a', '#3f8a4a');
+    if(i===3 || i===6) figFruit(bx+1, by+2);
+  }
+  const tipX = 16+7*4, tipY = fy - 3 - Math.sin(1.225)*6 + sway;
+  px(tipX+2, tipY, 3,2, P.gold);           // the tip you would cling to
+}
+
+/* A point on the neck's arc. */
+function bez(p0,p1,p2,t){
+  const u=1-t;
+  return {x:u*u*p0.x + 2*u*t*p1.x + t*t*p2.x,
+          y:u*u*p0.y + 2*u*t*p1.y + t*t*p2.y};
+}
+/* Where a head is, and how high above the water it hangs (0 = down at deck level). */
+function headPose(h, ay, sy){
+  const lair = {x: SCY_X - 10 - Math.sin(h.bob)*3, y: ay + Math.cos(h.bob*0.8)*6, up:0.30};
+  const rear = {x: SCY_X - 26 - Math.sin(h.bob)*2, y: ay - 34,                    up:1.00};
+  const prey = {x: h.tx,                           y: sy(h.ty),                   up:0.00};
+  const mix=(a,b,t)=>({x:a.x+(b.x-a.x)*t, y:a.y+(b.y-a.y)*t, up:a.up+(b.up-a.up)*t});
+  const ease = t => t*t*(3-2*t);
+  switch(h.state){
+    case 'rear':    return mix(lair, rear, ease(h.t));
+    case 'strike':  return mix(rear, prey, h.t*h.t);        // accelerating downward
+    case 'hold':    return prey;
+    case 'retract': return mix(prey, lair, ease(h.t));
+    case 'spent':   return {x: lair.x+4, y: lair.y, up:0.12};
+    default:        return lair;
+  }
+}
+
+function drawScylla(sy){
+  for(let i=0;i<G.heads.length;i++){
+    const h  = G.heads[i];
+    const ay = sy(h.ay);
+    if(ay < -180 || ay > H+180) continue;
+    const p  = headPose(h, ay, sy);
+
+    // the shadow she throws on the water while she is still up in the air
+    if(p.up > 0.06){
+      ctx.fillStyle = 'rgba(4,10,16,'+(0.34*p.up).toFixed(2)+')';
+      ctx.beginPath();
+      ctx.ellipse(p.x + p.up*13, p.y + p.up*11, 8+p.up*3, (8+p.up*3)*0.6, 0, 0, Math.PI*2);
+      ctx.fill();
+    }
+
+    // the neck, arcing up out of the cave and over the water
+    const base = {x: SCY_X+8, y: ay};
+    const ctrl = {x: (base.x+p.x)/2 - 16 - 14*p.up, y: (base.y+p.y)/2 - 10 - 30*p.up};
+    const segs = 18;
+    let prev = base, tip = base;
+    for(let s2=1; s2<=segs; s2++){
+      const t = s2/segs;
+      const q = bez(base, ctrl, p, t);
+      const w = Math.max(2, Math.round((7 - t*3.5) * (1 + p.up*0.35)));
+      px(q.x-w/2, q.y-w/2, w, w, h.state==='spent' ? '#2b1f18' : '#3d2a20');
+      px(q.x-w/2, q.y-w/2, w, 1, h.state==='spent' ? '#33251d' : '#4d372a');   // lit ridge
+      if(s2%3===0) px(q.x-1, q.y-w/2+1, 2,1, '#54402c');                        // scales
+      prev = tip; tip = q;
+    }
+
+    const ang  = Math.atan2(tip.y-prev.y, tip.x-prev.x);
+    const open = h.state==='strike' || h.state==='hold';
+    drawScyllaHead(p.x, p.y, ang, 1 + p.up*0.55, open, h.carry, i);
+  }
+}
+
+function drawScyllaHead(x,y,ang,scale,open,carry,i){
+  ctx.save();
+  ctx.translate(x,y);
+  ctx.rotate(ang);
+  ctx.scale(scale,scale);
+  px(-9,-6, 4,12, '#2f211a');                   // the frill behind the skull
+  px(-6,-5, 12,10, '#3d2a20');                  // skull
+  px(-6,-5, 12,2,  '#4d372a');                  // lit crown
+  px(-6, 4, 12,1,  '#241a13');
+  if(open){
+    px(4,-8, 8,4, '#3d2a20');                   // upper jaw thrown back
+    px(4,-7, 8,1, '#4d372a');
+    px(4, 4, 8,4, '#3d2a20');                   // lower jaw dropped
+    px(3,-4, 9,8, P.wine);                      // the gullet
+    for(let k=0;k<5;k++){                       // three rows of teeth, Homer says
+      px(4+k*1.7,-5, 1,3, P.cream);
+      px(4+k*1.7, 3, 1,3, P.cream);
+      px(5+k*1.7,-1, 1,2, '#d9c9a8');
+    }
+  } else {
+    px(5,-3, 7,6, '#3d2a20');                   // snout, mouth shut
+    px(5,-3, 7,1, '#4d372a');
+    for(let k=0;k<4;k++) px(6+k*1.6, 2, 1,2, P.cream);
+  }
+  px(-3,-4, 4,4, '#17110d');                    // eye socket
+  px(-2,-3, 2,2, i%2 ? P.terra : '#d8552a');    // eye
+  px(11,-1, 1,1, '#17110d');                    // nostril
+  if(carry){                                     // a man in her teeth, still kicking
+    const kick = Math.sin(G.t*11) > 0 ? 1 : -1;
+    px(6,-1, 3,3, P.cream);
+    px(7,-3, 2,2, '#e0bf8e');
+    px(5, 2+kick, 2,1, '#e0bf8e');
+  }
+  ctx.restore();
+}
+
+/* One rower on his bench. He swings aft on the drive, forward on the recovery. */
+function drawRower(rx, yb, idx, sweep){
+  if(!G.seats[idx]) return;                       // this bench is empty now
+  const lean = sweep > 0.35 ? 1 : sweep < -0.35 ? -1 : 0;
+  px(rx, yb-1+lean, 2,2, '#c9a06a');              // body over the oar
+  px(rx, yb-2+lean, 2,1, '#3a2416');              // head
+}
+/* One oar. side = -1 port, +1 starboard. Slack oars trail aft in the water. */
+function drawOar(yb, side, idx, sweep, drive, halfWidth){
+  const manned = !!G.seats[idx];
+  const a   = manned ? sweep*0.62 : 1.15;         // radians aft of square
+  const len = 9 + (idx%2 ? 1.2 : 0);              // stagger, so blades read apart
+  const dx  = Math.cos(a)*side, dy = Math.sin(a);
+  const gx  = side*((halfWidth||7) - 1);          // the tholepin, on the gunwale
+  const col = manned ? '#5a3b21' : '#3f2a18';
+  for(let i=2; i<=len; i+=0.5) px(gx+dx*i, yb+dy*i, 1,1, col);
+  const bx = gx+dx*(len+1.5), by = yb+dy*(len+1.5);
+  px(bx-1, by-1, 2,2, manned ? '#6d4522' : '#3f2a18');   // the blade
+  if(manned && drive) px(bx-2, by+1, 3,1, 'rgba(223,240,238,0.7)');  // it bites
+}
+
+/* The hull's half-width at any point along her length: fine entry at the stem,
+   full amidships, a long taper into the run aft. */
+const SHIP_BOW = -19, SHIP_STERN = 17;
+function shipHalfWidth(y){
+  const t = (y - SHIP_BOW) / (SHIP_STERN - SHIP_BOW);
+  if(t < 0 || t > 1) return 0;
+  return Math.max(1, Math.round(7 * Math.pow(Math.sin(Math.PI * Math.pow(t, 0.7)), 0.5)));
+}
+
+function drawShip(x,y,ang,scale){
+  ctx.save();
+  ctx.translate(Math.round(x), Math.round(y));
+  ctx.rotate(ang);
+  if(scale && scale!==1) ctx.scale(scale,scale);
+
+  const sweep = Math.sin(G.stroke);        // +1 forward reach, -1 full aft
+  const drive = Math.cos(G.stroke) < 0;    // blades pulling through the water
+
+  // wake: two lines of foam spreading aft, thinning as they go
+  for(let i=0;i<8;i++){
+    const t = i/8;
+    const wob = Math.sin(G.t*5 - i*0.8)*1.2;
+    const len = Math.max(1, Math.round(3 - t*2));
+    const a   = (0.34*(1-t)*(1-t)).toFixed(2);
+    const spread = 1 + i*0.9;
+    px(-spread-len+wob, 22+i*3, len,1, 'rgba(223,240,238,'+a+')');
+    px( spread+wob,     22+i*3, len,1, 'rgba(223,240,238,'+a+')');
+  }
+  px(-2, 21, 4,1, 'rgba(223,240,238,0.30)');     // the water closing behind her
+
+  // planked hull, strake by strake
+  for(let yy=SHIP_BOW; yy<=SHIP_STERN; yy++){
+    const w = shipHalfWidth(yy);
+    px(-w, yy, w*2, 1, '#4a2f1a');               // wale
+    if(w >= 2) px(-w+1, yy, (w-1)*2, 1, (yy%6===0) ? '#6d4522' : '#7d5228');
+  }
+  // stem rising forward, with the eye Greek ships carried
+  px(-1,-22, 2,4, '#6d4522');
+  px(-1,-23, 2,2, P.gold);
+  px(-3,-16, 2,2, P.cream); px(-3,-16, 1,1, '#17110d');
+  px( 1,-16, 2,2, P.cream); px( 2,-16, 1,1, '#17110d');
+  // sternpost curling up over the helm
+  px(-2, 18, 4,3, '#6d4522');
+  px(-1, 21, 2,2, '#5a3b21');
+  // mast, with the sail furled on the yard — they row this stretch
+  px(-1,-11, 2,20, '#4a2f1a');
+  px(-5,-13, 10,3, P.cream);
+  px(-5,-13, 10,1, P.terra);
+  px(-5,-11, 10,1, '#c9a06a');
+
+  // six benches a side, twelve oars, pivoting on the gunwale where it falls
+  for(let i=0;i<6;i++){
+    const yb = -12 + i*4;
+    const w  = shipHalfWidth(yb);
+    px(-(w-1), yb, (w-1)*2, 1, '#5a3b21');
+    drawOar(yb, -1, i*2,   sweep, drive, w);
+    drawOar(yb,  1, i*2+1, sweep, drive, w);
+    drawRower(-4, yb, i*2,   sweep);
+    drawRower( 2, yb, i*2+1, sweep);
+  }
+
+  // Odysseus at the steering oar, where the captain belongs
+  if(G.odysseus){
+    px(-1, 12, 2,3, P.gold);
+    px(-1, 11, 2,1, '#3a2416');
+    const ha = 0.5 + sweep*0.12;
+    for(let i=1;i<=5;i++) px(4+Math.cos(ha)*i, 13+Math.sin(ha)*i, 1,1, '#5a3b21');
+    px(4+Math.cos(ha)*6, 13+Math.sin(ha)*6, 2,2, '#6d4522');
+  }
+  ctx.restore();
+}
+
+function drawHUD(){
+  // top bar
+  px(0,0,W,20,'rgba(10,12,16,0.72)');
+  px(0,20,W,1,'#6b4a24');
+
+  txt('CREW', 4, 3, P.ochre);
+  for(let i=0;i<CREW_START;i++){
+    const on = i<G.crew;
+    px(30+i*7, 3, 3,5, on?P.cream:'#3a2f26');
+    px(30+i*7, 8, 3,1, on?'#b39a72':'#2e251d');
+  }
+  px(30+CREW_START*7+6, 3, 3,5, G.odysseus?P.gold:'#4a3a20');
+  txt('ODYSSEUS', 30+CREW_START*7+12, 3, G.odysseus?P.gold:'#6b5a3a');
+  txt('HEADS', 236, 3, P.terra);
+  for(let i=0;i<6;i++){
+    const fed = G.heads[i] && G.heads[i].used;
+    px(275+i*7, 3, 4,5, fed?'#4a2f26':'#8c3a24');
+    if(!fed) px(276+i*7, 4, 1,1, P.terra);
+  }
+
+  // phase strip
+  const p = phaseInfo();
+  const name = p.name==='swallow'?'CHARYBDIS SWALLOWS':p.name==='spew'?'CHARYBDIS SPEWS':'the gulf is still';
+  const col  = p.name==='swallow'?P.terra:p.name==='spew'?P.foam:'#8fae9e';
+  txt(name, 4, 12, col);
+
+  // progress up the strait
+  const prog = 1 - Math.max(0,Math.min(1,(G.ship.y-EXIT_Y)/(START_Y-EXIT_Y)));
+  txt('ITHACA', W-6, 12, '#8d7a5e', 'right');
+  px(W-58, 14, 22,3, '#2a2119');
+  px(W-58, 14, Math.round(22*prog),3, P.gold);
+
+  // speed
+  txt('OARS '+('|'.repeat(Math.round((G.ship.speed-20)/9))), 4, H-11, P.ochre);
+  txt('×'+cfg.mult.toFixed(2), W-4, H-11, cfg.mult<0.98?'#d06a8a':P.gold, 'right');
+}
+
+/* Odysseus, about 11px tall. 'hang' = gripping the bough by both hands,
+   'swim' = head and arms above water, going round with the current. */
+/* Every part gets a dark edge, or a 2px limb on dark water reads as a smudge. */
+function pxo(x,y,w,h,c){
+  px(x-1, y-1, w+2, h+2, 'rgba(8,10,14,0.85)');
+  px(x, y, w, h, c);
+}
+function drawOdysseus(x,y,pose,sway){
+  const skin='#e0bf8e', tunic=P.cream, hair='#241a13', beard='#7a5330';
+  if(pose==='hang'){
+    const s = sway||0;
+    pxo(x-5, y,    2,2, skin);      // left hand, gripping the bough
+    pxo(x+3, y,    2,2, skin);      // right hand
+    pxo(x-4, y+2,  2,3, skin);      // arms, taking his whole weight
+    pxo(x+3, y+2,  2,3, skin);
+    pxo(x-2, y+4,  5,4, skin);      // head
+    px (x-2, y+4,  5,2, hair);      // hair
+    px (x-2, y+7,  5,1, beard);     // beard
+    px (x-1, y+6,  1,1, hair);      // eyes
+    px (x+1, y+6,  1,1, hair);
+    pxo(x-3+s, y+8,  7,6, tunic);   // tunic
+    px (x-3+s, y+10, 7,1, P.terra); // belt
+    pxo(x-3+s, y+14, 2,4, skin);    // legs, swinging over the gulf
+    pxo(x+2+s, y+14, 2,4, skin);
+  } else {
+    const kick = Math.sin(G.t*7) > 0 ? 1 : 0;
+    pxo(x-2, y-4,  5,4, skin);      // head above water
+    px (x-2, y-4,  5,2, hair);
+    px (x-2, y-1,  5,1, beard);
+    pxo(x-3, y+1,  7,4, tunic);     // what the sea has left of his tunic
+    pxo(x-7, y+1+kick, 4,2, skin);  // arms, thrashing
+    pxo(x+4, y+2-kick, 4,2, skin);
+    px (x-9, y+4, 3,1, P.foam);     // the water breaking round him
+    px (x+7, y+3, 3,1, P.foam);
+  }
+}
+function drawFig(){
+  const f=G.fig;
+  px(0,0,W,H,'#0a1a24');
+  // funnel seen from above
+  const cx=W/2, cy=H/2+18, R=86;
+  for(let i=7;i>=0;i--){
+    const rr=R*((i+1)/8);
+    ctx.fillStyle=['#20546a','#17394d','#0f2c3d','#0b2331','#081a26','#05121a','#02090e','#000'][7-i];
+    ctx.beginPath(); ctx.ellipse(cx,cy,rr,rr*0.62,0,0,Math.PI*2); ctx.fill();
+  }
+  for(let a=0;a<4;a++) for(let s=0;s<30;s++){
+    const t=s/30, ang=-G.t*3+a*1.57+t*6.6, rr=R*(0.1+0.9*t);
+    px(cx+Math.cos(ang)*rr, cy+Math.sin(ang)*rr*0.62, 2,2, t>0.5?P.foam:'#6fa5a3');
+  }
+
+  // the wild fig, reaching out over the gulf
+  px(cx-56, 2, 7, 46, '#4a2f1a');                  // trunk down from the cliff
+  px(cx-56, 44, 96, 4, '#3a2416');                 // the bough
+  for(let i=0;i<17;i++){
+    const bx = cx-52 + i*6;
+    const oy = [0,-3,-1,-4,-2][i%5];
+    figLeaf(bx, 39+oy, i%2 ? '#2f6b3a' : '#276033', '#3f8a4a');
+  }
+  for(let i=0;i<4;i++) figFruit(cx-40+i*24, 49);   // fruit hanging under the bough
+  px(cx-56, 2, 7, 3, '#5a3b21');
+  const grabX = cx, grabY = 48;
+  const glow = f.stage==='grab' ? (0.5+0.5*Math.sin(G.t*8)) : 1;
+  ctx.globalAlpha = glow; px(grabX-10, grabY, 20,3, P.gold); ctx.globalAlpha=1;
+
+  if(f.stage==='grab'){
+    const ox = cx + Math.cos(f.ang)*R*0.86, oy = cy + Math.sin(f.ang)*R*0.62*0.86;
+    ctx.save(); ctx.translate(ox, oy); ctx.scale(1.5,1.5);
+    drawOdysseus(0, 0, 'swim'); ctx.restore();
+    // near-marker
+    let a=((f.ang+Math.PI/2)%(Math.PI*2)+Math.PI*2)%(Math.PI*2);
+    const off=Math.min(a,Math.PI*2-a);
+    if(off<0.55) px(grabX-12, grabY-6, 24,2, P.foam);
+  } else if(f.stage==='wait'){
+    ctx.save(); ctx.translate(grabX, grabY-3); ctx.scale(1.6,1.6);
+    drawOdysseus(0, 0, 'hang', Math.round(Math.sin(G.t*2.2))); ctx.restore();
+    if(f.mast){
+      // wreckage lying flat on the water, carried round by the current
+      const rr = R*0.62;
+      const mx = cx + Math.cos(f.mast.ang)*rr;
+      const my = cy + Math.sin(f.mast.ang)*rr*0.62;
+      ctx.save();
+      ctx.translate(mx, my);
+      ctx.rotate(f.mast.ang + Math.PI/2);          // it lies along the current
+      ctx.scale(1, 0.72);                          // seen at the same slant as the funnel
+      px(-19, -1, 38,3, '#6d4522');                // the spar
+      px(-19, -1, 38,1, '#8a6230');
+      px(-19, 2,  38,1, '#4a2f1a');
+      px(-5,  -6, 3,13, '#5a3b21');                // the yard across it
+      px(-13, -3, 5,1, P.foam);                    // wash breaking over it
+      px(9,   3,  5,1, P.foam);
+      ctx.restore();
+      if(mastAligned(f)) px(grabX-14, grabY+34, 28,2, P.foam);
+      txt(f.window>0 ? 'NOW — LET GO' : 'wait for it to swing under you',
+          cx, cy+40, f.window>0?P.foam:'#5c7f86', 'center');
+    } else {
+      txt('...nothing below but black water...', cx, cy+40, '#5c7f86','center');
+    }
+  }
+
+  bigTxt('THE WILD FIG', W/2, 4, P.gold, 15);
+  px(0,H-40,W,40,'rgba(10,12,16,0.82)');
+  px(0,H-40,W,1,'#6b4a24');
+  txt(f.msg, W/2, H-33, f.flash>0? P.terra : P.cream, 'center');
+  const cue = f.stage==='grab' ? 'PRESS SPACE OR TAP AS YOU PASS THE GOLD BRANCH'
+                               : 'PRESS SPACE OR TAP AS THE MAST SWINGS BENEATH YOU';
+  txt(cue, W/2, H-21, P.gold, 'center');
+  txt('grip: '+ '\u2666'.repeat(Math.max(0,f.tries)), W/2, H-10, P.ochre, 'center');
+}
+
+/* ---- title & results ---- */
+function drawTitle(){
+  px(0,0,W,H,'rgba(9,12,16,0.78)');
+  bigTxt('SCYLLA & CHARYBDIS', W/2, 44, P.cream, 19);
+  px(70, 70, 180, 2, P.terra);
+  txt('ODYSSEY XII — THE STRAIT', W/2, 78, P.ochre, 'center');
+
+  txt('Charybdis is to port. Scylla is to starboard.', W/2, 104, P.cream, 'center');
+  txt('Circe says: lose six men, not the ship.', W/2, 116, P.cream, 'center');
+
+  txt('\u2190 \u2192  rudder        \u2191 \u2193  oar-stroke', W/2, 142, P.gold, 'center');
+  txt('Set the gulf on the stele beside you.', W/2, 154, '#9a8465', 'center');
+  txt('If she swallows the ship, grab the wild fig.', W/2, 166, '#9a8465', 'center');
+
+  const b = 0.5+0.5*Math.sin(G.t*4);
+  ctx.globalAlpha = 0.45+0.55*b;
+  txt('PRESS SPACE OR TAP TO CAST OFF', W/2, 186, P.terra, 'center');
+  ctx.globalAlpha = 1;
+  if(G.best) txt('best offering: '+G.best, W/2, 206, '#8d7a5e', 'center');
+}
+
+function drawOver(){
+  px(0,0,W,H,'rgba(9,12,16,0.86)');
+  const lost = CREW_START - G.crew;
+  let head, lines, col;
+
+  if(G.result==='through' && G.crew===CREW_START){
+    head='UNTOUCHED'; col=P.gold;
+    lines=['Not one man taken, and the gulf behind you.',
+           'Circe would call that luck, not seamanship.'];
+  } else if(G.result==='through' && G.odysseus){
+    head='THROUGH THE STRAIT'; col=P.cream;
+    lines=[lost+' men gone to the heads of Scylla.',
+           lost<=6 ? 'As Circe counselled: the few for the many.'
+                   : 'More than six. She fed better than Homer allowed.',
+           'You sail on. It is the most pitiful sight you have seen.'];
+  } else if(G.result==='figtree'){
+    head='YOU ALONE'; col=P.ochre;
+    lines=['The ship is gone. The crew is gone.',
+           'You clung to the wild fig until the mast came up,',
+           'and paddled out of the gulf with your hands.'];
+  } else if(G.result==='drowned'){
+    head='THE GULF TOOK YOU'; col=P.terra;
+    lines=['No fig tree, no mast, no Ithaca.',
+           'Charybdis swallowed the black water, and you with it.'];
+  } else {
+    head='SHE TOOK YOU'; col=P.terra;
+    lines=['The crew was already eaten. The sixth head found you',
+           'calling out your name — the worst of all sights.'];
+  }
+
+  bigTxt(head, W/2, 30, col, 20);
+  px(60, 58, 200, 2, col);
+  lines.forEach((l,i)=> txt(l, W/2, 70+i*12, '#c9b791','center'));
+
+  const sp = scoreParts();
+  txt('crew home      '+G.crew+' × 120  = '+sp.crewPts, W/2, 128, P.cream,'center');
+  txt('captain alive          '+(G.odysseus?'+800':'   +0'), W/2, 140, P.cream,'center');
+  txt('swiftness           +'+sp.swift, W/2, 152, sp.swift?P.cream:'#8d7a5e','center');
+  txt('gulf as set          × '+cfg.mult.toFixed(2), W/2, 164, cfg.mult<0.98?'#d06a8a':P.gold,'center');
+  px(96,176,128,1,'#6b4a24');
+  bigTxt(String(G.score), W/2, 180, P.gold, 18);
+
+  const b = 0.5+0.5*Math.sin(G.t*4);
+  ctx.globalAlpha=0.4+0.6*b;
+  txt('SPACE OR TAP TO SAIL AGAIN', W/2, 214, P.terra,'center');
+  ctx.globalAlpha=1;
+}
+
+/* ================= loop ================= */
+let last=performance.now();
+function frame(now){
+  const dt = Math.min(0.05,(now-last)/1000); last=now;
+  try{ update(dt); draw(); }
+  catch(err){ console.error(err); }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+})();
+</script>
+</body>
+</html>
