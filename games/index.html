@@ -33,6 +33,14 @@
     .card h2 { font: normal 1.5rem/1.2 var(--font-serif); color: var(--ink); margin: 0 0 0.35em; }
     .card p { margin: 0 0 0.9em; font-size: 0.95rem; }
     .go { font: 0.7rem/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.12em; color: var(--teal-dark); }
+    .elsewhere { max-width: 820px; margin: 0 auto; padding: 8px 24px 0; }
+    .section-label {
+      font: 0.7rem/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.12em;
+      color: var(--muted); margin: 0 0 12px; padding-top: 16px; border-top: 1px solid var(--rule);
+    }
+    .card.offsite { border-style: dashed; }
+    .card.offsite .go { color: var(--muted); text-transform: none; letter-spacing: 0.04em; }
+    .card.offsite:hover .go { color: var(--teal-dark); }
     footer { max-width: 820px; margin: 0 auto; padding: 16px 24px 48px; color: var(--muted); font: 0.75rem/1.5 var(--font-mono); }
   </style>
 </head>
@@ -59,6 +67,16 @@
       <span class="go">Play →</span>
     </a>
   </main>
+  <section class="elsewhere">
+    <p class="section-label">Elsewhere</p>
+    <a class="card offsite" href="https://creatures.sweeney.io" target="_blank" rel="noopener">
+      <h2>Creatures 2.0</h2>
+      <p>Grass grows, rabbits eat it and breed, foxes hunt the rabbits — turn the dials and watch the
+        populations settle or collapse. A 1996 school simulation, read back out of its Windows binary
+        and rebuilt for the browser.</p>
+      <span class="go">creatures.sweeney.io ↗</span>
+    </a>
+  </section>
   <footer>2026.sweeney.io</footer>
 </body>
 </html>
