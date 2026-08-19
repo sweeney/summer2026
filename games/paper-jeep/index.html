@@ -1,0 +1,1684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Paper Jeep</title>
+<style>
+  :root{
+    --paper:#f0e9d6;
+    --ink:#2b2723;
+    --rule:#7d97b8;
+    --olive:#6e7f4e;
+    --rust:#b34a32;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;height:100%;overflow:hidden;background:var(--paper);}
+  body{
+    font-family:"Bradley Hand","Segoe Print","Chalkboard SE","Comic Sans MS",cursive;
+    color:var(--ink);
+    user-select:none;
+  }
+  canvas{display:block;position:absolute;inset:0;outline:none;}
+
+  #focusnag{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-2deg);
+    z-index:8;font-size:24px;padding:14px 28px;pointer-events:none;
+    background:rgba(240,233,214,.92);
+    border:3px dashed var(--rust);color:var(--rust);
+    border-radius:255px 14px 225px 15px/15px 225px 15px 255px;
+    display:none;
+  }
+  #focusnag.show{display:block;}
+
+  #pads{position:absolute;inset:auto 0 0 0;height:132px;z-index:4;}
+
+  .sketchbox{
+    background:rgba(240,233,214,.86);
+    border:2.5px solid var(--ink);
+    border-radius:255px 14px 225px 15px/15px 225px 15px 255px;
+    padding:10px 16px;
+    box-shadow:2px 3px 0 rgba(43,39,35,.22);
+  }
+
+  #hud{position:absolute;top:14px;left:14px;transform:rotate(-1.1deg);pointer-events:none;}
+  #hud .crumb{font-size:11px;letter-spacing:.1em;text-transform:uppercase;opacity:.6;margin-bottom:3px;}
+  #hud .crumb a{color:var(--ink);pointer-events:auto;}
+  #hud .crumb a:hover{color:var(--rust);}
+  #hud .lvl{font-size:13px;letter-spacing:.06em;opacity:.65;}
+  #hud .name{font-size:22px;line-height:1.1;margin-top:-2px;}
+  #padG{right:18px;bottom:132px;width:66px;height:66px;font-size:24px;
+    border-color:#3a5f8a;color:#3a5f8a;}
+  #hud .hint{font-size:13px;opacity:.75;margin-top:3px;max-width:250px;line-height:1.25;}
+
+  #track{position:absolute;top:16px;left:50%;transform:translateX(-50%) rotate(.6deg);pointer-events:none;}
+  #trackcv{display:block;}
+
+#topbtns{position:absolute;top:64px;right:14px;z-index:6;display:flex;
+    gap:8px;flex-direction:column;align-items:flex-end;}
+  .tab{font-size:14px;padding:5px 14px;transform:rotate(.8deg);}
+
+  #sheet{position:absolute;left:50%;top:50%;z-index:9;
+    transform:translate(-50%,-50%) rotate(-.7deg);
+    width:min(560px,90vw);max-height:78vh;overflow:auto;display:none;
+    padding:18px 22px 22px;}
+  #sheet.show{display:block;}
+  #sheet h2{margin:0 0 12px;font-size:26px;}
+  .closeb{position:absolute;top:10px;right:12px;padding:1px 11px;font-size:19px;
+    border-radius:50% 45% 55% 50%/50% 55% 45% 50%;}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(122px,1fr));gap:9px;}
+  .cell{border:2.5px solid var(--ink);background:var(--paper);cursor:pointer;
+    border-radius:200px 12px 190px 14px/14px 190px 12px 200px;
+    padding:7px 9px;text-align:left;font:inherit;font-size:13px;color:var(--ink);
+    box-shadow:2px 3px 0 rgba(43,39,35,.2);}
+  .cell:hover{transform:translate(1px,1px);}
+  .cell .n{font-size:11px;opacity:.55;}
+  .cell.locked{opacity:.4;cursor:not-allowed;border-style:dashed;box-shadow:none;}
+  .cell.on{background:rgba(179,74,50,.16);border-color:var(--rust);}
+  .cell.done::after{content:" \2713";color:var(--rust);}
+
+  #unlocktoast{position:absolute;left:50%;top:22%;z-index:10;display:none;
+    transform:translate(-50%,0) rotate(-2deg);font-size:19px;padding:12px 22px;
+    border-color:var(--rust);color:var(--rust);text-align:center;}
+  #unlocktoast.show{display:block;animation:drop .3s cubic-bezier(.2,1.5,.5,1);}
+
+  #tries{position:absolute;top:14px;right:14px;transform:rotate(1.4deg);font-size:15px;pointer-events:none;}
+
+  .card{
+    position:absolute;left:50%;top:50%;
+    transform:translate(-50%,-50%) rotate(-1.6deg);
+    text-align:center;padding:22px 34px 24px;
+    min-width:262px;display:none;z-index:5;
+  }
+  .card.show{display:block;animation:drop .28s cubic-bezier(.2,1.5,.5,1);}
+  @keyframes drop{from{transform:translate(-50%,-64%) rotate(-5deg);opacity:0}}
+  .card h2{margin:0 0 4px;font-size:29px;}
+  .card p{margin:0 0 14px;font-size:15px;opacity:.75;line-height:1.35;}
+
+  button{
+    font:inherit;font-size:17px;cursor:pointer;color:var(--ink);
+    background:var(--paper);
+    border:2.5px solid var(--ink);
+    border-radius:225px 15px 255px 15px/15px 255px 15px 225px;
+    padding:7px 22px;box-shadow:2px 3px 0 rgba(43,39,35,.25);
+  }
+  button:hover{transform:translate(1px,1px);box-shadow:1px 2px 0 rgba(43,39,35,.25);}
+  button:focus-visible{outline:3px dashed var(--rust);outline-offset:3px;}
+
+  .pad{
+    position:absolute;bottom:16px;width:104px;height:104px;
+    border:3px solid var(--ink);border-radius:60% 40% 55% 45%/45% 55% 40% 60%;
+    background:rgba(240,233,214,.55);
+    display:flex;align-items:center;justify-content:center;font-size:34px;
+    cursor:pointer;
+  }
+  .pad:active{background:rgba(179,74,50,.3);}
+  #padL{left:18px;} #padR{right:18px;}
+  .tiltpad{width:66px;height:66px;bottom:34px;font-size:24px;opacity:.8;}
+  #padU{left:136px;} #padD{right:136px;}
+  @media (max-width:620px){
+    .tiltpad{width:54px;height:54px;bottom:40px;font-size:19px;}
+    #padU{left:126px;} #padD{right:126px;}
+  }
+
+  #keys{position:absolute;bottom:12px;left:50%;transform:translateX(-50%) rotate(-.5deg);
+        font-size:13px;opacity:.55;pointer-events:none;text-align:center;}
+
+  @media (prefers-reduced-motion:reduce){ .card.show{animation:none;} }
+</style>
+</head>
+<body>
+
+<canvas id="c" tabindex="0"></canvas>
+
+<div id="focusnag">Click here to drive</div>
+
+<div id="hud" class="sketchbox">
+  <div class="crumb"><a href="../../">2026</a> &rarr; <a href="../">Games</a></div>
+  <div class="lvl" id="lvlno">level 1 of 10</div>
+  <div class="name" id="lvlname">First Drive</div>
+  <div class="hint" id="lvlhint"></div>
+</div>
+
+<div id="track" class="sketchbox" style="padding:8px 14px 4px">
+  <canvas id="trackcv" width="230" height="30"></canvas>
+</div>
+
+<div id="tries" class="sketchbox">crashes: <span id="triesn">0</span></div>
+
+<div id="card" class="card sketchbox">
+  <h2 id="cardh">Cleared</h2>
+  <p id="cardp"></p>
+  <button id="cardb">Next level</button>
+</div>
+
+<div id="topbtns">
+  <button id="btnLevels" class="tab">Levels</button>
+  <button id="btnKit" class="tab">Wardrobe</button>
+</div>
+
+<div id="sheet" class="sketchbox">
+  <button id="sheetClose" class="closeb">&times;</button>
+  <h2 id="sheetTitle">Levels</h2>
+  <div id="sheetBody"></div>
+</div>
+
+<div id="unlocktoast" class="sketchbox"></div>
+
+<div id="pads">
+  <div class="pad" id="padL">&#8592;</div>
+  <div class="pad tiltpad" id="padU" title="nose up">&#8598;</div>
+  <div class="pad tiltpad" id="padD" title="nose down">&#8600;</div>
+  <div class="pad" id="padR">&#8594;</div>
+  <div class="pad" id="padG" title="glide">&#9651;</div>
+</div>
+
+<div id="keys">&#8594; drive &nbsp;·&nbsp; &#8592; reverse &nbsp;·&nbsp; &#8593; &#8595; balance &nbsp;·&nbsp; space glide &nbsp;·&nbsp; R restart</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+<script>
+(function(){
+"use strict";
+
+if(typeof Matter === "undefined"){
+  document.body.innerHTML = '<div style="padding:40px;font:20px cursive">Could not load the physics library. Check your connection and reload.</div>';
+  return;
+}
+
+const {Engine, Bodies, Body, Composite, Constraint, Events} = Matter;
+
+/* ───────────────────────── levels ───────────────────────── */
+/* segment types:  f = flat        {w}
+                   s = slope       {w, r}   r = rise, positive goes up
+                   g = open gap    {w, drop}
+                   p = pit w/floor {w, d}                                  */
+
+const LEVELS = [
+  { name:"First Drive", hint:"Hold \u2192 to drive. Reach the flag.",
+    spec:[{t:'f',w:420},{t:'s',w:320,r:70},{t:'s',w:300,r:-70},{t:'f',w:420}],
+    objs:[{t:'rock',x:1120,r:13}] },
+
+  { name:"Bumpy Road", hint:"Loose rocks. Carry a bit of speed into them.",
+    spec:[{t:'f',w:320},{t:'s',w:240,r:50},{t:'s',w:240,r:-50},{t:'s',w:260,r:80},{t:'s',w:260,r:-80},{t:'f',w:360}],
+    objs:[{t:'rock',x:420,r:13},{t:'rock',x:900,r:15},{t:'rock',x:1380,r:14}] },
+
+  { name:"Take Off", hint:"Up the ramp and over. Lean with \u2190 \u2192 while airborne.",
+    spec:[{t:'f',w:520},{t:'s',w:300,r:78},{t:'g',w:250,drop:190},{t:'s',w:320,r:-90},{t:'f',w:380}],
+    objs:[] },
+
+  { name:"Mind the Gap", hint:"The crate isn't scenery. Shove it in the hole.",
+    spec:[{t:'f',w:560},{t:'p',w:158,d:118},{t:'f',w:480}],
+    objs:[{t:'block',x:320}] },
+
+  { name:"Rock Garden", hint:"Momentum beats patience on the big ones.",
+    spec:[{t:'f',w:300},{t:'s',w:260,r:90},{t:'f',w:180},{t:'s',w:200,r:-45},{t:'f',w:260},{t:'s',w:280,r:105},{t:'f',w:420}],
+    objs:[{t:'rock',x:380,r:14},{t:'rock',x:640,r:20},{t:'rock',x:920,r:15},
+          {t:'rock',x:1120,r:18},{t:'rock',x:1560,r:21}] },
+
+  { name:"Barrel Run", hint:"Barrels scatter. Hit them square or go round.",
+    spec:[{t:'f',w:340},{t:'s',w:240,r:60},{t:'f',w:200},{t:'s',w:220,r:-60},{t:'f',w:300},{t:'s',w:200,r:70},{t:'f',w:400}],
+    objs:[{t:'barrel',x:400},{t:'barrel',x:436},{t:'barrel',x:472},
+          {t:'rock',x:700,r:13},
+          {t:'barrel',x:1080},{t:'barrel',x:1116},
+          {t:'barrel',x:1420},{t:'barrel',x:1456},{t:'barrel',x:1492}] },
+
+  { name:"Two Holes", hint:"Two crates, two holes. Don't push the wrong one past.",
+    spec:[{t:'f',w:440},{t:'p',w:158,d:118},{t:'f',w:420},{t:'p',w:158,d:118},{t:'f',w:420}],
+    objs:[{t:'block',x:280},{t:'block',x:790}] },
+
+  { name:"Tipping Point", hint:"Drive up the plank. Past the middle it tips the other way.",
+    spec:[{t:'f',w:480},{t:'f',w:300},{t:'f',w:300},{t:'s',w:220,r:60},{t:'f',w:380}],
+    objs:[{t:'seesaw',x:700,y:0,len:340},{t:'barrel',x:1180},{t:'barrel',x:1216}] },
+
+  { name:"Long Jump", hint:"Two hops. Glide onto the island, then ramp off it again.",
+    spec:[{t:'f',w:620},{t:'s',w:340,r:92},{t:'g',w:230,drop:180},{t:'f',w:260},{t:'s',w:300,r:82},{t:'g',w:240,drop:195},{t:'s',w:320,r:-80},{t:'f',w:400}],
+    objs:[] },
+
+  { name:"Falling Away", hint:"Those tiles won't hold. Keep moving.",
+    spec:[{t:'f',w:420},{t:'g',w:400,drop:0},{t:'f',w:420}],
+    objs:[{t:'crumble',x:460,y:0,n:5,tw:80}] },
+
+  { name:"Swing Time", hint:"Wait for it to swing past, then go.",
+    spec:[{t:'f',w:460},{t:'f',w:340},{t:'s',w:200,r:60},{t:'f',w:380}],
+    objs:[{t:'hammer',x:620,len:132,push:6},{t:'barrel',x:900},{t:'barrel',x:936}] },
+
+  { name:"Going Up", hint:"Ride the platform. Time your run onto it.",
+    spec:[{t:'f',w:420},{t:'g',w:280,drop:-90},{t:'f',w:400}],
+    objs:[{t:'lift',x:560,y:0,w:170,h:20,ax:0,ay:80,rate:.014}] },
+
+  { name:"The Climb", hint:"Steep, and something heavy is coming down it.",
+    spec:[{t:'f',w:300},{t:'s',w:230,r:95},{t:'f',w:120},{t:'s',w:230,r:100},{t:'f',w:120},{t:'s',w:240,r:105},{t:'f',w:200},{t:'s',w:300,r:-160},{t:'f',w:380}],
+    objs:[{t:'rock',x:620,r:13},{t:'boulder',x:880,r:27},{t:'rock',x:1010,r:13}] },
+
+  { name:"The Works", hint:"Fill the hole, then two hops with an island between.",
+    spec:[{t:'f',w:420},{t:'p',w:158,d:118},{t:'f',w:320},{t:'s',w:300,r:80},{t:'g',w:225,drop:180},{t:'f',w:240},{t:'s',w:260,r:78},{t:'g',w:235,drop:195},{t:'s',w:280,r:-80},{t:'f',w:380}],
+    objs:[{t:'block',x:250},{t:'barrel',x:700},{t:'barrel',x:736},{t:'boulder',x:840,r:22}] },
+
+  { name:"The Gauntlet", hint:"Everything at once. Good luck.",
+    spec:[{t:'f',w:380},{t:'p',w:158,d:118},{t:'f',w:300},{t:'s',w:240,r:90},{t:'f',w:160},{t:'s',w:160,r:-40},{t:'f',w:280},{t:'p',w:158,d:118},{t:'f',w:320},{t:'s',w:320,r:86},{t:'g',w:235,drop:185},{t:'f',w:240},{t:'s',w:260,r:78},{t:'g',w:235,drop:195},{t:'s',w:300,r:-90},{t:'f',w:420}],
+    objs:[{t:'block',x:230},{t:'rock',x:700,r:14},{t:'boulder',x:1000,r:24},
+          {t:'barrel',x:1600},{t:'barrel',x:1636},{t:'block',x:1500},
+          {t:'hammer',x:1180,len:120,push:5},{t:'rock',x:2050,r:15}] },
+
+  { name:"Tightrope", hint:"Rope bridges. They sag and swing — don't dawdle.",
+    spec:[{t:'f',w:400},{t:'g',w:300,drop:0},{t:'f',w:220},{t:'g',w:300,drop:0},{t:'f',w:380}],
+    objs:[{t:'bridge',x:550,w:320,n:9},{t:'bridge',x:1070,w:320,n:9}] },
+
+  { name:"Chain Gang", hint:"Three hammers, all out of step. Read the rhythm.",
+    spec:[{t:'f',w:420},{t:'f',w:300},{t:'f',w:300},{t:'s',w:220,r:60},{t:'f',w:380}],
+    objs:[{t:'hammer',x:560,len:128,push:7},{t:'hammer',x:820,len:150,push:-5},
+          {t:'hammer',x:1080,len:118,push:8},{t:'barrel',x:1320},{t:'barrel',x:1356}] },
+
+  { name:"Crumble Run", hint:"Five tiles, none of them patient. Don't stop.",
+    spec:[{t:'f',w:420},{t:'g',w:500,drop:0},{t:'f',w:420}],
+    objs:[{t:'crumble',x:466,y:0,n:5,tw:95}] },
+
+  { name:"Elevator Pitch", hint:"Ride up, then across. Time your run onto each platform.",
+    spec:[{t:'f',w:400},{t:'g',w:260,drop:-110},{t:'f',w:300},{t:'g',w:260,drop:0},{t:'f',w:400}],
+    objs:[{t:'lift',x:530,y:0,w:180,h:20,ax:0,ay:105,rate:.013},
+          {t:'lift',x:1090,y:-110,w:170,h:20,ax:105,ay:0,rate:.011}] },
+
+  { name:"Big Air", hint:"Two sails onto a small island. Hold glide on both.",
+    spec:[{t:'f',w:700},{t:'s',w:340,r:92},{t:'g',w:290,drop:175},{t:'f',w:170},{t:'s',w:240,r:80},{t:'g',w:300,drop:205},{t:'s',w:320,r:-80},{t:'f',w:400}],
+    objs:[] },
+
+  { name:"Seesaw Chain", hint:"Two planks. Get off the first before it drops you.",
+    spec:[{t:'f',w:440},{t:'f',w:300},{t:'f',w:240},{t:'f',w:300},{t:'f',w:400}],
+    objs:[{t:'seesaw',x:600,y:0,len:340},{t:'seesaw',x:1140,y:0,len:340}] },
+
+  { name:"Rock Bottom", hint:"Two crates, two holes, and a boulder that wants the same holes.",
+    spec:[{t:'f',w:380},{t:'p',w:158,d:118},{t:'f',w:280},{t:'p',w:158,d:118},{t:'f',w:300},{t:'s',w:240,r:80},{t:'f',w:400}],
+    objs:[{t:'block',x:220},{t:'block',x:700},{t:'boulder',x:1150,r:26},{t:'rock',x:1450,r:16}] },
+
+  { name:"The Long Haul", hint:"Crate, tiles, then a swinging hammer over a rope bridge.",
+    spec:[{t:'f',w:360},{t:'p',w:158,d:118},{t:'f',w:240},{t:'g',w:240,drop:0},{t:'f',w:200},{t:'s',w:240,r:80},{t:'f',w:220},{t:'g',w:250,drop:0},{t:'f',w:260},{t:'s',w:320,r:95},{t:'g',w:230,drop:185},{t:'f',w:250},{t:'s',w:260,r:78},{t:'g',w:240,drop:200},{t:'s',w:300,r:-80},{t:'f',w:420}],
+    objs:[{t:'block',x:200},{t:'crumble',x:790,y:0,n:3,tw:88},{t:'bridge',x:1783,w:290,n:9},{t:'hammer',x:1783,len:118,push:7},{t:'rock',x:1980,r:15}] },
+
+  { name:"Rope Walk", hint:"Three bridges. Steady throttle beats a mad dash.",
+    spec:[{t:'f',w:380},{t:'g',w:260,drop:0},{t:'f',w:180},{t:'g',w:260,drop:0},{t:'f',w:180},{t:'g',w:260,drop:0},{t:'f',w:380}],
+    objs:[{t:'bridge',x:510,w:280,n:8},{t:'bridge',x:950,w:280,n:8},{t:'bridge',x:1390,w:280,n:8}] },
+
+  { name:"Pivot Practice", hint:"A plank, a hole and a crate. In that order.",
+    spec:[{t:'f',w:420},{t:'f',w:320},{t:'f',w:240},{t:'p',w:158,d:118},{t:'f',w:400}],
+    objs:[{t:'seesaw',x:660,y:0,len:320},{t:'block',x:280},{t:'barrel',x:1000}] },
+
+  { name:"Hammer Alley", hint:"Four of them, and the last one swings hardest.",
+    spec:[{t:'f',w:420},{t:'f',w:280},{t:'f',w:280},{t:'f',w:280},{t:'s',w:200,r:60},{t:'f',w:380}],
+    objs:[{t:'hammer',x:540,len:126,push:6},{t:'hammer',x:790,len:146,push:-6},
+          {t:'hammer',x:1040,len:116,push:7},{t:'hammer',x:1290,len:134,push:-9},
+          {t:'rock',x:1500,r:15}] },
+
+  { name:"Crumble Climb", hint:"Tiles first, then straight into the steep bit.",
+    spec:[{t:'f',w:400},{t:'g',w:330,drop:0},{t:'f',w:200},{t:'s',w:240,r:100},{t:'f',w:140},{t:'s',w:240,r:105},{t:'f',w:380}],
+    objs:[{t:'crumble',x:440,y:0,n:4,tw:80},{t:'boulder',x:1100,r:24}] },
+
+  { name:"Lift Off", hint:"Up, across, then down the far side. Mind the swing.",
+    spec:[{t:'f',w:400},{t:'g',w:260,drop:-130},{t:'f',w:280},{t:'g',w:260,drop:130},{t:'f',w:400}],
+    objs:[{t:'lift',x:530,w:180,h:20,ax:0,ay:120,rate:.012},
+          {t:'lift',x:1080,y:-130,w:170,h:20,ax:0,ay:120,rate:.010,phase:3.1},
+          {t:'hammer',x:880,len:120,push:6}] },
+
+  { name:"Last Page", hint:"Everything the notebook has left. Take your time.",
+    spec:[{t:'f',w:380},{t:'p',w:158,d:118},{t:'f',w:260},{t:'f',w:300},{t:'f',w:200},
+          {t:'g',w:280,drop:0},{t:'f',w:200},{t:'s',w:300,r:90},{t:'g',w:230,drop:185},
+          {t:'f',w:250},{t:'s',w:260,r:78},{t:'g',w:240,drop:200},{t:'s',w:300,r:-80},{t:'f',w:420}],
+    objs:[{t:'block',x:210},{t:'seesaw',x:940,y:0,len:320},
+          {t:'bridge',x:1438,w:320,n:9},{t:'hammer',x:1438,len:124,push:8},
+          {t:'boulder',x:2320,r:24},{t:'barrel',x:2500},{t:'barrel',x:2536}] }
+];
+
+const BLOCK_W = 140, BLOCK_H = 110;
+const RUNWAY = 620;   // road behind the start line, for run-ups
+const CAT_WALL = 0x0002;   // barriers live in their own collision layer
+
+/* Unlocked one per three levels cleared. Drawn on top of the jeep. */
+const ACCESSORIES = [
+  { id:"none",    name:"Nothing",      at:0  },
+  { id:"party",   name:"Party hat",    at:3  },
+  { id:"cowboy",  name:"Cowboy hat",   at:6  },
+  { id:"plough",  name:"Snow plough",  at:9  },
+  { id:"antlers", name:"Antlers",      at:12 },
+  { id:"propeller",name:"Propeller cap",at:15 },
+  { id:"crown",   name:"Paper crown",  at:18 },
+  { id:"rocket",  name:"Rocket fins",  at:21 }
+];
+
+/* ───────────────────────── sketch helpers ───────────────────────── */
+
+function mulberry32(a){
+  return function(){
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+/* lay down a wobbling path through the given points */
+function inkPath(ctx, pts, seed, amp){
+  const rnd = mulberry32(seed);
+  const j = pts.map(p => ({
+    x: p.x + (rnd() - .5) * amp * 2,
+    y: p.y + (rnd() - .5) * amp * 2
+  }));
+  ctx.beginPath();
+  ctx.moveTo(j[0].x, j[0].y);
+  for(let i = 1; i < j.length; i++){
+    const a = j[i-1], b = j[i];
+    ctx.quadraticCurveTo(
+      (a.x + b.x)/2 + (rnd() - .5) * amp * 2.2,
+      (a.y + b.y)/2 + (rnd() - .5) * amp * 2.2,
+      b.x, b.y
+    );
+  }
+  return j;
+}
+
+/* two passes of the pen, slightly apart, so corners overshoot */
+function inkStroke(ctx, pts, seed, opts){
+  const o = opts || {};
+  const amp = o.amp != null ? o.amp : 1.6;
+  const w = o.w != null ? o.w : 2.2;
+  const col = o.col || "#2b2723";
+  const close = !!o.close;
+  ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.strokeStyle = col;
+  ctx.globalAlpha = .55; ctx.lineWidth = w;
+  inkPath(ctx, pts, seed, amp); if(close) ctx.closePath(); ctx.stroke();
+  ctx.globalAlpha = .9; ctx.lineWidth = w * .8;
+  inkPath(ctx, pts, seed + 977, amp * .8); if(close) ctx.closePath(); ctx.stroke();
+  ctx.globalAlpha = 1;
+}
+
+/* marker wash: fill offset a touch off the outline, like colouring in a hurry */
+function inkWash(ctx, pts, seed, col, alpha, dx, dy){
+  ctx.save();
+  ctx.translate(dx || 0, dy || 0);
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = col;
+  inkPath(ctx, pts, seed + 5150, 2.6);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+  ctx.globalAlpha = 1;
+}
+
+function circlePts(cx, cy, r, n){
+  const pts = [];
+  for(let i = 0; i <= n; i++){
+    const a = i / n * Math.PI * 2;
+    pts.push({ x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r });
+  }
+  return pts;
+}
+
+/* break long runs into shorter hops so the wobble reads along their length */
+function subdivide(pts, maxLen){
+  const out = [pts[0]];
+  for(let i = 1; i < pts.length; i++){
+    const a = pts[i-1], b = pts[i];
+    const d = Math.hypot(b.x - a.x, b.y - a.y);
+    const n = Math.max(1, Math.ceil(d / maxLen));
+    for(let k = 1; k <= n; k++)
+      out.push({ x: a.x + (b.x - a.x) * k / n, y: a.y + (b.y - a.y) * k / n });
+  }
+  return out;
+}
+
+/* ───────────────────────── canvas ───────────────────────── */
+
+const cv = document.getElementById("c");
+const ctx = cv.getContext("2d");
+let CW = 0, CH = 0, DPR = 1, scale = 1;
+
+function resize(){
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  CW = window.innerWidth; CH = window.innerHeight;
+  cv.width = CW * DPR; cv.height = CH * DPR;
+  cv.style.width = CW + "px"; cv.style.height = CH + "px";
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  scale = Math.max(.5, Math.min(1, CW / 1150));
+  grain = null;
+}
+window.addEventListener("resize", resize);
+
+/* paper tooth, rendered once and tiled */
+let grain = null;
+function makeGrain(){
+  const g = document.createElement("canvas");
+  g.width = g.height = 140;
+  const gx = g.getContext("2d");
+  const img = gx.createImageData(140, 140);
+  for(let i = 0; i < img.data.length; i += 4){
+    const v = Math.random();
+    img.data[i] = 60; img.data[i+1] = 52; img.data[i+2] = 40;
+    img.data[i+3] = v > .82 ? 16 : (v > .6 ? 7 : 0);
+  }
+  gx.putImageData(img, 0, 0);
+  return ctx.createPattern(g, "repeat");
+}
+
+/* ───────────────────────── world state ───────────────────────── */
+
+let engine, world, chassis, wheelF, wheelR, axles = [];
+let strokes = [], rocks = [], blocks = [], barrels = [], boulders = [], planks = [];
+let tiles = [], hammers = [], lifts = [], beams = [], walls = [];
+let bridges = [], bridgeAnchors = [];
+let finishX = 0, finishY = 0, startX = 120, startY = 0, deathY = 0;
+let levelIdx = 0, crashes = 0, seed = 1;
+let unlocked = 1;          // highest level reachable (1-based count)
+let cleared = 0;           // how many distinct levels finished
+let wearing = "none";      // equipped accessory id
+let camX = 0, camY = 0, mode = "play", modeT = 0, frame = 0, inkPhase = 0;
+let grounded = false, flipT = 0, best = 0, started = false, throttle = 0;
+let gliding = false;
+const keys = { left:false, right:false, up:false, down:false, glide:false };
+const dust = [];
+
+function surfaceYAt(list, x){
+  for(const st of list){
+    for(let i = 1; i < st.length; i++){
+      const a = st[i-1], b = st[i];
+      if(Math.abs(b.x - a.x) < 1) continue;
+      if(x >= Math.min(a.x,b.x) && x <= Math.max(a.x,b.x))
+        return a.y + (b.y - a.y) * (x - a.x) / (b.x - a.x);
+    }
+  }
+  return 0;
+}
+
+/* Consecutive collinear points become ONE body. Every joint between two
+   ground rectangles is a seam a wheel can catch on, so a long flat road built
+   from six boxes is six little bumps. Merging them makes it genuinely flat. */
+function mergeCollinear(pts){
+  const out = [pts[0]];
+  for(let i = 1; i < pts.length; i++){
+    if(out.length >= 2){
+      const a = out[out.length - 2], b = out[out.length - 1], c = pts[i];
+      const a1 = Math.atan2(b.y - a.y, b.x - a.x);
+      const a2 = Math.atan2(c.y - b.y, c.x - b.x);
+      if(Math.abs(a1 - a2) < 1e-4){ out[out.length - 1] = c; continue; }
+    }
+    out.push(pts[i]);
+  }
+  return out;
+}
+
+function segmentBody(a, b){
+  const dx = b.x - a.x, dy = b.y - a.y;
+  const len = Math.hypot(dx, dy);
+  if(len < 2) return null;
+  const ang = Math.atan2(dy, dx);
+  const TH = 60;
+  /* horizontal-ish pieces overlap slightly so joints don't leave a notch */
+  const ext = Math.abs(Math.cos(ang)) > .35 ? 8 : 0;
+  const nx = -dy / len, ny = dx / len;         // points into the ground
+  return Bodies.rectangle(
+    (a.x + b.x)/2 + nx * TH/2,
+    (a.y + b.y)/2 + ny * TH/2,
+    len + ext, TH,
+    { isStatic:true, angle:ang, friction:1, frictionStatic:1.6,
+      restitution:0, slop:.05, label:"ground" }
+  );
+}
+
+function buildLevel(idx){
+  const L = LEVELS[idx];
+  seed = idx * 7919 + 13;
+
+  engine = Engine.create();
+  engine.gravity.y = 1;
+  engine.positionIterations = 6;
+  engine.velocityIterations = 4;
+  engine.constraintIterations = 2;
+  world = engine.world;
+
+  /* terrain outline, left to right — starts behind the jeep so there's
+     runway to reverse onto instead of an edge to fall off */
+  strokes = [];
+  let cur = [{ x:-320, y:0 }], x = 0, y = 0;
+  for(const s of L.spec){
+    if(s.t === 'f'){ x += s.w; cur.push({x, y}); }
+    else if(s.t === 's'){ x += s.w; y -= s.r; cur.push({x, y}); }
+    else if(s.t === 'g'){ strokes.push(cur); x += s.w; y += (s.drop || 0); cur = [{x, y}]; }
+    else if(s.t === 'p'){
+      cur.push({ x, y:y + s.d });
+      x += s.w; cur.push({ x, y:y + s.d });
+      cur.push({ x, y });
+    }
+  }
+  strokes.push(cur);
+
+  for(const st of strokes){
+    const solid = mergeCollinear(st);
+    for(let i = 1; i < solid.length; i++){
+      const bdy = segmentBody(solid[i-1], solid[i]);
+      if(bdy) Composite.add(world, bdy);
+    }
+  }
+
+  /* wall at the back of the runway */
+  Composite.add(world, Bodies.rectangle(-340, -100, 40, 400,
+    { isStatic:true, friction:.4, label:"ground" }));
+
+  finishX = x - 170;
+  finishY = surfaceYAt(strokes, finishX);
+  startY = surfaceYAt(strokes, startX);
+  let lo = 0;
+  for(const st of strokes) for(const p of st) lo = Math.max(lo, p.y);
+  deathY = lo + 780;
+
+  /* scenery + puzzle pieces */
+  rocks = []; blocks = []; barrels = []; boulders = []; planks = [];
+  tiles = []; hammers = []; lifts = []; beams = [];
+  bridges = []; bridgeAnchors = [];
+  for(const o of (L.objs || [])){
+    const sy = (o.y !== undefined) ? o.y : surfaceYAt(strokes, o.x);
+
+    if(o.t === 'rock'){
+      const b = Bodies.circle(o.x, sy - o.r * .28, o.r,
+        { isStatic:true, friction:.9, label:"rock" });
+      b.drawR = o.r; rocks.push(b); Composite.add(world, b);
+
+    } else if(o.t === 'block'){
+      const b = Bodies.rectangle(o.x, sy - BLOCK_H/2 - 6, BLOCK_W, BLOCK_H,
+        { density:.00014, friction:.22, frictionStatic:.28,
+          frictionAir:.005, label:"block" });
+      blocks.push(b); Composite.add(world, b);
+
+    } else if(o.t === 'barrel'){
+      /* light enough to send flying, heavy enough to unsettle you */
+      const b = Bodies.rectangle(o.x, sy - 26, 34, 48,
+        { density:.0004, friction:.4, restitution:.15,
+          chamfer:{ radius:9 },
+          /* everything EXCEPT the end barriers, so knocked barrels roll
+             straight through them while the jeep still gets stopped */
+          collisionFilter:{ mask: 0xFFFFFFFF & ~CAT_WALL },
+          label:"barrel" });
+      barrels.push(b); Composite.add(world, b);
+
+    } else if(o.t === 'boulder'){
+      const r = o.r || 34;
+      const b = Bodies.circle(o.x, sy - r - 8, r,
+        { density:.0022, friction:.5, frictionStatic:.3,
+          restitution:.05, label:"boulder" });
+      b.drawR = r; boulders.push(b); Composite.add(world, b);
+
+    } else if(o.t === 'seesaw'){
+      /* the wedge sits on the road and the plank balances on top of it, so
+         driving on gives you a slope UP, and past the pivot it tips DOWN */
+      const FULCRUM = 46;
+      const len = o.len || 340;
+      const p = Bodies.rectangle(o.x, sy - FULCRUM, len, 16,
+        { density:.0007, friction:.95, frictionStatic:1.2, label:"plank" });
+      p.drawLen = len;
+      p.pivotX = o.x; p.pivotY = sy - FULCRUM; p.roadY = sy;
+      Composite.add(world, p);
+      /* free pivot: pinned in space, free to rotate */
+      Composite.add(world, Constraint.create({
+        pointA:{ x:o.x, y:sy - FULCRUM }, bodyB:p, pointB:{ x:0, y:0 },
+        length:0, stiffness:1, damping:.1
+      }));
+      planks.push(p);
+
+    } else if(o.t === 'crumble'){
+      /* Collapsing tiles: hold briefly under load, then drop away */
+      const n = o.n || 4, tw = o.tw || 90;
+      for(let i = 0; i < n; i++){
+        /* centre sits half a thickness BELOW the surface so the tile top is
+           flush with the road — it was sitting 16px proud, so you had to
+           climb onto it and the fuse lit before you got there */
+        const tile = Bodies.rectangle(o.x + i * (tw + 6), sy + 8, tw, 16,
+          { isStatic:true, friction:.9, label:"crumble" });
+        tile.fuse = -1; tile.drawW = tw;
+        tiles.push(tile); Composite.add(world, tile);
+      }
+
+    } else if(o.t === 'hammer'){
+      /* Swinging hammer on a pivot — a timing obstacle */
+      const len = o.len || 130;
+      const head = Bodies.rectangle(o.x, sy - 160 + len, 54, 42,
+        { density:.005, friction:.6, restitution:.1, label:"hammer" });
+      Composite.add(world, head);
+      Composite.add(world, Constraint.create({
+        pointA:{ x:o.x, y:sy - 160 }, bodyB:head, pointB:{ x:0, y:0 },
+        length:len, stiffness:1, damping:.002
+      }));
+      head.pivotX = o.x; head.pivotY = sy - 160;
+      Body.setVelocity(head, { x:(o.push || 6), y:0 });
+      hammers.push(head);
+
+    } else if(o.t === 'lift'){
+      /* Platform sliding on a fixed track — cross it at the right moment */
+      const p = Bodies.rectangle(o.x, sy - (o.h || 90), o.w || 150, 18,
+        { isStatic:true, friction:.95, label:"lift" });
+      p.homeX = o.x; p.homeY = sy - (o.h || 90);
+      p.ampX = o.ax || 0; p.ampY = o.ay || 70;
+      p.rate = o.rate || .011; p.phase = o.phase || 0;
+      p.drawW = o.w || 150;
+      lifts.push(p); Composite.add(world, p);
+
+    } else if(o.t === 'bridge'){
+      /* A chain of planks anchored at both ends. It sags under the jeep and
+         swings — unlike a narrow beam, which in 2D is just flat road. */
+      const n = o.n || 9, span = o.w || 300, segW = span / n;
+      const by = sy - 4, GRP = Body.nextGroup(true);
+      let prev = null;
+      for(let i = 0; i < n; i++){
+        const px = o.x - span/2 + segW * (i + .5);
+        const seg = Bodies.rectangle(px, by, segW * .92, 9, {
+          density:.0009, friction:.95, frictionAir:.02,
+          collisionFilter:{ group:GRP }, label:"bridge" });
+        seg.drawW = segW * .92;
+        Composite.add(world, seg);
+        bridges.push(seg);
+        Composite.add(world, Constraint.create(prev
+          ? { bodyA:prev, pointA:{x:segW/2,y:0}, bodyB:seg, pointB:{x:-segW/2,y:0},
+              length:0, stiffness:.85, damping:.1 }
+          : { pointA:{x:o.x - span/2, y:by}, bodyB:seg, pointB:{x:-segW/2,y:0},
+              length:0, stiffness:1 }));
+        prev = seg;
+      }
+      Composite.add(world, Constraint.create({
+        pointA:{ x:o.x + span/2, y:by }, bodyB:prev, pointB:{ x:segW/2, y:0 },
+        length:0, stiffness:1 }));
+      bridgeAnchors.push({ x:o.x, y:by, w:span });
+
+    } else if(o.t === 'beam'){
+      /* Narrow beam: thin, and no margin either side */
+      const b = Bodies.rectangle(o.x, sy - 6, o.w || 260, 10,
+        { isStatic:true, friction:.9, label:"beam" });
+      b.drawW = o.w || 260;
+      beams.push(b); Composite.add(world, b);
+    }
+  }
+
+  /* end stops, so you can't run off either end of the paper */
+  walls = [];
+  const endX = x, endY = surfaceYAt(strokes, x - 4);
+  for(const [wx, wy] of [[-RUNWAY + 10, surfaceYAt(strokes, -RUNWAY + 14)],
+                         [endX - 8, endY]]){
+    const wall = Bodies.rectangle(wx, wy - 110, 22, 220,
+      { isStatic:true, friction:.4,
+        collisionFilter:{ category:CAT_WALL }, label:"wall" });
+    wall.topY = wy - 220; wall.baseY = wy;
+    walls.push(wall); Composite.add(world, wall);
+  }
+
+  buildJeep(startX, startY - RIDE_HEIGHT);
+
+  camX = chassis.position.x; camY = chassis.position.y - 40;
+  dust.length = 0; flipT = 0; best = startX;
+  mode = "play"; modeT = 0; started = false; throttle = 0;
+  gliding = false;
+
+  /* settle the suspension, then sleep the rig so it sits dead still */
+  for(let i = 0; i < 45; i++) Engine.update(engine, 1000/60);
+  for(const b of [chassis, wheelF, wheelR]){
+    Body.setVelocity(b, { x:0, y:0 });
+    Body.setAngularVelocity(b, 0);
+    Matter.Sleeping.set(b, true);
+  }
+  camX = chassis.position.x; camY = chassis.position.y - 40;
+
+  Events.on(engine, "beforeUpdate", () => { grounded = false; });
+  const touch = ev => {
+    for(const p of ev.pairs){
+      if(p.bodyA === wheelF || p.bodyB === wheelF || p.bodyA === wheelR || p.bodyB === wheelR)
+        grounded = true;
+    }
+  };
+  Events.on(engine, "collisionStart", touch);
+  Events.on(engine, "collisionActive", touch);
+
+  /* Nose-first or roof-first contact ends the run. A flat belly scrape over
+     a rock does not — only steep strikes count. */
+  Events.on(engine, "collisionStart", ev => {
+    if(mode !== "play" || !started) return;
+    for(const p of ev.pairs){
+      const other = p.bodyA === chassis ? p.bodyB
+                  : p.bodyB === chassis ? p.bodyA : null;
+      if(!other || other === wheelF || other === wheelR) continue;
+      const tilt = Math.abs(Math.atan2(Math.sin(chassis.angle), Math.cos(chassis.angle)));
+      if(tilt > .8){ finish("crash"); return; }
+    }
+  });
+
+  syncHud();
+}
+
+/* One source of truth for jeep geometry, so the spawn positions and the
+   axle anchors can never drift apart again. */
+const AXLE_X = 40, AXLE_Y = 6, WHEEL_R = 26;
+const RIDE_HEIGHT = AXLE_Y + WHEEL_R;   // chassis centre above the road
+
+function buildJeep(x, y){
+  /* THE BUG, present since the first version: the wheels physically overlap
+     the chassis rectangle (they have to — they're mounted under it). Nothing
+     stopped them colliding with each other, so every frame the solver tried
+     to shove two interpenetrating bodies apart. That was the jitter, the
+     bouncing and the spinning. A shared negative collision group makes the
+     jeep's own parts pass through each other while still hitting the world. */
+  const RIG = Body.nextGroup(true);
+
+  chassis = Bodies.rectangle(x, y, 104, 28, {
+    density:.006, friction:.4, frictionAir:.012,
+    collisionFilter:{ group:RIG }, label:"chassis"
+  });
+  const wOpt = {
+    density:.0018, friction:1, frictionStatic:1.8,
+    restitution:0, slop:.05,
+    collisionFilter:{ group:RIG }, label:"wheel"
+  };
+  wheelR = Bodies.circle(x - AXLE_X, y + AXLE_Y, WHEEL_R, wOpt);
+  wheelF = Bodies.circle(x + AXLE_X, y + AXLE_Y, WHEEL_R, wOpt);
+
+  axles = [
+    Constraint.create({ bodyA:chassis, pointA:{x:-AXLE_X,y:AXLE_Y}, bodyB:wheelR,
+                        stiffness:1, damping:0, length:0 }),
+    Constraint.create({ bodyA:chassis, pointA:{x: AXLE_X,y:AXLE_Y}, bodyB:wheelF,
+                        stiffness:1, damping:0, length:0 })
+  ];
+  Composite.add(world, [chassis, wheelR, wheelF].concat(axles));
+}
+
+/* ───────────────────────── driving ───────────────────────── */
+
+const MAX_SPIN = .95;      // rad/step: ~1480 px/s at r=26
+const TOP_SPEED = 24;      // px/step ceiling on the chassis
+const WHEEL_TORQUE = .20;  // ~1.2g: right at the 1.25g wheelie limit
+
+function drive(){
+  const dir  = (keys.right ? 1 : 0) + (keys.left ? -1 : 0);
+  const tilt = (keys.down ? 1 : 0) + (keys.up ? -1 : 0);
+
+  /* Before the first input the jeep is genuinely asleep. Nothing is written
+     to its velocities at all — every frame we touched them we were fighting
+     the contact solver, and that fight is what made it hop off the line. */
+  if(!started){
+    if(dir !== 0 || tilt !== 0 || keys.glide){
+      started = true;
+      for(const b of [chassis, wheelF, wheelR]) Matter.Sleeping.set(b, false);
+    } else {
+      return;
+    }
+  }
+
+  /* Throttle ramps in over about half a second. */
+  if(dir !== 0) throttle = Math.min(1, throttle + .07);
+  else          throttle = Math.max(0, throttle - .15);
+
+  /* Drive with TORQUE, not by forcing angular velocity. Forcing it overrides
+     whatever the contact solver just worked out, every single frame — that
+     fight is the jitter, and it also means grip is infinite, which is why it
+     took off. Torque lets friction decide how much actually reaches the road. */
+  const spd = Math.hypot(chassis.velocity.x, chassis.velocity.y);
+
+  for(const w of [wheelF, wheelR]){
+    if(dir !== 0 && Math.abs(w.angularVelocity) < MAX_SPIN && spd < TOP_SPEED){
+      w.torque += dir * WHEEL_TORQUE * throttle;
+    }
+    if(dir === 0 && Math.abs(w.angularVelocity) > .01){
+      w.torque -= Math.sign(w.angularVelocity) * WHEEL_TORQUE * .7;   // brake
+    }
+  }
+
+  /* Glide: hold it off a ramp and the jeep spreads a paper wing. Cancels
+     most of gravity while falling, levels the body out and keeps it drifting
+     forward — turns a short hop into a long, flat sail. Air only. */
+  gliding = keys.glide && !grounded;
+  if(gliding){
+    const weight = (chassis.mass + wheelF.mass + wheelR.mass)
+                 * engine.gravity.y * engine.gravity.scale;
+    if(chassis.velocity.y > 0)
+      Body.applyForce(chassis, chassis.position, { x:0, y:-weight * .78 });
+    /* wings want to fly level */
+    const a = Math.atan2(Math.sin(chassis.angle), Math.cos(chassis.angle));
+    Body.setAngularVelocity(chassis, chassis.angularVelocity * .88 - a * .006);
+    /* and they keep you moving forward */
+    Body.applyForce(chassis, chassis.position,
+      { x:Math.cos(chassis.angle) * .0006 * chassis.mass, y:0 });
+  }
+
+  /* Anti-wheelie: on the ground, with no balance input, damp out pitch spin.
+     Without this the drive reaction slowly rotates the body no matter how
+     gentle the power is. */
+  if(grounded && tilt === 0 && Math.abs(chassis.angularVelocity) > .002)
+    Body.setAngularVelocity(chassis, chassis.angularVelocity * .93);
+
+  /* Balance pedals. Up and down are the only pitch control — the throttle no
+     longer twists the body in mid-air, so the two never fight each other. */
+  if(tilt !== 0)
+    Body.setAngularVelocity(chassis, chassis.angularVelocity + tilt * (grounded ? .0045 : .01));
+
+  /* Gentle self-righting in the air when you're not steering */
+  if(!grounded && tilt === 0){
+    const a = Math.atan2(Math.sin(chassis.angle), Math.cos(chassis.angle));
+    Body.setAngularVelocity(chassis, chassis.angularVelocity - a * .003);
+  }
+
+  /* dust off the driven wheel */
+  if(grounded && dir !== 0 && frame % 3 === 0){
+    const w = dir > 0 ? wheelR : wheelF;
+    if(Math.abs(w.angularVelocity) > .12)
+      dust.push({
+        x: w.position.x - dir * 16, y: w.position.y + 14,
+        vx: -dir * (.6 + Math.random()), vy: -Math.random() * .7,
+        r: 4 + Math.random() * 7, life: 1, seed: Math.random() * 9999 | 0
+      });
+  }
+}
+
+function updateObstacles(){
+  /* Moving platforms ride a sine track. Setting position directly keeps them
+     rock solid to stand on, unlike a driven dynamic body. */
+  for(const p of lifts){
+    p.phase += p.rate;
+    Body.setPosition(p, {
+      x: p.homeX + Math.sin(p.phase) * p.ampX,
+      y: p.homeY + Math.sin(p.phase) * p.ampY
+    });
+  }
+
+  /* Collapsing tiles: once a wheel rests on one it fuses, then falls away */
+  for(const t of tiles){
+    if(t.fuse === -1){
+      const onIt = Math.abs(chassis.position.x - t.position.x) < (t.drawW || 90) * .6 &&
+                   chassis.position.y < t.position.y &&
+                   chassis.position.y > t.position.y - 95;
+      if(onIt) t.fuse = 34;
+    } else if(t.fuse > 0){
+      t.fuse--;
+      if(t.fuse === 0){
+        Body.setStatic(t, false);
+        Body.setDensity(t, .0009);
+        Body.setAngularVelocity(t, (Math.random() - .5) * .06);
+      }
+    }
+  }
+}
+
+function checkState(dt){
+  if(mode !== "play") return;
+  best = Math.max(best, chassis.position.x);
+
+  /* must actually reach the flag, not just drift past its x while falling
+     down a hole below it */
+  const atFlagHeight = chassis.position.y < finishY + 40 &&
+                       chassis.position.y > finishY - 170;
+  if(chassis.position.x > finishX && atFlagHeight){ finish("won"); return; }
+  if(chassis.position.y > deathY){ finish("crash"); return; }
+
+  const upright = Math.cos(chassis.angle);
+  const slow = Math.hypot(chassis.velocity.x, chassis.velocity.y) < 1.4;
+  if(upright < -.25 && slow) flipT += dt; else flipT = 0;
+  if(flipT > 700) finish("crash");
+}
+
+function finish(kind){
+  mode = kind; modeT = 0;
+  if(kind === "crash"){
+    crashes++;
+    document.getElementById("triesn").textContent = crashes;
+    for(let i = 0; i < 16; i++)
+      dust.push({
+        x: chassis.position.x, y: chassis.position.y,
+        vx: (Math.random()-.5)*6, vy: -Math.random()*4-.5,
+        r: 5 + Math.random()*11, life: 1, seed: Math.random()*9999|0
+      });
+  } else {
+    if(levelIdx + 1 > cleared) cleared = levelIdx + 1;
+    unlocked = Math.max(unlocked, Math.min(LEVELS.length, levelIdx + 2));
+    const newKit = ACCESSORIES.find(a => a.at === cleared);
+    if(newKit){ wearing = newKit.id; flashUnlock(newKit); }
+    const last = levelIdx === LEVELS.length - 1;
+    showCard(
+      last ? "All " + LEVELS.length + " cleared" : "Cleared",
+      last ? "You got the jeep through every page of the notebook."
+           : "Next: " + LEVELS[levelIdx + 1].name,
+      last ? "Start over" : "Next level"
+    );
+  }
+}
+
+/* ───────────────────────── interface ───────────────────────── */
+
+const card = document.getElementById("card");
+const cardH = document.getElementById("cardh");
+const cardP = document.getElementById("cardp");
+const cardB = document.getElementById("cardb");
+
+function showCard(h, p, b){
+  cardH.textContent = h; cardP.textContent = p; cardB.textContent = b;
+  card.classList.add("show");
+  cardB.focus();
+}
+function hideCard(){ card.classList.remove("show"); }
+
+function nextLevel(){
+  hideCard();
+  levelIdx = (levelIdx + 1) % LEVELS.length;
+  if(levelIdx === 0) crashes = 0;
+  document.getElementById("triesn").textContent = crashes;
+  syncHud();          // update the panel first, so it can't be left stale
+  buildLevel(levelIdx);
+}
+
+cardB.addEventListener("click", nextLevel);
+/* clicking the card itself, or anywhere once you've won, also advances */
+card.addEventListener("click", nextLevel);
+
+const sheet      = document.getElementById("sheet");
+const sheetTitle = document.getElementById("sheetTitle");
+const sheetBody  = document.getElementById("sheetBody");
+const toast      = document.getElementById("unlocktoast");
+
+function openSheet(kind){
+  sheetTitle.textContent = kind === "levels" ? "Levels" : "Wardrobe";
+  sheetBody.innerHTML = "";
+  const grid = document.createElement("div");
+  grid.className = "grid";
+
+  if(kind === "levels"){
+    LEVELS.forEach((L, i) => {
+      const b = document.createElement("button");
+      const open = i < unlocked;
+      b.className = "cell" + (open ? "" : " locked") + (i < cleared ? " done" : "")
+                  + (i === levelIdx ? " on" : "");
+      b.innerHTML = '<div class="n">' + (i + 1) + '</div>' + (open ? L.name : "locked");
+      if(open) b.onclick = () => { closeSheet(); levelIdx = i; syncHud(); buildLevel(i); };
+      grid.appendChild(b);
+    });
+  } else {
+    ACCESSORIES.forEach(a => {
+      const b = document.createElement("button");
+      const got = cleared >= a.at;
+      b.className = "cell" + (got ? "" : " locked") + (wearing === a.id ? " on" : "");
+      b.innerHTML = '<div class="n">' + (a.at ? "level " + a.at : "default") + '</div>'
+                  + (got ? a.name : "locked");
+      if(got) b.onclick = () => { wearing = a.id; openSheet("kit"); };
+      grid.appendChild(b);
+    });
+  }
+  sheetBody.appendChild(grid);
+  sheet.classList.add("show");
+}
+function closeSheet(){ sheet.classList.remove("show"); }
+
+document.getElementById("btnLevels").onclick = () => openSheet("levels");
+document.getElementById("btnKit").onclick    = () => openSheet("kit");
+document.getElementById("sheetClose").onclick = closeSheet;
+
+let toastT = null;
+function flashUnlock(kit){
+  toast.textContent = "Unlocked: " + kit.name + "!";
+  toast.classList.add("show");
+  clearTimeout(toastT);
+  toastT = setTimeout(() => toast.classList.remove("show"), 2600);
+}
+
+function syncHud(){
+  document.getElementById("lvlno").textContent = "level " + (levelIdx + 1) + " of " + LEVELS.length;
+  document.getElementById("lvlname").textContent = LEVELS[levelIdx].name;
+  document.getElementById("lvlhint").textContent = LEVELS[levelIdx].hint;
+}
+
+/* the little progress track, drawn like a pencil sketch in the margin */
+const tcv = document.getElementById("trackcv");
+const tx = tcv.getContext("2d");
+function drawTrack(){
+  tx.clearRect(0, 0, 230, 30);
+  tx.strokeStyle = "#2b2723";
+  const line = [];
+  for(let i = 0; i <= 10; i++) line.push({ x: 10 + i * 21, y: 22 });
+  tx.setLineDash([7, 5]);
+  inkStroke(tx, line, 4242, { amp:1.1, w:1.6 });
+  tx.setLineDash([]);
+
+  const prog = Math.max(0, Math.min(1, (best - startX) / Math.max(1, finishX - startX)));
+  const px = 10 + prog * 210;
+  inkStroke(tx, [{x:px-7,y:19},{x:px+7,y:19}], 88, { amp:.8, w:2.4 });
+  inkStroke(tx, circlePts(px-4, 22, 3.2, 8), 91, { amp:.6, w:1.5, close:true });
+  inkStroke(tx, circlePts(px+4, 22, 3.2, 8), 92, { amp:.6, w:1.5, close:true });
+  inkStroke(tx, [{x:220,y:22},{x:220,y:6},{x:229,y:9},{x:220,y:12}], 95, { amp:.9, w:1.8 });
+}
+
+/* ───────────────────────── rendering ───────────────────────── */
+
+function viewRect(){
+  const hw = CW / 2 / scale, hh = CH / 2 / scale;
+  return { x0:camX - hw, y0:camY - hh, x1:camX + hw, y1:camY + hh };
+}
+
+function drawBackdrop(){
+  ctx.fillStyle = "#f0e9d6";
+  ctx.fillRect(0, 0, CW, CH);
+
+  /* distant pencil hills, cheap parallax in screen space */
+  const base = CH * .68 + camY * .12;
+  ctx.save();
+  ctx.globalAlpha = .3;
+  for(let layer = 0; layer < 2; layer++){
+    const p = .18 + layer * .14, amp = 40 + layer * 34, span = 340 + layer * 130;
+    const off = -(camX * p) % span;
+    const pts = [];
+    for(let i = -1; i * span + off < CW + span; i++){
+      const bx = i * span + off;
+      pts.push({ x:bx, y:base - layer * 26 });
+      pts.push({ x:bx + span * .5, y:base - layer * 26 - amp });
+    }
+    if(pts.length > 1)
+      inkStroke(ctx, pts, 700 + layer, { amp:1.4, w:1.6, col:"#6b6255" });
+  }
+  ctx.restore();
+
+  /* squared-notebook rule, in world space */
+  const r = viewRect();
+  ctx.save();
+  ctx.translate(CW/2, CH/2); ctx.scale(scale, scale); ctx.translate(-camX, -camY);
+  ctx.strokeStyle = "#7d97b8"; ctx.globalAlpha = .17; ctx.lineWidth = 1;
+  ctx.beginPath();
+  const G = 50;
+  for(let gx = Math.floor(r.x0/G)*G; gx <= r.x1; gx += G){ ctx.moveTo(gx, r.y0); ctx.lineTo(gx, r.y1); }
+  for(let gy = Math.floor(r.y0/G)*G; gy <= r.y1; gy += G){ ctx.moveTo(r.x0, gy); ctx.lineTo(r.x1, gy); }
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+function drawGround(){
+  const r = viewRect();
+  const bottom = deathY + 400;
+
+  strokes.forEach((st, si) => {
+    if(st[st.length-1].x < r.x0 - 60 || st[0].x > r.x1 + 60) return;
+
+    const fine = subdivide(st, 46);
+    const poly = fine.concat([
+      { x:fine[fine.length-1].x, y:bottom },
+      { x:fine[0].x, y:bottom }
+    ]);
+
+    /* hatched soil, clipped to the ground silhouette */
+    ctx.save();
+    inkPath(ctx, poly, seed + si * 31, 1.5);
+    ctx.closePath();
+    ctx.clip();
+
+    ctx.fillStyle = "#e4dcc4"; ctx.globalAlpha = .85;
+    ctx.fillRect(r.x0 - 40, r.y0 - 40, (r.x1-r.x0) + 80, (r.y1-r.y0) + 80);
+    ctx.globalAlpha = 1;
+
+    ctx.strokeStyle = "#8d8168"; ctx.globalAlpha = .4; ctx.lineWidth = 1.3;
+    ctx.beginPath();
+    const step = 15;
+    const c0 = Math.floor((r.x0 - r.y1) / step) * step;
+    const c1 = Math.ceil((r.x1 - r.y0) / step) * step;
+    for(let c = c0; c <= c1; c += step){
+      ctx.moveTo(r.y0 + c, r.y0);
+      ctx.lineTo(r.y1 + c, r.y1);
+    }
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    ctx.restore();
+
+    /* the surface line itself, culled to what's on screen */
+    const vis = fine.filter((p, i) =>
+      p.x > r.x0 - 90 && p.x < r.x1 + 90 ||
+      (fine[i-1] && fine[i-1].x < r.x1 && fine[i+1] && fine[i+1].x > r.x0));
+    if(vis.length > 1)
+      inkStroke(ctx, vis, seed + si * 31 + 5, { amp:1.5, w:3 });
+  });
+}
+
+function drawRocks(){
+  for(const b of rocks){
+    const p = b.position, R = b.drawR;
+    const pts = circlePts(p.x, p.y, R, 11);
+    inkWash(ctx, pts, b.id, "#9a9080", .5, 2, 2);
+    inkStroke(ctx, pts, b.id, { amp:2.2, w:2.4, close:true });
+    inkStroke(ctx, [
+      { x:p.x - R*.4, y:p.y - R*.3 },
+      { x:p.x - R*.05, y:p.y - R*.55 }
+    ], b.id + 3, { amp:1, w:1.4 });
+  }
+}
+
+function drawBlocks(ph){
+  for(const b of blocks){
+    ctx.save();
+    ctx.translate(b.position.x, b.position.y);
+    ctx.rotate(b.angle);
+    const hw = BLOCK_W/2, hh = BLOCK_H/2;
+    const box = [
+      {x:-hw,y:-hh},{x:hw,y:-hh},{x:hw,y:hh},{x:-hw,y:hh},{x:-hw,y:-hh}
+    ];
+    inkWash(ctx, box, b.id, "#c39a5e", .45, 3, 3);
+    inkStroke(ctx, box, b.id + ph, { amp:2, w:2.8, close:true });
+    /* crate battens */
+    inkStroke(ctx, [{x:-hw,y:-hh},{x:hw,y:hh}], b.id + ph + 11, { amp:1.6, w:1.8 });
+    inkStroke(ctx, [{x:hw,y:-hh},{x:-hw,y:hh}], b.id + ph + 12, { amp:1.6, w:1.8 });
+    inkStroke(ctx, [{x:-hw,y:-hh*.45},{x:hw,y:-hh*.45}], b.id + ph + 13, { amp:1.4, w:1.6 });
+    inkStroke(ctx, [{x:-hw,y:hh*.45},{x:hw,y:hh*.45}], b.id + ph + 14, { amp:1.4, w:1.6 });
+    ctx.restore();
+  }
+}
+
+function drawBoulders(ph){
+  for(const b of boulders){
+    const p = b.position, R = b.drawR;
+    const pts = circlePts(p.x, p.y, R, 13);
+    inkWash(ctx, pts, b.id, "#8a8072", .55, 3, 3);
+    inkStroke(ctx, pts, b.id + ph, { amp:2.4, w:2.8, close:true });
+    ctx.save();
+    ctx.translate(p.x, p.y); ctx.rotate(b.angle);
+    /* a couple of cracks so you can see it rolling */
+    inkStroke(ctx, [{x:-R*.5,y:-R*.2},{x:-R*.1,y:R*.15},{x:R*.35,y:-R*.1}],
+      b.id + 4 + ph, { amp:1.2, w:1.5 });
+    inkStroke(ctx, [{x:R*.1,y:-R*.6},{x:R*.25,y:-R*.25}],
+      b.id + 5 + ph, { amp:1, w:1.3 });
+    ctx.restore();
+  }
+}
+
+function drawBarrels(ph){
+  for(const b of barrels){
+    ctx.save();
+    ctx.translate(b.position.x, b.position.y);
+    ctx.rotate(b.angle);
+    const box = [{x:-17,y:-24},{x:17,y:-24},{x:17,y:24},{x:-17,y:24},{x:-17,y:-24}];
+    inkWash(ctx, box, b.id, "#a5623c", .5, 2, 2);
+    inkStroke(ctx, box, b.id + ph, { amp:1.4, w:2.4, close:true });
+    inkStroke(ctx, [{x:-17,y:-11},{x:17,y:-11}], b.id + 7 + ph, { amp:1, w:1.6 });
+    inkStroke(ctx, [{x:-17,y: 11},{x:17,y: 11}], b.id + 8 + ph, { amp:1, w:1.6 });
+    ctx.restore();
+  }
+}
+
+function drawPlanks(ph){
+  for(const p of planks){
+    /* fulcrum wedge, drawn in world space under the pivot */
+    const wedge = [
+      { x:p.pivotX - 30, y:p.roadY },
+      { x:p.pivotX,      y:p.pivotY + 2 },
+      { x:p.pivotX + 30, y:p.roadY },
+      { x:p.pivotX - 30, y:p.roadY }
+    ];
+    inkWash(ctx, wedge, 209, "#8a7a60", .5, 2, 2);
+    inkStroke(ctx, wedge, 210, { amp:1.5, w:2.4, close:true });
+
+    ctx.save();
+    ctx.translate(p.position.x, p.position.y);
+    ctx.rotate(p.angle);
+    const hl = p.drawLen / 2;
+    const box = [{x:-hl,y:-8},{x:hl,y:-8},{x:hl,y:8},{x:-hl,y:8},{x:-hl,y:-8}];
+    inkWash(ctx, box, p.id, "#b08a56", .5, 2, 3);
+    inkStroke(ctx, box, p.id + ph, { amp:1.3, w:2.6, close:true });
+    /* grain lines along the plank */
+    for(let i = -2; i <= 2; i++)
+      inkStroke(ctx, [{ x:i * hl * .38 - 22, y:0 }, { x:i * hl * .38 + 22, y:0 }],
+        p.id + 20 + i + ph, { amp:1, w:1.2 });
+    ctx.restore();
+  }
+}
+
+function drawTiles(ph){
+  for(const t of tiles){
+    ctx.save();
+    ctx.translate(t.position.x, t.position.y);
+    ctx.rotate(t.angle);
+    const hw = (t.drawW || 90) / 2, hh = 8;
+    const box = [{x:-hw,y:-hh},{x:hw,y:-hh},{x:hw,y:hh},{x:-hw,y:hh},{x:-hw,y:-hh}];
+    /* a fusing tile shakes and reddens as its moment runs out */
+    const arming = t.fuse > 0;
+    if(arming){
+      const s = (26 - t.fuse) / 26;
+      ctx.translate((Math.random()-.5) * s * 4, (Math.random()-.5) * s * 4);
+    }
+    inkWash(ctx, box, t.id, arming ? "#b34a32" : "#9c9384", .4, 2, 2);
+    inkStroke(ctx, box, t.id + ph, { amp:1.2, w:2.4, close:true,
+      col: arming ? "#b34a32" : "#2b2723" });
+    inkStroke(ctx, [{x:-hw*.5,y:-hh},{x:-hw*.5,y:hh}], t.id+2+ph, { amp:.8, w:1.2 });
+    inkStroke(ctx, [{x: hw*.5,y:-hh},{x: hw*.5,y:hh}], t.id+3+ph, { amp:.8, w:1.2 });
+    ctx.restore();
+  }
+}
+
+function drawHammers(ph){
+  for(const h of hammers){
+    /* rope from pivot to head */
+    inkStroke(ctx, [
+      { x:h.pivotX, y:h.pivotY },
+      { x:(h.pivotX + h.position.x)/2, y:(h.pivotY + h.position.y)/2 },
+      { x:h.position.x, y:h.position.y }
+    ], 400, { amp:1.4, w:2 });
+    inkStroke(ctx, circlePts(h.pivotX, h.pivotY, 7, 8), 401, { amp:1, w:2.2, close:true });
+
+    ctx.save();
+    ctx.translate(h.position.x, h.position.y);
+    ctx.rotate(h.angle);
+    const box = [{x:-27,y:-21},{x:27,y:-21},{x:27,y:21},{x:-27,y:21},{x:-27,y:-21}];
+    inkWash(ctx, box, h.id, "#7a6a58", .55, 3, 3);
+    inkStroke(ctx, box, h.id + ph, { amp:1.5, w:2.8, close:true });
+    inkStroke(ctx, [{x:-27,y:0},{x:27,y:0}], h.id + 4 + ph, { amp:1.1, w:1.5 });
+    ctx.restore();
+  }
+}
+
+function drawLifts(ph){
+  for(const p of lifts){
+    const hw = p.drawW / 2;
+    /* dashed track showing where it travels */
+    ctx.save();
+    ctx.setLineDash([8, 7]);
+    inkStroke(ctx, [
+      { x:p.homeX - p.ampX, y:p.homeY - p.ampY },
+      { x:p.homeX + p.ampX, y:p.homeY + p.ampY }
+    ], 500, { amp:.9, w:1.4, col:"#7d97b8" });
+    ctx.setLineDash([]);
+    ctx.restore();
+
+    ctx.save();
+    ctx.translate(p.position.x, p.position.y);
+    const box = [{x:-hw,y:-9},{x:hw,y:-9},{x:hw,y:9},{x:-hw,y:9},{x:-hw,y:-9}];
+    inkWash(ctx, box, p.id, "#5f7f93", .5, 2, 3);
+    inkStroke(ctx, box, p.id + ph, { amp:1.3, w:2.8, close:true });
+    for(let i = -1; i <= 1; i++)
+      inkStroke(ctx, [{x:i*hw*.5,y:-9},{x:i*hw*.5,y:9}], p.id+6+i+ph, { amp:.8, w:1.3 });
+    ctx.restore();
+  }
+}
+
+function drawWalls(){
+  for(const w of walls){
+    const x = w.position.x;
+    inkStroke(ctx, [{x:x-9,y:w.baseY},{x:x-9,y:w.topY}], 610, { amp:1.5, w:3 });
+    inkStroke(ctx, [{x:x+9,y:w.baseY},{x:x+9,y:w.topY}], 611, { amp:1.5, w:3 });
+    for(let i = 0; i < 5; i++){
+      const y = w.topY + i * 44 + 10;
+      inkStroke(ctx, [{x:x-9,y:y},{x:x+9,y:y}], 612 + i, { amp:1.2, w:2 });
+    }
+    inkStroke(ctx, [{x:x-9,y:w.topY},{x:x+9,y:w.topY+18}], 620, { amp:1.2, w:1.6, col:"#b34a32" });
+    inkStroke(ctx, [{x:x+9,y:w.topY},{x:x-9,y:w.topY+18}], 621, { amp:1.2, w:1.6, col:"#b34a32" });
+  }
+}
+
+function drawBridges(ph){
+  for(const a of bridgeAnchors){
+    for(const sgn of [-1, 1]){
+      const px = a.x + sgn * a.w/2;
+      inkStroke(ctx, [{x:px,y:a.y+16},{x:px,y:a.y-40}], 800, { amp:1.4, w:3 });
+      inkStroke(ctx, [{x:px,y:a.y-40},{x:px - sgn*16,y:a.y+14}], 801, { amp:1.2, w:1.6 });
+    }
+  }
+  /* rope along the tops of the planks */
+  if(bridges.length > 1){
+    const rope = bridges.map(b => ({ x:b.position.x, y:b.position.y - 7 }));
+    inkStroke(ctx, rope, 805, { amp:1.2, w:1.8, col:"#8a7a60" });
+  }
+  for(const b of bridges){
+    ctx.save();
+    ctx.translate(b.position.x, b.position.y);
+    ctx.rotate(b.angle);
+    const hw = b.drawW / 2;
+    const box = [{x:-hw,y:-5},{x:hw,y:-5},{x:hw,y:5},{x:-hw,y:5},{x:-hw,y:-5}];
+    inkWash(ctx, box, b.id, "#b08a56", .5, 2, 2);
+    inkStroke(ctx, box, b.id + ph, { amp:1, w:2.2, close:true });
+    ctx.restore();
+  }
+}
+
+function drawBeams(){
+  for(const b of beams){
+    const hw = b.drawW / 2, p = b.position;
+    const box = [
+      {x:p.x-hw,y:p.y-5},{x:p.x+hw,y:p.y-5},
+      {x:p.x+hw,y:p.y+5},{x:p.x-hw,y:p.y+5},{x:p.x-hw,y:p.y-5}
+    ];
+    inkWash(ctx, box, b.id, "#8a7a60", .5, 2, 2);
+    inkStroke(ctx, box, b.id, { amp:1.1, w:2.6, close:true });
+  }
+}
+
+function drawWheel(w, ph){
+  ctx.save();
+  ctx.translate(w.position.x, w.position.y);
+  const tyre = circlePts(0, 0, WHEEL_R, 14);
+  inkWash(ctx, tyre, 40, "#5d5750", .35, 2, 2);
+  inkStroke(ctx, tyre, 40 + ph, { amp:1.1, w:2.8, close:true });
+  ctx.rotate(w.angle);
+  inkStroke(ctx, circlePts(0, 0, WHEEL_R*.42, 9), 44 + ph, { amp:1.2, w:2, close:true });
+  for(let i = 0; i < 5; i++){
+    const a = i / 5 * Math.PI * 2;
+    inkStroke(ctx, [
+      { x:Math.cos(a)*WHEEL_R*.42, y:Math.sin(a)*WHEEL_R*.42 },
+      { x:Math.cos(a)*WHEEL_R*.9, y:Math.sin(a)*WHEEL_R*.9 }
+    ], 50 + i + ph, { amp:1, w:1.5 });
+  }
+  ctx.restore();
+}
+
+const JEEP = [
+  {x:-56,y:  8},{x:-58,y: -6},{x:-48,y:-13},{x: -8,y:-13},
+  {x: -8,y:-35},{x: 14,y:-37},{x: 23,y:-13},{x: 50,y:-11},
+  {x: 57,y: -2},{x: 55,y:  9}
+];
+
+function drawJeep(ph){
+  drawWheel(wheelR, ph);
+  drawWheel(wheelF, ph);
+
+  ctx.save();
+  ctx.translate(chassis.position.x, chassis.position.y);
+  ctx.rotate(chassis.angle);
+
+  const body = JEEP.concat([JEEP[0]]);
+  inkWash(ctx, body, 60, "#6e7f4e", .5, 3, 3);
+  inkStroke(ctx, body, 60 + ph, { amp:1.1, w:2.8, close:true });
+
+  /* cabin glass */
+  inkStroke(ctx, [
+    {x:-4,y:-32},{x:12,y:-33},{x:19,y:-16},{x:-4,y:-16},{x:-4,y:-32}
+  ], 66 + ph, { amp:1.2, w:1.7, close:true });
+
+  /* bonnet crease, headlamp, bumper, spare wheel on the tail */
+  inkStroke(ctx, [{x:26,y:-9},{x:48,y:-8}], 70 + ph, { amp:1, w:1.4 });
+  inkStroke(ctx, circlePts(51, -5, 4, 8), 72 + ph, { amp:.9, w:1.8, close:true });
+  inkStroke(ctx, [{x:-58,y:2},{x:-64,y:2}], 74 + ph, { amp:.9, w:2.2 });
+  inkStroke(ctx, circlePts(-62, -4, 11, 10), 76 + ph, { amp:1.4, w:2.2, close:true });
+
+  drawAccessory(ph);
+
+  ctx.restore();
+}
+
+function drawAccessory(ph){
+  if(wearing === "none") return;
+  const R = "#b34a32", B = "#3a5f8a";
+  /* cabin roof spans x -8..14, so its centre is x = 3 and its top is y = -36.
+     Everything worn on the head is built around that point. */
+  const CX = 3, CY = -36;
+
+  if(wearing === "party"){
+    const hat = [{x:CX-15,y:CY},{x:CX,y:CY-46},{x:CX+15,y:CY},{x:CX-15,y:CY}];
+    inkWash(ctx, hat, 700, R, .45, 2, 2);
+    inkStroke(ctx, hat, 700 + ph, { amp:1.3, w:2.4, close:true });
+    inkStroke(ctx, circlePts(CX, CY-50, 5, 8), 701 + ph, { amp:1, w:2, close:true, col:R });
+    inkStroke(ctx, [{x:CX-10,y:CY-14},{x:CX+10,y:CY-20}], 702 + ph, { amp:1, w:1.4, col:B });
+    inkStroke(ctx, [{x:CX-7,y:CY-26},{x:CX+8,y:CY-32}], 703 + ph, { amp:1, w:1.4, col:B });
+
+  } else if(wearing === "cowboy"){
+    const brim  = [{x:CX-29,y:CY-2},{x:CX+29,y:CY-2},{x:CX+24,y:CY-10},{x:CX-24,y:CY-10},{x:CX-29,y:CY-2}];
+    const crown = [{x:CX-14,y:CY-10},{x:CX-11,y:CY-34},{x:CX+11,y:CY-36},{x:CX+14,y:CY-10}];
+    inkWash(ctx, crown, 711, "#8a6a3c", .5, 2, 2);
+    inkWash(ctx, brim,  710, "#8a6a3c", .5, 2, 2);
+    inkStroke(ctx, crown, 711 + ph, { amp:1.2, w:2.2, close:true });
+    inkStroke(ctx, brim,  710 + ph, { amp:1.3, w:2.6, close:true });
+    inkStroke(ctx, [{x:CX-13,y:CY-18},{x:CX+13,y:CY-20}], 712 + ph, { amp:1, w:1.8, col:R });
+
+  } else if(wearing === "plough"){
+    /* front-mounted, not on the roof */
+    const blade = [{x:56,y:14},{x:96,y:-16},{x:104,y:-2},{x:70,y:22},{x:56,y:14}];
+    inkWash(ctx, blade, 720, B, .5, 3, 3);
+    inkStroke(ctx, blade, 720 + ph, { amp:1.5, w:2.8, close:true });
+    inkStroke(ctx, [{x:58,y:6},{x:82,y:-6}], 721 + ph, { amp:1.1, w:1.8 });
+    inkStroke(ctx, [{x:60,y:16},{x:96,y:-12}], 722 + ph, { amp:1, w:1.4, col:R });
+
+  } else if(wearing === "antlers"){
+    for(const sgn of [-1, 1]){
+      const bx = CX + sgn * 9;
+      inkStroke(ctx, [{x:bx,y:CY},{x:bx + sgn*11,y:CY-24},{x:bx + sgn*5,y:CY-42}],
+        730 + sgn + ph, { amp:1.4, w:2.6, col:"#8a6a3c" });
+      inkStroke(ctx, [{x:bx + sgn*8,y:CY-20},{x:bx + sgn*23,y:CY-28}],
+        732 + sgn + ph, { amp:1.2, w:2, col:"#8a6a3c" });
+      inkStroke(ctx, [{x:bx + sgn*7,y:CY-33},{x:bx + sgn*20,y:CY-43}],
+        734 + sgn + ph, { amp:1.2, w:1.8, col:"#8a6a3c" });
+    }
+
+  } else if(wearing === "propeller"){
+    const cap = [{x:CX-16,y:CY},{x:CX-14,y:CY-14},{x:CX+14,y:CY-14},{x:CX+16,y:CY},{x:CX-16,y:CY}];
+    inkWash(ctx, cap, 740, B, .45, 2, 2);
+    inkStroke(ctx, cap, 740 + ph, { amp:1.2, w:2.2, close:true });
+    inkStroke(ctx, [{x:CX,y:CY-14},{x:CX,y:CY-24}], 741 + ph, { amp:.9, w:1.8 });
+    const spin = frame * .35;
+    for(let i = 0; i < 2; i++){
+      const a = spin + i * Math.PI;
+      inkStroke(ctx, [{x:CX,y:CY-26},
+                      {x:CX + Math.cos(a)*22, y:CY-26 + Math.sin(a)*6}],
+        742 + i + ph, { amp:1, w:2.2, col:R });
+    }
+
+  } else if(wearing === "crown"){
+    const c = [{x:CX-16,y:CY},{x:CX-14,y:CY-24},{x:CX-7,y:CY-12},{x:CX,y:CY-28},
+               {x:CX+7,y:CY-12},{x:CX+14,y:CY-24},{x:CX+16,y:CY},{x:CX-16,y:CY}];
+    inkWash(ctx, c, 750, "#c9a227", .5, 2, 2);
+    inkStroke(ctx, c, 750 + ph, { amp:1.2, w:2.4, close:true });
+
+  } else if(wearing === "rocket"){
+    /* rear-mounted fins */
+    const fin = [{x:-56,y:-6},{x:-78,y:-30},{x:-74,y:4},{x:-56,y:-6}];
+    inkWash(ctx, fin, 760, R, .5, 2, 2);
+    inkStroke(ctx, fin, 760 + ph, { amp:1.3, w:2.4, close:true });
+    const fin2 = [{x:-56,y:10},{x:-80,y:22},{x:-58,y:18},{x:-56,y:10}];
+    inkWash(ctx, fin2, 761, R, .5, 2, 2);
+    inkStroke(ctx, fin2, 761 + ph, { amp:1.3, w:2.2, close:true });
+  }
+}
+
+function drawGlider(ph){
+  if(!gliding) return;
+  ctx.save();
+  ctx.translate(chassis.position.x, chassis.position.y);
+  ctx.rotate(chassis.angle * .5);
+  const wing = [{x:-64,y:-52},{x:0,y:-72},{x:64,y:-52},{x:0,y:-44},{x:-64,y:-52}];
+  inkWash(ctx, wing, 950, "#3a5f8a", .3, 2, 2);
+  inkStroke(ctx, wing, 950 + ph, { amp:1.8, w:2.4, close:true, col:"#3a5f8a" });
+  inkStroke(ctx, [{x:0,y:-72},{x:0,y:-44}], 953 + ph, { amp:1.2, w:1.6, col:"#3a5f8a" });
+  inkStroke(ctx, [{x:-30,y:-50},{x:-14,y:-38}], 954 + ph, { amp:1, w:1.4, col:"#3a5f8a" });
+  inkStroke(ctx, [{x: 30,y:-50},{x: 14,y:-38}], 955 + ph, { amp:1, w:1.4, col:"#3a5f8a" });
+  ctx.restore();
+}
+
+function drawSpeedTrail(ph){
+  if(Math.hypot(chassis.velocity.x, chassis.velocity.y) < TOP_SPEED * .72) return;
+  ctx.save();
+  ctx.translate(chassis.position.x, chassis.position.y);
+  ctx.rotate(chassis.angle);
+  for(let i = 0; i < 4; i++){
+    const y = -14 + i * 11 + (Math.random() - .5) * 3;
+    const len = 26 + Math.random() * 34;
+    inkStroke(ctx, [{ x:-58, y:y }, { x:-58 - len, y:y }],
+      900 + i + ph, { amp:1.6, w:2.2, col:"#b34a32" });
+  }
+  ctx.restore();
+}
+
+function drawFlag(){
+  const fy = surfaceYAt(strokes, finishX);
+  inkStroke(ctx, [{x:finishX,y:fy+4},{x:finishX,y:fy-96}], 300, { amp:1.4, w:3 });
+  const flag = [
+    {x:finishX,y:fy-96},{x:finishX+52,y:fy-88},{x:finishX+44,y:fy-70},{x:finishX,y:fy-58},{x:finishX,y:fy-96}
+  ];
+  inkWash(ctx, flag, 302, "#b34a32", .45, 2, 2);
+  inkStroke(ctx, flag, 302, { amp:1.5, w:2.2, close:true });
+  ctx.save();
+  inkPath(ctx, flag, 302, 1.5); ctx.closePath(); ctx.clip();
+  ctx.strokeStyle = "#2b2723"; ctx.globalAlpha = .5; ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  for(let i = 0; i < 8; i++){
+    ctx.moveTo(finishX + i * 8, fy - 100);
+    ctx.lineTo(finishX + i * 8 - 22, fy - 50);
+  }
+  ctx.stroke(); ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+function drawDust(){
+  for(const d of dust){
+    ctx.globalAlpha = d.life * .5;
+    inkStroke(ctx, circlePts(d.x, d.y, d.r * (1.4 - d.life * .4), 8),
+      d.seed, { amp:1.5, w:1.5, close:true, col:"#8d8168" });
+  }
+  ctx.globalAlpha = 1;
+}
+
+function render(){
+  /* The ink boil is charming while things move and reads as a vibration when
+     they don't, so it slows right down once the jeep is close to stopped. */
+  const moving = Math.hypot(chassis.velocity.x, chassis.velocity.y) > .6;
+  if(moving || mode !== "play") inkPhase = Math.floor(frame / 11) * 3;
+  const ph = inkPhase;
+
+  drawBackdrop();
+
+  ctx.save();
+  ctx.translate(CW/2, CH/2);
+  ctx.scale(scale, scale);
+  ctx.translate(-camX, -camY);
+
+  drawGround();
+  drawFlag();
+  drawRocks();
+  drawBeams();
+  drawBridges(ph);
+  drawWalls();
+  drawTiles(ph);
+  drawLifts(ph);
+  drawPlanks(ph);
+  drawBlocks(ph);
+  drawBoulders(ph);
+  drawBarrels(ph);
+  drawHammers(ph);
+  drawDust();
+  if(mode !== "crash" || modeT < 260){ drawSpeedTrail(ph); drawJeep(ph); drawGlider(ph); }
+
+  ctx.restore();
+
+  if(!grain) grain = makeGrain();
+  ctx.fillStyle = grain;
+  ctx.fillRect(0, 0, CW, CH);
+
+  /* soft edge shadow so it reads as a sheet of paper */
+  const vg = ctx.createRadialGradient(CW/2, CH/2, Math.min(CW,CH)*.35, CW/2, CH/2, Math.max(CW,CH)*.72);
+  vg.addColorStop(0, "rgba(90,78,58,0)");
+  vg.addColorStop(1, "rgba(90,78,58,.2)");
+  ctx.fillStyle = vg;
+  ctx.fillRect(0, 0, CW, CH);
+
+  drawTrack();
+}
+
+/* ───────────────────────── loop ───────────────────────── */
+
+let acc = 0, prev = performance.now();
+const STEP = 1000 / 60;
+
+function loop(now){
+  requestAnimationFrame(loop);
+  let dt = now - prev; prev = now;
+  if(dt > 120) dt = 120;
+  acc += dt;
+
+  let steps = 0;
+  while(acc >= STEP && steps < 4){
+    if(mode === "play" && !sheet.classList.contains("show")){ drive(); updateObstacles(); }
+    Engine.update(engine, STEP);
+    checkState(STEP);
+    acc -= STEP; steps++;
+  }
+
+  for(let i = dust.length - 1; i >= 0; i--){
+    const d = dust[i];
+    d.x += d.vx; d.y += d.vy; d.vy += .035; d.vx *= .985;
+    d.life -= .016;
+    if(d.life <= 0) dust.splice(i, 1);
+  }
+
+  /* camera leads a little in the direction of travel */
+  const lead = Math.max(-140, Math.min(140, chassis.velocity.x * 22));
+  camX += ((chassis.position.x + lead) - camX) * .09;
+  camY += ((chassis.position.y - 40) - camY) * .05;
+
+  if(mode === "crash"){
+    modeT += dt;
+    if(modeT > 1400) buildLevel(levelIdx);
+  }
+
+  frame++;
+  render();
+}
+
+/* ───────────────────────── input ───────────────────────── */
+
+/* The game lives in an iframe. Until that frame holds keyboard focus the
+   arrow keys go to the page behind it, so grab focus on load and on any
+   click, and say so plainly when we don't have it. */
+const nag = document.getElementById("focusnag");
+
+function grabFocus(){
+  if(card.classList.contains("show")) return;   // let the card keep focus
+  if(sheet.classList.contains("show")) return;  // nor while a panel is up
+  try { window.focus(); } catch(e){}
+  cv.focus({ preventScroll:true });
+}
+function haveFocus(){
+  return document.hasFocus() && document.activeElement !== null;
+}
+document.addEventListener("pointerdown", grabFocus, true);
+document.addEventListener("pointerenter", grabFocus, true);
+document.addEventListener("pointermove", grabFocus, { capture:true, passive:true });
+window.addEventListener("load", grabFocus);
+grabFocus();
+
+setInterval(() => {
+  const ok = document.hasFocus();
+  nag.classList.toggle("show", !ok);
+  if(!ok) keys.left = keys.right = keys.up = keys.down = keys.glide = false;
+}, 200);
+
+/* listen on the document too, in case focus lands on a button */
+["keydown","keyup"].forEach(type => {
+  document.addEventListener(type, e => {
+    const down = type === "keydown";
+    if(["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"," "].includes(e.key)) e.preventDefault();
+    if(e.key === "ArrowRight" || e.key === "d" || e.key === "D") keys.right = down;
+    if(e.key === "ArrowLeft"  || e.key === "a" || e.key === "A") keys.left  = down;
+    if(e.key === "ArrowUp"    || e.key === "w" || e.key === "W") keys.up    = down;
+    if(e.key === "ArrowDown"  || e.key === "s" || e.key === "S") keys.down  = down;
+    if(e.key === " " && !card.classList.contains("show")) keys.glide = down;
+    if(e.key === "g" || e.key === "G" || e.key === "Shift") keys.glide = down;
+    if(!down) return;
+    if(e.key === "Escape") closeSheet();
+    if((e.key === "r" || e.key === "R") && mode !== "won") buildLevel(levelIdx);
+    if((e.key === " " || e.key === "Enter") && card.classList.contains("show")) nextLevel();
+  });
+});
+
+window.addEventListener("blur", () => {
+  keys.left = keys.right = keys.up = keys.down = keys.glide = false;
+});
+
+function bindPad(el, k){
+  const on  = e => { e.preventDefault(); keys[k] = true;  };
+  const off = e => { e.preventDefault(); keys[k] = false; };
+  el.addEventListener("pointerdown", on);
+  el.addEventListener("pointerup", off);
+  el.addEventListener("pointerleave", off);
+  el.addEventListener("pointercancel", off);
+}
+bindPad(document.getElementById("padL"), "left");
+bindPad(document.getElementById("padR"), "right");
+bindPad(document.getElementById("padU"), "up");
+bindPad(document.getElementById("padD"), "down");
+bindPad(document.getElementById("padG"), "glide");
+
+/* ───────────────────────── go ───────────────────────── */
+
+resize();
+buildLevel(0);
+requestAnimationFrame(loop);
+
+})();
+</script>
+</body>
+</html>
