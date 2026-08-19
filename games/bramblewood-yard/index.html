@@ -1,0 +1,2381 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bramblewood Yard</title>
+<style>
+:root{
+  --slate:#3b4550; --slate-d:#2b333c;
+  --tar:#241f1c; --tar-l:#3a322c;
+  --straw:#e8cf8e; --straw-d:#c9a95f;
+  --sack:#f5ead2; --sack-d:#e3d3ae;
+  --bramble:#5d8f4a; --bramble-d:#3f6b31; --bramble-l:#7fae60;
+  --brass:#c69a4c; --brass-d:#9a742f;
+  --rug:#a8503c; --rug-d:#7f3626;
+  --ink:#241f1c; --ink-m:#5c5148; --ink-f:#8b7f72;
+  --sky1:#9dc4dc; --sky2:#dbeaf0;
+  --good:#4b8c47; --warn:#d0952c; --bad:#b4432f;
+  --line:rgba(36,31,28,.16);
+  --shadow:0 2px 0 rgba(36,31,28,.18), 0 8px 20px -8px rgba(36,31,28,.35);
+  --display:Georgia,'Times New Roman',serif;
+  --body:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --type:'Courier New',Courier,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:var(--body); color:var(--ink); background:var(--slate-d);
+  background-image:
+    repeating-linear-gradient(0deg,rgba(255,255,255,.028) 0 2px,transparent 2px 5px),
+    radial-gradient(120% 80% at 50% 0%,#4a5663 0%,#2b333c 60%,#20262c 100%);
+  min-height:100vh; -webkit-font-smoothing:antialiased;
+}
+button{font:inherit;color:inherit;cursor:pointer}
+h1,h2,h3,h4{font-family:var(--display);font-weight:700;margin:0}
+
+/* ---------- shell ---------- */
+.app{max-width:1120px;margin:0 auto;padding:14px 14px 24px}
+
+.crumb{
+  font-family:var(--type);
+  font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--brass);opacity:.75;margin:0 0 10px;
+}
+.crumb a{color:var(--brass)}
+.crumb a:hover{color:var(--straw)}
+
+.topbar{
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  background:linear-gradient(180deg,var(--tar-l),var(--tar));
+  border:2px solid #1a1613;border-radius:12px;padding:12px 16px;
+  box-shadow:var(--shadow);position:relative;overflow:hidden;
+}
+.topbar::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(90deg,rgba(255,255,255,.045) 0 1px,transparent 1px 7px)}
+.sign{flex:1;min-width:220px;position:relative;z-index:1}
+.sign h1{color:var(--straw);font-size:clamp(20px,4.4vw,30px);letter-spacing:.06em;
+  text-transform:uppercase;line-height:1;text-shadow:0 2px 0 #16120f}
+.sign h1 em{font-style:normal;color:var(--brass)}
+.sign p{margin:5px 0 0;color:#a99c88;font-family:var(--type);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+.tally{display:flex;gap:8px;position:relative;z-index:1;flex-wrap:wrap}
+.chip{
+  background:rgba(0,0,0,.3);border:1px solid rgba(198,154,76,.45);border-radius:8px;
+  padding:6px 11px;text-align:center;min-width:66px;
+}
+.chip b{display:block;font-family:var(--display);font-size:17px;color:var(--straw);line-height:1.1}
+.chip span{display:block;font-family:var(--type);font-size:9.5px;letter-spacing:.1em;color:#9b8f7d;text-transform:uppercase}
+
+/* role tabs */
+.roles{display:grid;grid-template-columns:repeat(auto-fit,minmax(146px,1fr));gap:8px;margin:12px 0}
+.role{
+  background:linear-gradient(180deg,#6d4a2c,#54371f);
+  border:2px solid #38220f;border-bottom-width:5px;border-radius:10px;
+  padding:10px 6px;text-align:center;color:#f0e2c6;transition:.14s;
+}
+.role:hover{filter:brightness(1.12)}
+.role .rn{display:block;font-family:var(--display);font-size:15px;letter-spacing:.03em}
+.role .rd{display:block;font-size:10.5px;color:#c3ab89;margin-top:2px}
+.role .ri{font-size:19px;line-height:1}
+.role[aria-pressed="true"]{
+  background:linear-gradient(180deg,#e8cf8e,#c9a95f);color:#3a2a15;border-color:#8c6a2c;
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.5);
+}
+.role[aria-pressed="true"] .rd{color:#6b5426}
+.role .badge{display:inline-block;background:var(--rug);color:#fff;font-size:10px;font-weight:700;
+  border-radius:20px;padding:1px 7px;margin-left:4px}
+
+/* panels */
+.panel{background:var(--sack);border:2px solid #b9a67d;border-radius:12px;box-shadow:var(--shadow);overflow:hidden}
+.panel-hd{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+  padding:9px 14px;background:linear-gradient(180deg,#efe0bd,#e3d3ae);border-bottom:2px solid #c8b58c;
+}
+.panel-hd h2{font-size:16px;letter-spacing:.04em}
+.panel-hd .sub{font-family:var(--type);font-size:11px;color:var(--ink-m);letter-spacing:.05em}
+.panel-bd{padding:14px}
+
+/* buttons */
+.btn{
+  background:linear-gradient(180deg,#fffaf0,#e6d9bb);border:2px solid #9c8a63;border-bottom-width:4px;
+  border-radius:9px;padding:8px 13px;font-size:13.5px;font-weight:600;transition:.12s;
+}
+.btn:hover{filter:brightness(1.05);transform:translateY(-1px)}
+.btn:active{transform:translateY(2px);border-bottom-width:2px}
+.btn[disabled]{opacity:.42;cursor:not-allowed;transform:none;filter:none}
+.btn-go{background:linear-gradient(180deg,#7fae60,#5d8f4a);border-color:#3f6b31;color:#fff}
+.btn-red{background:linear-gradient(180deg,#c26a54,#a8503c);border-color:#7f3626;color:#fff}
+.btn-dark{background:linear-gradient(180deg,#4b5560,#39424c);border-color:#242b32;color:#f0e6d4}
+.btn-sm{padding:5px 10px;font-size:12px;border-bottom-width:3px}
+.btn-lg{padding:12px 20px;font-size:15px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+/* ---------- stable block ---------- */
+.subtabs{display:flex;gap:6px}
+.subtab{background:transparent;border:2px solid transparent;border-radius:8px;padding:5px 11px;font-size:13px;font-weight:600;color:var(--ink-m)}
+.subtab[aria-pressed="true"]{background:#fffaf0;border-color:#c8b58c;color:var(--ink)}
+
+.block{display:grid;grid-template-columns:repeat(auto-fit,minmax(238px,1fr));gap:12px}
+.stall{
+  background:linear-gradient(180deg,#6d4a2c 0 46%,#54371f 46% 100%);
+  border:3px solid #35200e;border-radius:10px;overflow:hidden;position:relative;text-align:left;
+  padding:0;display:block;width:100%;box-shadow:var(--shadow);
+}
+.stall::before{content:"";position:absolute;inset:0;
+  background:repeating-linear-gradient(90deg,rgba(0,0,0,.22) 0 1px,transparent 1px 22px);pointer-events:none}
+.stall:hover{filter:brightness(1.08)}
+.stall .plate{
+  display:flex;align-items:center;justify-content:space-between;gap:6px;
+  background:linear-gradient(180deg,#d8b465,#b8913f);border-bottom:3px solid #35200e;
+  padding:5px 10px;position:relative;z-index:2;
+}
+.stall .plate b{font-family:var(--display);font-size:14.5px;letter-spacing:.05em;color:#33240c}
+.stall .plate small{font-family:var(--type);font-size:10px;color:#5c451a;letter-spacing:.04em}
+.stall .scene{position:relative;height:160px;overflow:hidden;
+  background:linear-gradient(180deg,#3a2a19 0 58%,#e8cf8e 58% 100%)}
+.stall .scene .straw{position:absolute;left:0;right:0;bottom:0;height:42%;
+  background:linear-gradient(180deg,#e8cf8e,#cfae63);
+  box-shadow:inset 0 3px 0 rgba(255,255,255,.35)}
+.stall .scene .straw::after{content:"";position:absolute;inset:0;
+  background:repeating-linear-gradient(72deg,rgba(140,110,50,.30) 0 1px,transparent 1px 6px),
+             repeating-linear-gradient(-58deg,rgba(160,128,60,.22) 0 1px,transparent 1px 9px)}
+.stall .scene .horse{position:absolute;bottom:2px;left:50%;transform:translateX(-50%);height:94%;width:auto;max-width:96%;z-index:2}
+.pho{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);height:88%;width:auto;max-width:94%;
+  object-fit:contain;z-index:3;border-radius:5px;box-shadow:0 4px 14px rgba(0,0,0,.45)}
+.box .pho{height:84%}
+.stall .empty{position:absolute;inset:0;display:grid;place-items:center;color:#c9b48c;
+  font-family:var(--type);font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;z-index:2}
+.stall .needs{display:flex;gap:5px;padding:7px 9px;background:#2b1c0e;position:relative;z-index:2;flex-wrap:wrap}
+.pip{display:flex;align-items:center;gap:3px;font-size:10.5px;font-family:var(--type);color:#d8c8ab;
+  background:rgba(255,255,255,.07);border-radius:20px;padding:2px 7px;letter-spacing:.03em}
+.pip i{width:7px;height:7px;border-radius:50%;background:var(--good);font-style:normal;display:block}
+.pip.w i{background:var(--warn)} .pip.b i{background:var(--bad)}
+.stall .alarm.rest{background:var(--warn);animation:none}
+.stall .alarm{position:absolute;top:34px;right:8px;z-index:5;background:var(--rug);color:#fff;
+  font-size:10.5px;font-weight:700;border-radius:20px;padding:3px 9px;box-shadow:0 2px 6px rgba(0,0,0,.4);
+  animation:pulse 1.5s infinite}
+@keyframes pulse{50%{transform:scale(1.09)}}
+
+/* ---------- field ---------- */
+.field{border:3px solid #35200e;border-radius:10px;overflow:hidden;box-shadow:var(--shadow);position:relative}
+.field svg{display:block;width:100%;height:auto}
+
+/* ---------- stall detail ---------- */
+.stallview{display:grid;grid-template-columns:1.5fr 1fr;gap:14px}
+@media(max-width:760px){.stallview{grid-template-columns:1fr}}
+.box{
+  position:relative;border:3px solid #35200e;border-radius:10px;overflow:hidden;min-height:290px;
+  background:linear-gradient(180deg,#4a3320 0 20%,#6d4a2c 20% 62%,#e8cf8e 62% 100%);
+}
+.box::before{content:"";position:absolute;left:0;right:0;top:20%;height:42%;
+  background:repeating-linear-gradient(90deg,rgba(0,0,0,.2) 0 2px,transparent 2px 26px)}
+.box .bedding{position:absolute;left:0;right:0;bottom:0;height:38%;
+  background:linear-gradient(180deg,#eed69a,#c9a95f)}
+.box .bedding::after{content:"";position:absolute;inset:0;
+  background:repeating-linear-gradient(70deg,rgba(140,110,50,.28) 0 1px,transparent 1px 7px),
+             repeating-linear-gradient(-52deg,rgba(160,128,60,.2) 0 1px,transparent 1px 11px)}
+.box .horse{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);height:82%;width:auto;max-width:88%;z-index:3}
+.box .haynet{position:absolute;top:12%;left:5%;width:74px;z-index:2}
+.box .bucket{position:absolute;bottom:12%;right:6%;width:66px;z-index:4}
+.box .muckpile{position:absolute;z-index:2}
+.box .win{position:absolute;top:24%;right:8%;width:74px;height:52px;border:4px solid #35200e;border-radius:4px;
+  background:linear-gradient(180deg,#9dc4dc,#cfe3ec);box-shadow:inset 0 0 0 2px #6d4a2c}
+.box .win::after{content:"";position:absolute;left:50%;top:0;bottom:0;width:4px;background:#35200e;transform:translateX(-50%)}
+
+.card{background:#fffaf0;border:2px solid #d3c19a;border-radius:10px;padding:12px}
+.card h3{font-size:15px;margin-bottom:2px}
+.card .breedline{font-family:var(--type);font-size:11px;color:var(--ink-m);letter-spacing:.03em;margin:0 0 10px}
+.meter{margin-bottom:8px}
+.meter .lab{display:flex;justify-content:space-between;font-size:11.5px;font-family:var(--type);
+  letter-spacing:.05em;color:var(--ink-m);margin-bottom:3px;text-transform:uppercase}
+.meter .track{height:11px;border-radius:6px;background:#e0d3b4;border:1px solid #c3ae83;overflow:hidden}
+.meter .fill{height:100%;border-radius:5px;transition:width .5s cubic-bezier(.2,.8,.3,1)}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:11px}
+.actions .btn{width:100%}
+
+.note{font-family:var(--type);font-size:11.5px;line-height:1.55;color:var(--ink-m);
+  background:#f2e6c8;border-left:3px solid var(--brass);padding:7px 10px;border-radius:0 6px 6px 0;margin-top:10px}
+
+/* ---------- modal ---------- */
+.scrim{position:fixed;inset:0;background:rgba(20,16,13,.72);display:grid;place-items:center;
+  padding:14px;z-index:60;animation:fade .18s}
+@keyframes fade{from{opacity:0}}
+.sheet{background:var(--sack);border:3px solid #9c8a63;border-radius:14px;width:min(680px,100%);
+  max-height:92vh;overflow:auto;box-shadow:0 24px 60px -12px rgba(0,0,0,.7)}
+.sheet.wide{width:min(940px,100%)}
+.sheet-hd{display:flex;justify-content:space-between;align-items:center;gap:10px;
+  padding:11px 15px;background:linear-gradient(180deg,#efe0bd,#e0cfa6);border-bottom:2px solid #c8b58c;
+  position:sticky;top:0;z-index:5}
+.sheet-hd h2{font-size:17px}
+.sheet-bd{padding:15px}
+.x{background:none;border:none;font-size:22px;line-height:1;color:var(--ink-m);padding:0 4px}
+
+/* ---------- mini games ---------- */
+.stage{position:relative;border:3px solid #35200e;border-radius:10px;overflow:hidden;user-select:none;
+  -webkit-user-select:none;touch-action:manipulation}
+.stage svg{display:block;width:100%;height:auto}
+.hud{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;
+  font-family:var(--type);font-size:12px;letter-spacing:.04em;margin-bottom:9px;text-transform:uppercase;color:var(--ink-m)}
+.hud b{color:var(--ink);font-size:14px}
+
+.muck{cursor:grab}
+.muck:active{cursor:grabbing}
+#m-stage{cursor:none}
+#m-items g,#m-zone,#m-fork{transition:opacity .18s}
+
+.ingredients{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
+.ing{background:#fffaf0;border:2px solid #c3ae83;border-bottom-width:4px;border-radius:9px;padding:9px 8px;text-align:center}
+.ing:hover{filter:brightness(1.05)}
+.ing .n{display:block;font-size:12.5px;font-weight:700}
+.ing .u{display:block;font-family:var(--type);font-size:10px;color:var(--ink-m)}
+.ing .c{display:inline-block;margin-top:4px;background:var(--bramble);color:#fff;border-radius:20px;
+  font-size:11px;padding:1px 8px;font-family:var(--type)}
+.recipe{background:#f2e6c8;border:2px dashed #c3ae83;border-radius:9px;padding:10px 12px;margin-bottom:11px}
+.recipe h4{font-size:13px;letter-spacing:.05em;text-transform:uppercase;margin-bottom:5px}
+.recipe ul{margin:0;padding-left:17px;font-family:var(--type);font-size:12.5px;line-height:1.7}
+
+.dirtspot{cursor:crosshair;transition:opacity .25s}
+.brushing{cursor:none}
+
+/* ---------- vet clipboard ---------- */
+.clip{background:#8a6b4a;border:3px solid #5e462d;border-radius:10px;padding:11px 11px 14px;box-shadow:var(--shadow)}
+.clip .clamp{height:15px;width:96px;margin:-19px auto 9px;background:linear-gradient(180deg,#c8ccd2,#8d949c);
+  border:2px solid #5a6068;border-radius:4px}
+.sheetpaper{background:#fdfbf3;border-radius:3px;padding:12px 13px;
+  background-image:repeating-linear-gradient(180deg,transparent 0 21px,rgba(60,90,140,.13) 21px 22px);
+  font-family:var(--type);font-size:12.4px;line-height:22px;color:#20242c;min-height:190px}
+.sheetpaper h4{font-family:var(--type);font-size:12.4px;letter-spacing:.14em;text-transform:uppercase;
+  border-bottom:1.5px solid #20242c;padding-bottom:3px;margin:0 0 8px;line-height:22px}
+.sheetpaper .k{color:#7a2f22;font-weight:700}
+.sheetpaper .blank{color:#9aa0ac}
+.tools{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:7px}
+.tool{background:#fffaf0;border:2px solid #a9977070;border-color:#a99770;border-bottom-width:4px;
+  border-radius:9px;padding:8px;text-align:left;display:flex;gap:8px;align-items:center;font-size:12.5px}
+.tool .ti{font-size:17px}
+.tool[data-used="1"]{background:#e3ecdc;border-color:#8aa87c;opacity:.75}
+.dxlist{display:grid;gap:7px}
+.dx{background:#fffaf0;border:2px solid #a99770;border-bottom-width:4px;border-radius:9px;padding:10px 12px;text-align:left}
+.dx b{font-size:13.5px}
+.dx small{display:block;font-family:var(--type);font-size:11px;color:var(--ink-m);margin-top:2px}
+.dx.ok{background:#dff0d6;border-color:#5d8f4a}
+.dx.no{background:#f6ddd6;border-color:#b4432f;opacity:.7}
+
+/* ---------- horse mode ---------- */
+.world{position:relative;border:3px solid #35200e;border-radius:10px;overflow:hidden;background:#cfe3ec}
+.world svg{display:block;width:100%;height:auto}
+.hmeters{position:absolute;top:9px;left:9px;display:grid;gap:5px;z-index:9;pointer-events:none}
+.hm{display:flex;align-items:center;gap:6px;background:rgba(36,31,28,.62);border-radius:20px;padding:3px 9px 3px 6px}
+.hm span{font-family:var(--type);font-size:10px;color:#f0e6d4;letter-spacing:.07em;width:44px;text-transform:uppercase}
+.hm .track{width:78px;height:7px;border-radius:5px;background:rgba(255,255,255,.22);overflow:hidden}
+.hm .fill{height:100%;border-radius:5px;transition:width .3s}
+.keys{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+.key{font-family:var(--type);font-size:11px;background:#fffaf0;border:2px solid #c3ae83;border-bottom-width:3px;
+  border-radius:6px;padding:3px 8px}
+.key b{color:var(--rug)}
+.dpad{position:absolute;bottom:9px;left:9px;right:9px;display:none;justify-content:space-between;z-index:9}
+.dpad button{width:56px;height:56px;border-radius:50%;border:2px solid rgba(0,0,0,.35);
+  background:rgba(253,251,243,.86);font-size:19px;font-weight:700}
+@media(pointer:coarse){.dpad{display:flex}}
+
+/* ---------- training ---------- */
+.levels{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:10px}
+.lvl{background:#fffaf0;border:2px solid #c3ae83;border-bottom-width:4px;border-radius:10px;
+  padding:11px 12px;text-align:left;position:relative;transition:.13s}
+.lvl:hover{filter:brightness(1.04);transform:translateY(-2px)}
+.lvl[disabled]{opacity:.45;cursor:not-allowed;transform:none;filter:none}
+.lvl .no{font-family:var(--type);font-size:10px;letter-spacing:.13em;color:var(--ink-f);text-transform:uppercase}
+.lvl b{display:block;font-family:var(--display);font-size:15.5px;margin:2px 0 5px;line-height:1.15}
+.lvl .disc{display:inline-block;font-family:var(--type);font-size:9.5px;letter-spacing:.09em;
+  text-transform:uppercase;background:#efe0bd;border-radius:20px;padding:2px 9px;color:var(--ink-m)}
+.lvl .st{position:absolute;top:10px;right:12px;color:var(--brass);font-size:12px;letter-spacing:1.5px}
+.lvl.done{background:#eef4e8;border-color:#8aa87c}
+.lvl .gift{display:block;margin-top:8px;font-size:11px;color:var(--rug);font-weight:700}
+.creator{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:660px){.creator{grid-template-columns:1fr}}
+h4.sect{font-family:var(--type);font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--ink-m);margin:13px 0 6px}
+.swatches{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.sw{border:2px solid #c3ae83;border-bottom-width:4px;border-radius:9px;padding:6px 4px;
+  background:#fffaf0;font-size:11px;font-family:var(--type);text-align:center;line-height:1.3}
+.sw:hover{filter:brightness(1.05)}
+.sw[aria-pressed="true"]{border-color:var(--brass);background:#f5e6c4;box-shadow:inset 0 0 0 2px var(--brass)}
+.sw i{display:block;height:20px;border-radius:5px;margin-bottom:4px;border:1px solid rgba(0,0,0,.15)}
+.nameinput{width:100%;font-family:var(--display);font-size:19px;padding:9px 11px;
+  border:2px solid #c3ae83;border-radius:9px;background:#fffaf0;color:var(--ink)}
+
+.testlist{margin:0;padding-left:22px;font-family:var(--type);font-size:13px;line-height:2}
+.testlist b{display:inline-block;min-width:20px;color:var(--rug);font-family:var(--display);font-size:15px}
+.dots{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;justify-content:center}
+.dot{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-family:var(--type);
+  font-size:11px;background:#e0d3b4;border:2px solid #c3ae83;color:var(--ink-m)}
+.dot.on{background:var(--bramble);border-color:var(--bramble-d);color:#fff}
+.dot.now{border-color:var(--brass);box-shadow:0 0 0 2px rgba(198,154,76,.4);background:#fffaf0}
+#lv-me.glide{transition:transform .7s cubic-bezier(.3,.7,.3,1)}
+
+h3.sect2{font-size:13px;letter-spacing:.05em;text-transform:uppercase;margin:15px 0 8px}
+.carelist{display:grid;gap:7px}
+.careitem{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  background:#eef4e8;border:2px solid #8aa87c;border-radius:9px;padding:8px 11px}
+.careitem.due{background:#fdf3e0;border-color:var(--brass)}
+.careitem .ci-t b{display:block;font-size:13.5px}
+.careitem .ci-t small{font-family:var(--type);font-size:11px;color:var(--ink-m)}
+.tapspot{cursor:pointer;transition:opacity .3s}
+.tapspot circle:first-child{animation:ping 1.3s ease-in-out infinite}
+@keyframes ping{0%,100%{opacity:.38}50%{opacity:.08}}
+
+.feedpick{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:7px}
+.fp{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#fffaf0;
+  border:2px solid #c3ae83;border-radius:9px;padding:6px 9px}
+.fp-t b{display:block;font-size:12.5px;line-height:1.2}
+.fp-t small{font-family:var(--type);font-size:10px;color:var(--ink-m)}
+.fp-s{display:flex;align-items:center;gap:6px}
+.fp-s span{font-family:var(--display);font-size:16px;min-width:15px;text-align:center}
+.fpb{width:26px;height:26px;border-radius:7px;border:2px solid #9c8a63;border-bottom-width:3px;
+  background:linear-gradient(180deg,#fffaf0,#e6d9bb);font-size:15px;font-weight:700;line-height:1}
+.fpb:active{transform:translateY(1px);border-bottom-width:2px}
+
+/* ---------- horse svg animation ---------- */
+.horse{overflow:visible}
+.h-body{animation:breathe 4.4s ease-in-out infinite}
+@keyframes breathe{50%{transform:scaleY(1.014) scaleX(1.004)}}
+.h-tail{animation:swish 4.2s ease-in-out infinite}
+@keyframes swish{0%,100%{transform:rotate(0)}30%{transform:rotate(7deg)}62%{transform:rotate(-6deg)}}
+.h-ear-n{animation:earflick 6.5s infinite}
+.h-ear-f{animation:earflick 7.9s infinite .8s}
+@keyframes earflick{0%,88%,100%{transform:rotate(0)}92%{transform:rotate(-13deg)}96%{transform:rotate(6deg)}}
+.h-lid{transform:scaleY(0);animation:blink 7s infinite}
+@keyframes blink{0%,95%,100%{transform:scaleY(0)}97%{transform:scaleY(1)}}
+.h-head,.h-skull{transition:transform .8s cubic-bezier(.3,.7,.3,1)}
+
+.h-leg{transform-box:view-box}
+@keyframes swU{0%{transform:rotate(15deg)}25%{transform:rotate(0)}50%{transform:rotate(-15deg)}75%{transform:rotate(0)}100%{transform:rotate(15deg)}}
+@keyframes swL{0%{transform:rotate(-3deg)}22%{transform:rotate(-25deg)}55%{transform:rotate(2deg)}100%{transform:rotate(-3deg)}}
+@keyframes bob{0%,100%{transform:translateY(0)}25%{transform:translateY(-2.4px)}75%{transform:translateY(-1.2px)}}
+
+.pose-walk .h-all{animation:bob 1.05s ease-in-out infinite}
+.pose-walk .u1,.pose-walk .u2,.pose-walk .u3,.pose-walk .u4{animation:swU 1.05s ease-in-out infinite}
+.pose-walk .l1,.pose-walk .l2,.pose-walk .l3,.pose-walk .l4{animation:swL 1.05s ease-in-out infinite}
+.pose-trot .h-all{animation:bob .58s ease-in-out infinite}
+.pose-trot .u1,.pose-trot .u2,.pose-trot .u3,.pose-trot .u4{animation:swU .58s ease-in-out infinite}
+.pose-trot .l1,.pose-trot .l2,.pose-trot .l3,.pose-trot .l4{animation:swL .58s ease-in-out infinite}
+.pose-canter .h-all{animation:bob .42s ease-in-out infinite}
+.pose-canter .u1,.pose-canter .u2,.pose-canter .u3,.pose-canter .u4{animation:swU .42s ease-in-out infinite}
+.pose-canter .l1,.pose-canter .l2,.pose-canter .l3,.pose-canter .l4{animation:swL .42s ease-in-out infinite}
+.u1,.l1{animation-delay:0s} .u2,.l2{animation-delay:-.26s}
+.u3,.l3{animation-delay:-.53s} .u4,.l4{animation-delay:-.79s}
+
+.pose-graze .h-head{transform:var(--graze)}
+.pose-graze .h-skull{transform:var(--gskull)}
+.pose-stretch .h-skull,.pose-cough .h-skull{transform:rotate(16deg)}
+.pose-stretch .h-head{transform:translate(-6px,10px) rotate(-24deg)}
+.pose-colic .h-head{transform:translate(2px,12px) rotate(-15deg)}
+.pose-colic .u1{animation:paw 1.6s ease-in-out infinite}
+@keyframes paw{0%,60%,100%{transform:rotate(0)}72%{transform:rotate(-24deg)}84%{transform:rotate(6deg)}}
+.pose-lame .u1{transform:rotate(-13deg)}
+.pose-lame .h-all{animation:nod 1.5s ease-in-out infinite}
+@keyframes nod{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(2px) rotate(.7deg)}}
+.pose-rock .u1,.pose-rock .u2{transform:rotate(-17deg)}
+.pose-rock .u3,.pose-rock .u4{transform:rotate(15deg)}
+.pose-rock .h-all{transform:rotate(2deg)}
+.pose-cough .h-head{transform:translate(-6px,10px) rotate(-24deg);animation:cough 2.2s infinite}
+@keyframes cough{0%,74%,100%{}80%{transform:translate(-2px,4px) rotate(-14deg)}86%{transform:translate(-8px,12px) rotate(-28deg)}}
+
+.flip{transform:scaleX(-1)}
+.dust{animation:dust 1.4s ease-out infinite;transform-origin:center}
+@keyframes dust{0%{opacity:.55;transform:scale(.4) translateY(0)}100%{opacity:0;transform:scale(1.5) translateY(-14px)}}
+
+@media(prefers-reduced-motion:reduce){
+  *{animation-duration:.001s !important;animation-iteration-count:1 !important;transition-duration:.001s !important}
+}
+:focus-visible{outline:3px solid var(--brass);outline-offset:2px}
+
+.toast{position:fixed;left:50%;top:16px;transform:translate(-50%,-24px);z-index:90;opacity:0;
+  background:var(--tar);color:var(--straw);border:2px solid var(--brass);border-radius:10px;
+  padding:9px 16px;font-size:13.5px;font-weight:600;transition:.3s;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.center{text-align:center}
+.muted{color:var(--ink-m);font-size:12.5px}
+.big{font-family:var(--display);font-size:19px}
+.stars{font-size:26px;letter-spacing:5px;color:var(--brass)}
+.pickgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.pick{background:#fffaf0;border:2px solid #c3ae83;border-bottom-width:4px;border-radius:10px;padding:9px;text-align:center}
+.pick:hover{filter:brightness(1.05);transform:translateY(-2px)}
+.pick svg{width:100%;height:auto}
+.pick b{display:block;font-family:var(--display);font-size:14px;margin-top:3px}
+.pick small{font-family:var(--type);font-size:10.5px;color:var(--ink-m)}
+</style>
+</head>
+<body>
+<div class="app">
+  <p class="crumb"><a href="../../">2026</a> &rarr; <a href="../">Games</a> &rarr; Bramblewood Yard</p>
+  <header class="topbar">
+    <div class="sign">
+      <h1>Bramblewood <em>Yard</em></h1>
+      <p id="clock">Day 1 &middot; Morning</p>
+    </div>
+    <div class="tally">
+      <div class="chip"><b id="t-points">0</b><span>Points</span></div>
+      <div class="chip"><b id="t-jobs">0</b><span>Jobs done</span></div>
+      <div class="chip"><b id="t-care">–</b><span>Care</span></div>
+    </div>
+  </header>
+
+  <nav class="roles" id="roles">
+    <button class="role" data-mode="owner" aria-pressed="true">
+      <span class="ri">&#129528;</span><span class="rn">Yard Owner</span><span class="rd">Muck out, feed, water, exercise</span>
+    </button>
+    <button class="role" data-mode="vet" aria-pressed="false">
+      <span class="ri">&#129658;</span><span class="rn">Vet<span id="vet-badge"></span></span><span class="rd">Examine, diagnose, treat</span>
+    </button>
+    <button class="role" data-mode="train" aria-pressed="false">
+      <span class="ri">&#127942;</span><span class="rn">Training</span><span class="rd">Poles, jumping, dressage</span>
+    </button>
+    <button class="role" data-mode="horse" aria-pressed="false">
+      <span class="ri">&#127943;</span><span class="rn">Be a Horse</span><span class="rd">Graze, canter, roll, jump</span>
+    </button>
+  </nav>
+
+  <main id="view"></main>
+</div>
+
+<div id="modal-root"></div>
+<div class="toast" id="toast"></div>
+<script>
+"use strict";
+const $ = (s,r=document)=>r.querySelector(s);
+const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
+const clamp=(v,a=0,b=100)=>Math.max(a,Math.min(b,v));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const rnd=(a,b)=>a+Math.random()*(b-a);
+
+/* ============================ COATS ============================ */
+const COATS={
+  palomino:{name:'Palomino',base:'#d8a656',dark:'#a87c33',lite:'#f0cd8e',pts:'#c9964c',mane:'#f8f3e6',hoof:'#4a3f31'},
+  skewbald:{name:'Skewbald',base:'#7d4c28',dark:'#54301a',lite:'#a06f3f',pts:'#6b4022',mane:'#f2ece0',hoof:'#4a3c30',patches:1},
+  bay:{name:'Bay',base:'#8c5028',dark:'#5d3013',lite:'#b0743d',pts:'#1f1a16',mane:'#1f1a16',hoof:'#3b3129'},
+  chestnut:{name:'Chestnut',base:'#a85a2a',dark:'#7e3d18',lite:'#cb8148',pts:'#a85a2a',mane:'#e0b078',hoof:'#4a3c30'},
+  grey:{name:'Dapple grey',base:'#c6c2bd',dark:'#9d9892',lite:'#eceae7',pts:'#b3ada7',mane:'#dedad5',hoof:'#453f39',dapple:1},
+  dun:{name:'Dun',base:'#c0a06c',dark:'#9b7f4e',lite:'#dcc294',pts:'#3a3027',mane:'#3a3027',hoof:'#453b2e',stripe:1},
+  black:{name:'Black',base:'#332d2c',dark:'#1c1817',lite:'#544c4a',pts:'#1c1817',mane:'#171414',hoof:'#2a2422'}
+};
+
+/* ============================ BUILDS ============================
+   Two hand-drawn anatomies. The riding horse has a long sloping shoulder,
+   a defined throatlatch and a wedge-shaped head with a jowl. The Shetland
+   has short thick legs, a deep barrel, a stubby crested neck and a
+   small dished head buried under an enormous mane.                     */
+const VB={w:260,h:200,ground:176,cx:120};
+const BUILDS={
+horse:{
+  ground:176,cx:120,
+  ho:'112px 46px', po:'46px 20px', graze:'translate(0px,34px) rotate(-68deg)', gskull:'rotate(40deg)',
+  bo:'150px 88px', to:'195px 50px', eo1:'46px 24px', eo2:'53px 25px',
+  eye:[42,34], eyeR:[4.1,3.5], nostril:[20.5,54.5], nostrilRot:-28,
+  dirt:{x0:104,x1:192,y0:52,y1:108},
+  dorsal:'M 111,47 C 130,43 152,42 172,45',
+  barrel:'M 112,46 C 130,42 152,41 172,44 C 190,47 204,58 205,76 C 206,92 198,104 186,110 C 176,115 160,117 146,116 C 132,115 118,112 108,106 C 98,100 92,92 89,82 C 86,68 96,52 112,46 Z',
+  neck:'M 112,46 C 98,35 80,25 64,20 C 56,17 47,18 45,23 C 48,33 51,44 55,52 C 64,64 78,80 92,98 C 104,88 110,66 112,46 Z',
+  head:'M 46,20 C 40,20 34,26 28,34 C 23,41 18,48 15,53 C 12,57 13,62 17,64 C 21,66 26,64 28,61 C 31,57 33,54 37,53 C 44,51 50,52 53,48 C 56,43 54,32 50,25 Z',
+  earN:'M 44,22 C 42,14 43,7 46,5 C 50,7 51,15 50,23 Z',
+  earF:'M 51,23 C 50,15 51,9 54,7 C 57,10 57,17 56,24 Z',
+  earIn:'M 45,21 C 44,15 45,10 46,9 C 48,11 48,17 48,21 Z',
+  mane:'M 45,20 C 58,13 80,21 99,32 C 109,38 115,44 117,50 C 115,57 111,58 108,53 C 106,58 102,58 100,52 C 97,57 93,56 91,50 C 88,55 84,54 82,48 C 79,52 75,51 73,45 C 70,49 66,48 64,42 C 61,45 57,44 55,38 C 52,41 48,38 46,31 C 44,27 44,23 45,20 Z',
+  maneLine:'M 50,22 C 62,26 80,36 94,46 M 58,20 C 70,26 86,38 100,48 M 68,22 C 80,30 94,42 106,50',
+  fore:'M 46,19 C 38,20 31,28 26,37 C 25,40 26,42 28,41 C 32,32 39,25 47,24 Z',
+  tail:'M 190,44 C 208,42 220,58 223,80 C 226,104 222,128 213,148 C 208,159 201,168 194,173 C 199,151 202,127 201,104 C 200,80 195,58 187,46 Z',
+  tailLine:'M 194,60 C 205,74 208,94 205,114 C 202,134 197,151 192,162',
+  muscle:['M 112,48 C 106,62 100,76 95,88','M 172,46 C 186,58 192,76 189,96','M 120,104 C 134,110 152,112 168,110','M 128,98 C 140,103 154,105 166,104'],
+  jowl:'M 53,44 C 50,50 44,53 38,53',
+  patches:['M 96,40 C 116,38 128,58 124,80 C 120,100 100,106 90,94 C 80,80 82,46 96,40 Z',
+           'M 168,44 C 190,42 206,64 202,88 C 198,108 176,110 170,92 C 164,72 158,48 168,44 Z',
+           'M 126,96 C 146,92 164,100 160,114 C 154,124 130,122 124,110 Z'],
+  tack:{numnah:'M 109,45 C 121,39 143,38 154,42 C 157,45 156,54 153,64 C 151,73 148,80 144,84 C 132,88 118,88 109,83 C 105,72 105,56 109,45 Z',
+    saddle:'M 111,47 C 109,40 114,35 122,34 C 134,33 146,36 152,41 C 154,43 153,47 149,48 C 137,51 121,51 113,49 Z',
+    flap:'M 114,47 C 110,57 110,69 114,78 C 124,82 137,82 143,77 C 146,66 145,54 142,46 Z',
+    knee:'M 114,50 C 110,59 110,70 114,78 C 118,74 119,62 118,50 Z',
+    girth:'M 122,80 C 120,94 120,106 122,114', leather:'M 128,48 L 128,86', iron:{x:128,y:88},
+    brow:'M 33,31 L 51,28', cheek:'M 48,30 C 42,36 33,45 27,52', nose:'M 20,37 L 35,51',
+    throat:'M 51,29 C 53,38 50,48 43,52', bit:{x:25.5,y:54},
+    reins:'M 27,56 C 50,64 76,62 100,50', reins2:'M 27,59 C 50,70 78,68 100,54'},
+  spots:{neck:[92,66],mouth:[22,58],feet:[[106,166],[178,166],[95,166],[167,166]]},
+  legs:[{x:106,ty:98,ky:138,wt:11,wb:6},{x:178,ty:100,ky:140,wt:14,wb:6.5},
+        {x:95,ty:98,ky:138,wt:10,wb:5.5},{x:167,ty:100,ky:140,wt:13,wb:6}]
+},
+pony:{
+  ground:176,cx:120,
+  ho:'116px 90px', po:'64px 58px', graze:'translate(0px,7px) rotate(-62deg)', gskull:'rotate(37deg)',
+  bo:'152px 124px', to:'198px 108px', eo1:'64px 60px', eo2:'70px 61px',
+  eye:[50,77], eyeR:[3.6,3.1], nostril:[36.5,92.5], nostrilRot:-24,
+  dirt:{x0:110,x1:198,y0:94,y1:150},
+  dorsal:'M 115,91 C 136,85 158,84 176,89',
+  barrel:'M 116,90 C 136,84 158,83 176,88 C 194,93 204,106 204,124 C 204,142 194,152 180,156 C 166,160 150,160 138,157 C 126,154 114,148 108,138 C 102,128 100,114 102,104 C 104,94 108,90 116,90 Z',
+  neck:'M 116,90 C 108,76 96,64 82,58 C 74,55 66,56 63,61 C 64,70 68,80 72,88 C 78,100 88,112 98,124 C 108,114 113,102 116,90 Z',
+  head:'M 64,58 C 57,57 50,62 45,70 C 40,77 35,85 32,90 C 29,95 30,100 34,102 C 38,104 44,102 47,98 C 50,94 53,91 57,90 C 63,88 68,89 71,84 C 74,78 71,64 68,59 Z',
+  earN:'M 62,60 C 61,53 62,47 65,45 C 68,47 69,54 68,61 Z',
+  earF:'M 69,61 C 68,54 69,49 72,47 C 75,50 75,56 74,62 Z',
+  earIn:'M 63,59 C 62,54 63,50 64,49 C 66,51 66,55 66,59 Z',
+  mane:'M 63,54 C 76,47 94,54 108,66 C 116,73 121,82 123,91 C 121,100 116,101 112,95 C 110,102 105,102 101,95 C 98,102 93,101 90,94 C 86,100 81,98 78,91 C 74,96 69,94 66,87 C 62,91 57,88 55,80 C 52,70 51,60 63,54 Z',
+  mane2:'M 123,91 C 121,103 116,113 108,120 C 102,113 95,105 90,97 C 100,99 114,97 123,91 Z',
+  maneLine:'M 66,58 C 80,62 98,74 112,88 M 74,54 C 88,60 104,72 117,86 M 60,64 C 72,72 88,86 100,100',
+  fore:'M 67,53 C 55,53 44,62 37,74 C 34,80 34,88 38,88 C 42,77 49,67 59,63 C 67,60 71,57 67,53 Z',
+  tail:'M 192,98 C 208,96 220,110 223,130 C 226,150 222,166 214,175 C 210,179 205,181 201,180 C 206,164 209,145 207,128 C 205,112 199,101 190,100 Z',
+  tailLine:'M 199,110 C 209,124 213,144 209,164',
+  muscle:['M 116,92 C 110,104 106,118 105,130','M 176,90 C 190,102 196,120 193,138','M 118,148 C 134,154 152,156 170,153'],
+  jowl:'M 71,82 C 67,89 60,92 54,92',
+  patches:[],
+  tack:{numnah:'M 113,89 C 125,83 147,82 158,86 C 161,89 160,98 157,108 C 155,117 152,124 148,128 C 136,132 122,132 113,127 C 109,116 109,100 113,89 Z',
+    saddle:'M 115,91 C 113,84 118,79 126,78 C 138,77 150,80 156,85 C 158,87 157,91 153,92 C 141,95 125,95 117,93 Z',
+    flap:'M 118,91 C 114,101 114,113 118,122 C 128,126 141,126 147,121 C 150,110 149,98 146,90 Z',
+    knee:'M 118,94 C 114,103 114,114 118,122 C 122,118 123,106 122,94 Z',
+    girth:'M 126,124 C 124,136 124,146 126,153', leather:'M 132,92 L 132,128', iron:{x:132,y:130},
+    brow:'M 47,69 L 69,66', cheek:'M 66,68 C 58,74 48,83 42,90', nose:'M 39,72 L 51,84',
+    throat:'M 69,67 C 72,76 68,85 61,88', bit:{x:39,y:91},
+    reins:'M 40,93 C 62,99 88,98 110,90', reins2:'M 40,96 C 62,105 90,103 110,94'},
+  spots:{neck:[96,102],mouth:[38,96],feet:[[112,166],[184,166],[102,166],[174,166]]},
+  legs:[{x:112,ty:126,ky:150,wt:11,wb:7},{x:184,ty:126,ky:150,wt:13,wb:7.5},
+        {x:102,ty:126,ky:150,wt:10,wb:6.5},{x:174,ty:126,ky:150,wt:12,wb:7}]
+}};
+
+/* ============================ HORSE ART ============================ */
+function horseFigure(h,pose){
+  if(h.photo)return `<img class="pho" src="${h.photo}" alt="${h.name}">`;
+  return horseSVG(h,{pose});
+}
+function usePhoto(i,after){
+  const inp=document.createElement('input');inp.type='file';inp.accept='image/*';
+  inp.onchange=()=>{const f=inp.files&&inp.files[0];if(!f)return;
+    if(f.size>8e6){toast('That picture is very large — try a smaller one.');return;}
+    const r=new FileReader();
+    r.onload=()=>{S.horses[i].photo=r.result;toast(S.horses[i].name+' now uses your photo');if(after)after();};
+    r.onerror=()=>toast('Could not read that file.');
+    r.readAsDataURL(f);};
+  inp.click();
+}
+let _uid=0;
+function horseSVG(h,o={}){
+  const u='u'+(_uid++), C=COATS[h.coat], B=BUILDS[h.build||'horse'], m=h.mark||{}, pose=o.pose||'stand';
+  const G=B.ground, socks=m.socks||0, pointed=C.pts!==C.base;
+
+  function leg(L,n,far){
+    const {x,ty,ky,wt,wb}=L;
+    const fill=far?C.dark:C.base, sh=far?'#000':C.dark, op=far?.35:.45;
+    const pt=pointed?C.pts:fill;              // black points on bay/dun
+    const hasSock=socks>=n;
+    return `<g class="h-leg u${n}" style="transform-origin:${x}px ${ty}px">
+      <path d="M ${x-wt},${ty-1} C ${x-wt+1.5},${ty-11} ${x+wt-5},${ty-11} ${x+wt-2},${ty-1}
+               C ${x+wb+3},${ky-20} ${x+wb},${ky-8} ${x+wb},${ky+2}
+               L ${x-wb},${ky+2} C ${x-wb-1},${ky-8} ${x-wt-1},${ty+12} ${x-wt},${ty-1} Z" fill="${fill}"/>
+      <path d="M ${x-wt+1},${ty-4} C ${x-wt},${ty+14} ${x-wb-1},${ky-14} ${x-wb+1},${ky}
+               L ${x-wb+4},${ky} C ${x-wb+3},${ky-14} ${x-wt+4},${ty+12} ${x-wt+4},${ty-4} Z" fill="${sh}" opacity="${op}"/>
+      <g class="h-leg l${n}" style="transform-origin:${x}px ${ky}px">
+        <path d="M ${x-wb+1},${ky-4} C ${x-wb+1.5},${ky+8} ${x-3.6},${G-24} ${x-3.4},${G-16}
+                 L ${x+3.4},${G-16} C ${x+3.6},${G-24} ${x+wb-1.5},${ky+8} ${x+wb-1},${ky-4} Z" fill="${pt}"/>
+        <path d="M ${x-wb+1},${ky-4} C ${x-wb+1.5},${ky+8} ${x-3.6},${G-24} ${x-3.4},${G-16}
+                 L ${x-1.2},${G-16} C ${x-1.4},${G-24} ${x-wb+4},${ky+8} ${x-wb+4},${ky-4} Z" fill="${sh}" opacity="${op*0.8}"/>
+        <ellipse cx="${x}" cy="${G-15}" rx="4.4" ry="3.9" fill="${pt}"/>
+        <path d="M ${x-3.5},${G-15} L ${x+3.5},${G-15} L ${x+4.4},${G-7} L ${x-3},${G-7} Z" fill="${pt}"/>
+        ${hasSock?`<path d="M ${x-wb},${G-28} L ${x+wb},${G-28} C ${x+wb+.6},${G-16} ${x+5},${G-10} ${x+4.6},${G-6}
+                     L ${x-3.4},${G-6} C ${x-4},${G-12} ${x-wb-.6},${G-18} ${x-wb},${G-28} Z" fill="#f4efe6"/>`:''}
+        <path d="M ${x-4.6},${G-9} L ${x+5},${G-9} C ${x+5.6},${G-4} ${x+5.4},${G-1} ${x+4.6},${G}
+                 Q ${x},${G+2.4} ${x-4.4},${G} C ${x-5.2},${G-2} ${x-5.2},${G-5} ${x-4.6},${G-9} Z" fill="${hasSock?'#cfc4b2':C.hoof}"/>
+        <path d="M ${x-4.4},${G-9} L ${x+4.8},${G-9} L ${x+4.6},${G-6.4} L ${x-4.2},${G-6.4} Z" fill="#fff" opacity=".16"/>
+      </g></g>`;
+  }
+
+  const dapples=C.dapple?Array.from({length:10},(_,i)=>
+    `<ellipse cx="${B.cx+2+(i%5)*15}" cy="${(B.legs[0].ty-38)+Math.floor(i/5)*18+(i%2)*7}" rx="7" ry="5.6" fill="${C.lite}" opacity=".45"/>`).join(''):'';
+
+  const patches=C.patches&&B.patches.length?
+    `<g clip-path="url(#c${u})">${B.patches.map(p=>`<path d="${p}" fill="#f6f1e8"/>`).join('')}
+       ${B.patches.map(p=>`<path d="${p}" fill="none" stroke="${C.dark}" stroke-width="1.2" opacity=".25"/>`).join('')}</g>`:'';
+
+  const [ex,ey]=B.eye, [erx,ery]=B.eyeR, [nx,ny]=B.nostril;
+  const T=B.tack, LEA='#6b4523', LEA2='#8a5c2f', LEAD='#4a2d13', MET='#b6bec6';
+  const saddle=o.tack?`<g class="h-saddle">
+      <path d="${T.numnah}" fill="#f4f0e6"/>
+      <path d="${T.numnah}" fill="none" stroke="#3f5670" stroke-width="2.6"/>
+      <path d="${T.flap}" fill="${LEA2}"/>
+      <path d="${T.knee}" fill="${LEA}" opacity=".75"/>
+      <path d="${T.girth}" stroke="${LEA}" stroke-width="6.5" fill="none" stroke-linecap="round"/>
+      <path d="${T.leather}" stroke="${LEAD}" stroke-width="4.2" fill="none"/>
+      <path d="M ${T.iron.x-6.5},${T.iron.y} C ${T.iron.x-6.5},${T.iron.y+11} ${T.iron.x+6.5},${T.iron.y+11} ${T.iron.x+6.5},${T.iron.y}"
+            stroke="${MET}" stroke-width="3.4" fill="none"/>
+      <path d="M ${T.iron.x-5.6},${T.iron.y+8.6} L ${T.iron.x+5.6},${T.iron.y+8.6}" stroke="#9aa3ab" stroke-width="2.8"/>
+      <path d="${T.flap}" fill="none" stroke="${LEAD}" stroke-width="1.6"/>
+      <path d="${T.saddle}" fill="${LEA2}"/>
+      <path d="${T.saddle}" fill="none" stroke="${LEAD}" stroke-width="1.7"/>
+      <path d="${T.saddle}" fill="#fff" opacity=".12"/>
+    </g>`:'';
+  const bridle=o.tack?`<g class="h-bridle" fill="none" stroke="${LEAD}" stroke-width="3.1" stroke-linecap="round">
+      <path d="${T.throat}"/><path d="${T.cheek}"/><path d="${T.nose}"/><path d="${T.brow}"/>
+    </g>
+    <circle cx="${T.bit.x}" cy="${T.bit.y}" r="3.8" fill="none" stroke="${MET}" stroke-width="2.5"/>`:'';
+  const reins=o.tack?`<g fill="none" stroke="${LEAD}" stroke-width="2.7" stroke-linecap="round">
+      <path d="${T.reins}"/><path d="${T.reins2}"/></g>`:'';
+
+  return `<svg class="horse pose-${pose} ${o.cls||''}" viewBox="0 0 ${VB.w} ${VB.h}" xmlns="http://www.w3.org/2000/svg"
+    style="--ho:${B.ho};--po:${B.po};--graze:${B.graze};--gskull:${B.gskull}" role="img" aria-label="${h.name}, a ${C.name.toLowerCase()} ${h.build==='pony'?'Shetland pony':'horse'}">
+  <defs>
+    <linearGradient id="b${u}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="${C.lite}"/><stop offset=".45" stop-color="${C.base}"/><stop offset="1" stop-color="${C.dark}"/>
+    </linearGradient>
+    <radialGradient id="s${u}" cx=".38" cy=".28" r=".75">
+      <stop offset="0" stop-color="${C.lite}" stop-opacity=".9"/><stop offset="1" stop-color="${C.base}" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="c${u}"><path d="${B.barrel}"/><path d="${B.neck}"/></clipPath>
+    <clipPath id="m${u}"><path d="${B.mane}"/>${B.mane2?`<path d="${B.mane2}"/>`:''}</clipPath>
+  </defs>
+  <ellipse cx="${B.cx+8}" cy="${G+3}" rx="76" ry="7.5" fill="#000" opacity=".18"/>
+  <rect class="h-hoofline" x="0" y="${G}" width="${VB.w}" height="0.02" fill="none" stroke="none"/>
+  <g class="h-all">
+    <g>${leg(B.legs[2],3,1)}${leg(B.legs[3],4,1)}</g>
+    <g class="h-body" style="transform-origin:${B.bo}">
+      <g class="h-tail" style="transform-origin:${B.to}">
+        <path d="${B.tail}" fill="${C.mane}"/>
+        <path d="${B.tail}" fill="none" stroke="${C.dark}" stroke-width="1.5" opacity=".32"/>
+        <path d="${B.tailLine}" stroke="${C.dark}" stroke-width="1.6" fill="none" opacity=".3"/>
+        <path d="${B.tailLine}" stroke="${C.pts}" stroke-width="1.5" fill="none" opacity=".45"/>
+        <path d="${B.tailLine}" stroke="#fff" stroke-width="1" fill="none" opacity=".13" transform="translate(4,-3)"/>
+      </g>
+      <path d="${B.barrel}" fill="url(#b${u})"/>
+      <ellipse cx="${B.cx+18}" cy="${B.legs[0].ty-24}" rx="40" ry="24" fill="url(#s${u})"/>
+      ${dapples}
+      ${C.stripe?`<path d="${B.dorsal}" stroke="${C.pts}" stroke-width="4" fill="none" opacity=".8" stroke-linecap="round"/>`:''}
+      ${B.muscle.map(d=>`<path d="${d}" stroke="${C.dark}" stroke-width="2.4" fill="none" opacity=".3" stroke-linecap="round"/>`).join('')}
+      ${saddle}
+      <g class="h-head" style="transform-origin:var(--ho)">
+        <path d="${B.neck}" fill="url(#b${u})"/>
+        <g class="h-skull" style="transform-origin:var(--po)">
+        <g class="h-ear-f" style="transform-origin:${B.eo2}"><path d="${B.earF}" fill="${C.dark}"/></g>
+        <path d="${B.head}" fill="url(#b${u})"/>
+        <path d="${B.jowl}" stroke="${C.dark}" stroke-width="1.8" fill="none" opacity=".35" stroke-linecap="round"/>
+        ${m.blaze?`<path d="${h.build==='pony'
+          ?'M 60,58 C 52,64 44,74 38,84 C 35,89 35,95 39,97 C 43,98 47,96 48,92 C 52,82 59,70 66,62 Z'
+          :'M 44,22 C 38,30 31,40 24,50 C 21,55 20,60 24,62 C 28,64 32,62 34,58 C 39,48 46,34 52,26 Z'}"
+          fill="#f4efe6"/>`:''}
+        ${m.star&&!m.blaze?`<ellipse cx="${ex-4}" cy="${ey-9}" rx="4.4" ry="5.4" fill="#f4efe6" transform="rotate(-22 ${ex-4} ${ey-9})"/>`:''}
+        <g class="h-ear-n" style="transform-origin:${B.eo1}">
+          <path d="${B.earN}" fill="${C.base}"/><path d="${B.earIn}" fill="${C.dark}" opacity=".6"/></g>
+        <ellipse cx="${ex}" cy="${ey}" rx="${erx}" ry="${ery}" fill="#171210"/>
+        <ellipse cx="${ex}" cy="${ey}" rx="${erx*.62}" ry="${ery*.62}" fill="#3a2a20"/>
+        <ellipse cx="${ex-1.3}" cy="${ey-1.1}" rx="1.5" ry="1.3" fill="#fff" opacity=".85"/>
+        <path class="h-lid" style="transform-origin:${ex}px ${ey}px"
+              d="M ${ex-erx-1},${ey-ery-1} L ${ex+erx+1},${ey-ery-1} L ${ex+erx+1},${ey+ery+1} L ${ex-erx-1},${ey+ery+1} Z" fill="${C.base}"/>
+        <path d="M ${ex-erx-1.4},${ey-ery-.6} C ${ex-1},${ey-ery-3} ${ex+2.4},${ey-ery-2.4} ${ex+erx+1},${ey-ery+.6}"
+              stroke="${C.dark}" stroke-width="1.5" fill="none" opacity=".7"/>
+        <ellipse cx="${nx}" cy="${ny}" rx="3.6" ry="2.6" fill="#3a2622" transform="rotate(${B.nostrilRot} ${nx} ${ny})"/>
+        <ellipse cx="${nx-.6}" cy="${ny-.6}" rx="1.8" ry="1.2" fill="#000" opacity=".5" transform="rotate(${B.nostrilRot} ${nx} ${ny})"/>
+        <path d="M ${nx-3},${ny+6} C ${nx+1},${ny+8} ${nx+6},${ny+7} ${nx+8},${ny+4}"
+              stroke="${C.dark}" stroke-width="1.5" fill="none" opacity=".6" stroke-linecap="round"/>
+        ${bridle}
+        <path d="${B.fore}" fill="${C.mane}"/>
+        </g>
+        <path d="${B.mane}" fill="${C.mane}"/>
+        ${B.mane2?`<path d="${B.mane2}" fill="${C.mane}"/>`:''}
+        <g clip-path="url(#m${u})">
+          <path d="${B.maneLine}" stroke="#fff" stroke-width="1.7" fill="none" opacity=".2"/>
+          <path d="${B.maneLine}" stroke="${C.dark}" stroke-width="1.1" fill="none" opacity=".32" transform="translate(2.5,3)"/></g>
+        ${reins}
+      </g>
+      ${patches}
+    </g>
+    ${leg(B.legs[0],1)}${leg(B.legs[1],2)}
+  </g></svg>`;
+}
+
+/* ============================ STATE ============================ */
+const TIMES=['Morning','Midday','Afternoon','Evening'];
+function freshHorses(){return [
+
+    {id:'h1',name:'Lemon',coat:'dun',build:'horse',mark:{blaze:1,socks:2},sex:'Mare',age:5,breed:'Welsh Section D',
+     trait:'Sandy gold with a black mane and tail, and she knows exactly how good she looks. Stands like a statue to be photographed, then treads on your foot.',
+     hunger:52,thirst:44,energy:74,happy:66,clean:60,muck:4,water:34,hay:30,loc:'stable',cond:null,care:{},
+     feed:{chaff:2,nuts:1,carrot:1,supp:1}},
+    {id:'h2',name:'Oakley',coat:'skewbald',build:'horse',mark:{blaze:1,socks:4},sex:'Mare',age:6,breed:'Irish Cob',
+     trait:'Brown and white all over, no two patches the same. Steady as a rock unless a plastic bag is involved.',
+     hunger:60,thirst:58,energy:66,happy:70,clean:48,muck:3,water:52,hay:44,loc:'stable',cond:null,care:{},
+     feed:{chaff:2,beet:1,carrot:1,supp:1}},
+    {id:'h3',name:'Rollo',coat:'bay',build:'pony',mark:{star:1},sex:'Gelding',age:4,breed:'Shetland pony',
+     trait:'Knee-high and brown, with a black mane, tail and forelock you could lose a hairbrush in. Opens every gate on the yard.',
+     hunger:38,thirst:50,energy:88,happy:62,clean:52,muck:2,water:28,hay:18,loc:'field',cond:null,care:{},
+     feed:{chaff:1,carrot:1}}
+];}
+const S={
+  day:1,tod:0,points:0,jobs:0,mode:'owner',view:'stables',sel:0,
+  horses:freshHorses(),
+  yard:1
+};
+const H=i=>S.horses[i];
+
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('on');
+  clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),2100);}
+function award(n,why){S.points+=n;S.jobs++;paintTally();if(why)toast(why+'  +'+n);}
+function careScore(){
+  const a=S.horses.reduce((s,h)=>s+(h.hunger+h.thirst+h.happy+h.clean+(100-h.muck*20))/5,0)/S.horses.length;
+  return Math.round(a);
+}
+function careStars(){const c=careScore();return c>=88?5:c>=74?4:c>=58?3:c>=40?2:1;}
+function paintTally(){
+  markDirty();
+  $('#t-points').textContent=S.points; $('#t-jobs').textContent=S.jobs;
+  $('#t-care').textContent='★'.repeat(careStars());
+  $('#clock').textContent=`Day ${S.day} · ${TIMES[S.tod]}`+((S.yard||1)>1?` · Yard ${S.yard}`:'');
+  const ill=S.horses.filter(h=>h.cond).length;
+  $('#vet-badge').innerHTML = ill?`<span class="badge">${ill}</span>`:'';
+}
+function needColour(v){return v>=66?'var(--good)':v>=34?'var(--warn)':'var(--bad)';}
+function meter(lab,v,inv){
+  const val=clamp(inv?100-v:v);
+  return `<div class="meter"><div class="lab"><span>${lab}</span><span>${Math.round(val)}%</span></div>
+    <div class="track"><div class="fill" style="width:${clamp(val)}%;background:${needColour(val)}"></div></div></div>`;
+}
+
+function say(){}
+
+/* ============================ TIME ============================ */
+function advanceTime(){
+  S.tod++;
+  const newDay = S.tod>3;
+  if(newDay){S.tod=0;S.day++;}
+  S.horses.forEach(h=>{
+    h.hunger=clamp(h.hunger-(h.loc==='field'?9:19));
+    h.thirst=clamp(h.thirst-17);
+    h.clean=clamp(h.clean-(h.loc==='field'?11:6));
+    if(h.loc==='stable'&&h.muck<6)h.muck++;
+    h.energy=clamp(h.energy+(S.tod===0?26:8));
+    if(h.water>0){h.thirst=clamp(h.thirst+Math.min(h.water,26));h.water=clamp(h.water-26);}
+    if(h.hay>0){h.hunger=clamp(h.hunger+Math.min(h.hay,20));h.hay=clamp(h.hay-20);}
+    const bad=(h.hunger<30?1:0)+(h.thirst<30?1:0)+(h.muck>=5?1:0)+(h.clean<30?1:0);
+    h.happy=clamp(h.happy + (bad?-7*bad:4) + (h.loc==='field'?3:0));
+    if(h.cond&&h.cond.treated){h.cond.days--;if(h.cond.days<=0){toast(h.name+' is sound again!');h.cond=null;h.happy=clamp(h.happy+16);}}
+  });
+  if(newDay){
+    const well=S.horses.filter(h=>!h.cond);
+    if(well.length){
+      const v=pick(well);
+      let risk=0.55;
+      if(!careDue(v,CARE[0]))risk*=0.45;   // vaccinated
+      if(!careDue(v,CARE[1]))risk*=0.6;    // wormed
+      if(v.happy>75)risk*=0.8;
+      if(Math.random()<risk)v.cond={id:pick(Object.keys(CONDITIONS)),treated:false,days:2};
+    }
+    dayReport();
+  }
+  paintTally();render();
+}
+function dayReport(){
+  const st=careStars();
+  openSheet(`Day ${S.day-1} — yard report`,`<div class="center">
+    <div class="stars">${'★'.repeat(st)}${'☆'.repeat(5-st)}</div>
+    <p class="big" style="margin:8px 0 2px">${['Rough day.','Getting there.',"A decent day's work.",'Well run yard.','Immaculate.'][st-1]}</p>
+    <p class="muted">Care score ${careScore()}% · ${S.points} points · ${S.jobs} jobs done</p>
+    <div class="note" style="text-align:left">${
+      S.horses.map(h=>`<b>${h.name}</b> — ${h.cond?'needs the vet.':h.happy>70?'settled and content.':h.happy>45?'alright, could be better.':'not happy. Check the basics.'}`).join('<br>')
+    }</div>
+    <button class="btn btn-go btn-lg" style="margin-top:12px" onclick="closeSheet()">Start day ${S.day}</button></div>`);
+}
+
+/* ============================ MODAL ============================ */
+function openSheet(title,html,wide){
+  $('#modal-root').innerHTML=`<div class="scrim" id="scrim"><div class="sheet ${wide?'wide':''}" role="dialog" aria-modal="true">
+    <div class="sheet-hd"><h2>${title}</h2><button class="x" onclick="closeSheet()" aria-label="Close">×</button></div>
+    <div class="sheet-bd" id="sheet-bd">${html}</div></div></div>`;
+}
+function closeSheet(){$('#modal-root').innerHTML='';render();}
+
+/* ============================ OWNER MODE ============================ */
+function render(){
+  paintTally();
+  if(S.mode==='owner')renderOwner();
+  else if(S.mode==='vet')renderVet();
+  else if(S.mode==='train')renderTrain();
+  else renderHorseChoose();
+}
+function renderOwner(){
+  const v=$('#view');
+  v.innerHTML=`<div class="panel">
+    <div class="panel-hd">
+      <div class="subtabs">
+        <button class="subtab" data-v="stables" aria-pressed="${S.view==='stables'}">Stable block</button>
+        <button class="subtab" data-v="field" aria-pressed="${S.view==='field'}">The field</button>
+      </div>
+      <div class="row">
+        <span class="sub">${TIMES[S.tod]}</span>
+        <button class="btn btn-sm btn-dark" id="next">Move on to ${S.tod===3?'tomorrow':TIMES[S.tod+1].toLowerCase()} →</button>
+      </div>
+    </div>
+    <div class="panel-bd" id="ownerbody"></div></div>`;
+  $$('.subtab',v).forEach(b=>b.onclick=()=>{S.view=b.dataset.v;renderOwner();});
+  $('#next').onclick=advanceTime;
+  S.view==='stables'?renderStables():renderField();
+}
+
+function renderStables(){
+  const wrap=$('#ownerbody');
+  wrap.innerHTML=`<div class="block">${S.horses.map((h,i)=>{
+    const inside=h.loc==='stable';
+    return `<button class="stall" data-i="${i}">
+      <div class="plate"><b>${h.name}</b><small>${h.sex} · ${h.age}yr</small></div>
+      <div class="scene">
+        <div class="straw"></div>
+        ${inside?horseFigure(h,h.cond?condPose(h.cond.id):'stand'):'<div class="empty">Turned out in the field</div>'}
+        ${h.cond?`<span class="alarm ${h.cond.treated?'rest':''}">${h.cond.treated?'Resting up':'Not right'}</span>`:''}
+      </div>
+      <div class="needs">
+        ${pipEl('Food',h.hunger)}${pipEl('Water',h.thirst)}${pipEl('Bed',100-h.muck*20)}${pipEl('Coat',h.clean)}
+      </div></button>`;}).join('')}</div>
+    <p class="muted" style="margin:11px 0 0">Tap a stable to go in. Horses in the field still need water and checking.</p>`;
+  $$('.stall',wrap).forEach(b=>b.onclick=()=>openStall(+b.dataset.i));
+}
+function pipEl(l,v){const c=v>=66?'':v>=34?'w':'b';return `<span class="pip ${c}"><i></i>${l}</span>`;}
+function condPose(id){return CONDITIONS[id].pose;}
+
+function renderField(){
+  const out=S.horses.filter(h=>h.loc==='field');
+  const wrap=$('#ownerbody');
+  const spots=[[120,0.9],[330,0.78],[540,0.86],[720,0.72]];
+  wrap.innerHTML=`<div class="field"><svg viewBox="0 0 900 300" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fbcd6"/><stop offset="1" stop-color="#dbeaf0"/></linearGradient>
+      <linearGradient id="grass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6d9c52"/><stop offset="1" stop-color="#4d7a37"/></linearGradient>
+    </defs>
+    <rect width="900" height="300" fill="url(#sky)"/>
+    <ellipse cx="150" cy="52" rx="52" ry="19" fill="#fff" opacity=".8"/><ellipse cx="196" cy="46" rx="34" ry="16" fill="#fff" opacity=".8"/>
+    <ellipse cx="640" cy="40" rx="60" ry="20" fill="#fff" opacity=".65"/>
+    <path d="M 0,140 C 120,118 240,132 360,124 C 500,115 640,130 760,120 C 830,114 870,118 900,116 L 900,150 L 0,150 Z" fill="#6f8f63" opacity=".55"/>
+    <rect y="128" width="900" height="172" fill="url(#grass)"/>
+    ${Array.from({length:70},()=>{const x=rnd(0,900),y=rnd(140,296);
+      return `<path d="M ${x},${y} l -3,-7 M ${x},${y} l 0,-9 M ${x},${y} l 3,-7" stroke="#3f6b31" stroke-width="1.4" opacity=".5"/>`}).join('')}
+    <g>${[40,150,260,370,480,590,700,810].map(x=>`<rect x="${x}" y="118" width="9" height="46" rx="2" fill="#6b4a2f"/>`).join('')}
+      <rect x="40" y="126" width="780" height="6" rx="3" fill="#7d5836"/><rect x="40" y="144" width="780" height="6" rx="3" fill="#7d5836"/></g>
+    <g transform="translate(760,150)"><ellipse cx="46" cy="44" rx="46" ry="8" fill="#000" opacity=".16"/>
+      <rect x="6" y="10" width="80" height="34" rx="7" fill="#4c6b7a"/><rect x="10" y="14" width="72" height="22" rx="5" fill="#88b6c9"/>
+      <rect x="10" y="14" width="72" height="7" rx="4" fill="#b8dae7" opacity=".8"/></g>
+    ${out.map((h,i)=>{const sp=spots[i%4],sc=sp[1],gy=206+i*17;
+      return `<g transform="translate(${sp[0]-120*sc},${gy-176*sc}) scale(${sc})">${
+      horseInner(h,h.cond?condPose(h.cond.id):(i%2?'graze':'stand'))}</g>`}).join('')}
+    ${out.length===0?'<text x="450" y="220" text-anchor="middle" font-family="Courier New" font-size="17" fill="#e8f0e4">The field is empty. Turn someone out.</text>':''}
+  </svg></div>
+  <div class="row" style="margin-top:11px">
+    ${S.horses.map((h,i)=>`<button class="btn btn-sm ${h.loc==='field'?'':'btn-go'}" data-t="${i}">${h.loc==='field'?'Bring '+h.name+' in':'Turn '+h.name+' out'}</button>`).join('')}
+  </div>
+  <p class="muted" style="margin:9px 0 0">Turning out fills the belly slowly and lifts the mood, but they come back in muddy.</p>`;
+  $$('[data-t]',wrap).forEach(b=>b.onclick=()=>{
+    const h=H(+b.dataset.t);
+    if(h.cond&&h.cond.id==='laminitis'&&h.loc==='stable'){toast(h.name+' must stay off the grass.');return;}
+    h.loc=h.loc==='field'?'stable':'field';
+    if(h.loc==='field'){h.happy=clamp(h.happy+6);}else{h.clean=clamp(h.clean-9);}
+    award(1,h.loc==='field'?h.name+' turned out':h.name+' brought in');renderField();
+  });
+}
+
+/* ---------- stall detail ---------- */
+function openStall(i){
+  S.sel=i;const h=H(i);
+  const piles=Array.from({length:h.muck},(_,k)=>{
+    const x=14+((k*23)%62),y=66+((k*17)%22);
+    return `<svg class="muckpile" style="left:${x}%;bottom:${y*0.13+3}%;width:46px" viewBox="0 0 60 34">
+      <ellipse cx="30" cy="27" rx="24" ry="6" fill="#000" opacity=".2"/>
+      <ellipse cx="20" cy="22" rx="11" ry="8" fill="#6b5433"/><ellipse cx="34" cy="20" rx="12" ry="9" fill="#7b6039"/>
+      <ellipse cx="28" cy="14" rx="9" ry="7" fill="#8a6c42"/></svg>`}).join('');
+  openSheet(`${h.name}'s box`,`<div class="stallview">
+    <div>
+      <div class="box">
+        <div class="bedding"></div><div class="win"></div>
+        <svg class="haynet" viewBox="0 0 70 90"><path d="M 6,6 L 64,6 L 58,74 Q 35,88 12,74 Z" fill="#d9bd6b"/>
+          <path d="M 6,6 L 64,6 L 58,74 Q 35,88 12,74 Z" fill="none" stroke="#8a6c2f" stroke-width="1.6"/>
+          <path d="M 16,8 L 22,80 M 30,7 L 32,86 M 46,7 L 44,84 M 58,8 L 54,76 M 8,26 L 62,26 M 10,46 L 60,46 M 12,64 L 58,64"
+            stroke="#8a6c2f" stroke-width="1.4" fill="none" opacity=".7"/>
+          <rect x="28" y="0" width="14" height="8" rx="3" fill="#5a5f66"/></svg>
+        ${piles}
+        <svg class="bucket" viewBox="0 0 60 60"><path d="M 8,10 L 52,10 L 46,52 Q 30,58 14,52 Z" fill="#3f6b8a"/>
+          <path d="M 11,${52-Math.max(2,h.water*0.36)} L 49,${52-Math.max(2,h.water*0.36)} L 46,50 Q 30,55 14,50 Z" fill="#6fb0d0" opacity=".85"/>
+          <path d="M 8,10 L 52,10 L 51,16 L 9,16 Z" fill="#5686a5"/>
+          <path d="M 10,12 C 18,2 42,2 50,12" stroke="#2c4d64" stroke-width="2.6" fill="none"/></svg>
+        ${horseFigure(h,h.cond?condPose(h.cond.id):'stand')}
+      </div>
+      <div class="note">${h.trait}</div>
+    </div>
+    <div class="card">
+      <h3>${h.name}</h3><p class="breedline">${h.sex} · ${h.age} yrs · ${h.breed} · ${COATS[h.coat].name}</p>
+      ${meter('Belly',h.hunger)}${meter('Water',h.thirst)}${meter('Energy',h.energy)}
+      ${meter('Mood',h.happy)}${meter('Coat',h.clean)}${meter('Clean bed',100-h.muck*20)}
+      ${h.cond?`<div class="note" style="border-color:${h.cond.treated?'var(--warn)':'var(--rug)'};
+        background:${h.cond.treated?'#f7ecd4':'#f6ddd6'}">
+        <b>${h.cond.treated?h.name+' is on box rest.':h.name+" isn't right."}</b><br>
+        ${CONDITIONS[h.cond.id].flag}<br>
+        ${h.cond.treated
+          ? 'Treated and recovering. Move the day on and '+(h.sex==='Mare'?'she':'he')+' will come sound again.'
+          : 'Press <b>Vet check-up</b> below, then call the vet out.'}</div>`:''}
+      <div class="row" style="margin-top:10px">
+        <button class="btn btn-sm" id="a-photo">${h.photo?'Change photo':'&#128247; Use a real photo'}</button>
+        ${h.photo?'<button class="btn btn-sm" id="a-draw">Back to the drawing</button>':''}
+      </div>
+      <div class="actions">
+        <button class="btn" id="a-muck">Muck out</button>
+        <button class="btn" id="a-feed">Make feed</button>
+        <button class="btn" id="a-water">Fill water</button>
+        <button class="btn" id="a-groom">Groom</button>
+        <button class="btn" id="a-ex" ${h.cond&&!h.cond.treated?'disabled':''}>Exercise</button>
+        <button class="btn btn-go" id="a-out">${h.loc==='field'?'Bring in':'Turn out'}</button>
+        <button class="btn ${h.cond&&!h.cond.treated?'btn-red':''}" id="a-check" style="grid-column:1/-1">
+          &#129658; ${h.cond&&!h.cond.treated?'Call the vet &mdash; '+h.name+" isn't right"
+            :h.cond?'Vet check-up &mdash; on box rest'
+            :'Vet check-up'+(CARE.some(c=>careDue(h,c))?' &mdash; something is due':'')}</button>
+      </div>
+    </div></div>`,true);
+  $('#a-check').onclick=()=>checkup(i);
+  $('#a-photo').onclick=()=>usePhoto(i,()=>{closeSheet();openStall(i);});
+  if($('#a-draw'))$('#a-draw').onclick=()=>{delete h.photo;closeSheet();openStall(i);};
+  $('#a-muck').onclick=()=>gameMuck(i);
+  $('#a-feed').onclick=()=>gameFeed(i);
+  $('#a-water').onclick=()=>gameWater(i);
+  $('#a-groom').onclick=()=>{if(h.photo){toast('Switch back to the drawing to groom '+h.name+'.');return;}gameGroom(i);};
+  $('#a-ex').onclick=()=>gameExercise(i);
+  $('#a-out').onclick=()=>{
+    if(h.cond&&h.cond.id==='laminitis'&&h.loc==='stable'){toast(h.name+' must stay off the grass.');return;}
+    h.loc=h.loc==='field'?'stable':'field';award(1,'Moved '+h.name);closeSheet();};
+}
+
+/* ============================ MINI-GAMES ============================ */
+/* --- 1. MUCK OUT --- */
+function gameMuck(i){
+  const h=H(i);
+  if(h.muck===0){toast(h.name+"'s bed is already clean.");return;}
+  const W=880,HT=400,BEDTOP=176,BARROW=636;
+  const n=h.muck*3+2;
+  const items=[];
+  const spot=()=>({x:rnd(70,600),y:rnd(226,352)});
+  for(let k=0;k<n;k++)items.push({...spot(),in:false});
+
+  const pileArt=`<ellipse cx="0" cy="11" rx="26" ry="6" fill="#000" opacity=".22"/>
+    <ellipse cx="-10" cy="2" rx="13" ry="10" fill="#6b5433"/><ellipse cx="7" cy="0" rx="14" ry="11" fill="#7b6039"/>
+    <ellipse cx="-1" cy="-8" rx="11" ry="9" fill="#8a6c42"/><ellipse cx="-5" cy="-11" rx="4.5" ry="3" fill="#a0855a" opacity=".45"/>`;
+
+  openSheet(`Mucking out ${h.name}'s box`,
+   `<div class="hud"><span id="m-tip">Tap each pile and the fork flicks it into the barrow.</span>
+      <span>In the barrow <b id="m-n">0</b>/${n}</span></div>
+    <div class="stage" id="m-stage" style="touch-action:manipulation">
+    <svg viewBox="0 0 ${W} ${HT}" xmlns="http://www.w3.org/2000/svg" id="m-svg">
+      <rect width="${W}" height="${HT}" fill="#5b3d24"/>
+      <rect width="${W}" height="${BEDTOP}" fill="#6d4a2c"/>
+      <g opacity=".35">${Array.from({length:34},(_,k)=>`<rect x="${k*26}" y="0" width="2" height="${BEDTOP}" fill="#3a2413"/>`).join('')}</g>
+      <rect y="${BEDTOP}" width="${W}" height="${HT-BEDTOP}" fill="#e8cf8e"/>
+      <g opacity=".4">${Array.from({length:120},()=>{const x=rnd(0,W),y=rnd(BEDTOP+6,HT-2);
+        return `<line x1="${x}" y1="${y}" x2="${x+rnd(-15,15)}" y2="${y+rnd(-5,5)}" stroke="#a9873f" stroke-width="1.5"/>`}).join('')}</g>
+
+      <g id="m-barrow" transform="translate(${BARROW},150)">
+        <rect id="m-zone" x="-6" y="0" width="250" height="250" rx="14" fill="#7fae60" opacity="0"/>
+        <ellipse cx="112" cy="222" rx="86" ry="11" fill="#000" opacity=".22"/>
+        <path d="M 24,44 L 202,44 L 178,168 L 48,168 Z" fill="#4a7d3f"/>
+        <path d="M 24,44 L 202,44 L 197,62 L 29,62 Z" fill="#5e9950"/>
+        <clipPath id="m-clip"><path d="M 27,46 L 199,46 L 176,166 L 50,166 Z"/></clipPath>
+        <g clip-path="url(#m-clip)"><g id="m-load"></g></g>
+        <path d="M 24,44 L 202,44 L 178,168 L 48,168 Z" fill="none" stroke="#2f5228" stroke-width="3"/>
+        <circle cx="112" cy="192" r="24" fill="#2b2b2b"/><circle cx="112" cy="192" r="9" fill="#7a7a7a"/>
+        <rect x="188" y="50" width="12" height="104" rx="6" fill="#8a6c42" transform="rotate(16 188 50)"/>
+        <text x="112" y="26" text-anchor="middle" font-family="Courier New" font-size="17" fill="#f0e6d4"
+              letter-spacing="2" id="m-label">THE BARROW</text>
+      </g>
+
+      <g id="m-items">${items.map((it,k)=>`<g class="muck" data-k="${k}"
+        transform="translate(${it.x},${it.y})">${pileArt}</g>`).join('')}</g>
+
+      <g id="m-fork" opacity="0" pointer-events="none">
+        <g id="m-carry"></g>
+        <rect x="-5" y="-96" width="10" height="86" rx="4" fill="#9a6f45"/>
+        <rect x="-12" y="-108" width="24" height="16" rx="7" fill="#6d4a2c"/>
+        <rect x="-30" y="-14" width="60" height="9" rx="4" fill="#8a939c"/>
+        ${[-24,-12,0,12,24].map(x=>`<path d="M ${x},-6 C ${x*1.1},8 ${x*1.16},18 ${x*1.2},30"
+          stroke="#b3bcc5" stroke-width="5" fill="none" stroke-linecap="round"/>`).join('')}
+      </g>
+    </svg></div>
+    <p class="muted" style="margin-top:9px">Just tap every pile &mdash; no dragging, nothing to avoid. The barrow fills as you go.</p>`,true);
+
+  const stage=$('#m-stage'),svg=$('#m-svg'),fork=$('#m-fork'),
+        zone=$('#m-zone'),load=$('#m-load'),label=$('#m-label');
+  let got=0,flying=0;
+
+  const P=e=>{const r=svg.getBoundingClientRect();
+    return{x:(e.clientX-r.left)/r.width*W,y:(e.clientY-r.top)/r.height*HT};};
+  const el=k=>svg.querySelector(`.muck[data-k="${k}"]`);
+  const tip=t=>{const e=$('#m-tip');if(e)e.textContent=t;};
+
+  function paintLoad(){
+    load.innerHTML=Array.from({length:got},(_,j)=>{
+      const row=Math.floor(j/4), col=j%4;
+      return `<g transform="translate(${52+col*32+(row%2)*14},${156-row*20})">${pileArt}</g>`;}).join('');
+  }
+  function moveFork(p){fork.setAttribute('transform',`translate(${p.x},${p.y})`);}
+
+  // a quick flick of the fork, so the tap feels like it did something
+  function flickFork(){
+    const t0=performance.now();
+    (function spin(){
+      const k=(performance.now()-t0)/220;
+      if(k>=1){fork.setAttribute('transform',fork.getAttribute('transform').replace(/ rotate\([^)]*\)/,''));return;}
+      const base=fork.getAttribute('transform').replace(/ rotate\([^)]*\)/,'');
+      fork.setAttribute('transform',base+` rotate(${-26*Math.sin(Math.PI*k)})`);
+      requestAnimationFrame(spin);})();
+  }
+
+  // tap it and it sails into the barrow on its own
+  function flyIn(k){
+    const it=items[k],g=el(k);
+    if(!g||it.in)return;
+    it.in=true;flying++;
+    g.style.pointerEvents='none';
+    const sx=it.x, sy=it.y, ex=BARROW+106, ey=284, t0=performance.now();
+    (function hop(){
+      const k2=Math.min(1,(performance.now()-t0)/620);
+      const e=k2*k2*(3-2*k2);                       // ease
+      const x=sx+(ex-sx)*e;
+      const y=sy+(ey-sy)*e-Math.sin(Math.PI*e)*150; // lob it over
+      g.setAttribute('transform',`translate(${x},${y}) rotate(${e*260}) scale(${1-0.3*e})`);
+      if(k2<1){requestAnimationFrame(hop);return;}
+      g.remove();flying--;
+      got++;$('#m-n').textContent=got;paintLoad();
+      zone.setAttribute('opacity','.3');
+      setTimeout(()=>zone&&zone.setAttribute('opacity','0'),180);
+      tip(got>=n?'That is the lot.':'Good. Keep tapping.');
+      if(got>=n&&flying===0)finish();
+    })();
+  }
+
+  function tap(e){
+    const p=P(e);
+    fork.setAttribute('opacity','1');moveFork(p);
+    let best=null,bd=52;
+    items.forEach((it,k)=>{if(it.in)return;
+      const d=Math.hypot(p.x-it.x,p.y-it.y);if(d<bd){bd=d;best=k;}});
+    if(best===null)return;
+    flickFork();
+    flyIn(best);
+  }
+
+  stage.addEventListener('pointerdown',e=>{e.preventDefault();tap(e);});
+  stage.addEventListener('pointermove',e=>{fork.setAttribute('opacity','1');moveFork(P(e));});
+  stage.addEventListener('pointerleave',()=>fork.setAttribute('opacity','0'));
+
+  function finish(){
+    h.muck=0;h.happy=clamp(h.happy+9);h.clean=clamp(h.clean+4);
+    award(10,'Box mucked out');
+    setTimeout(()=>{
+      say(`${h.name}'s box is spotless and the bed is still deep.`);
+      closeSheet();},700);
+  }
+}
+
+/* --- 2. MAKE FEED --- */
+const ING={
+  chaff:{n:'Chaff',u:'scoop'},nuts:{n:'Pony nuts',u:'scoop'},beet:{n:'Soaked beet',u:'scoop'},
+  carrot:{n:'Carrots',u:'handful'},supp:{n:'Supplement',u:'scoop'},sugar:{n:'Sugar lumps',u:'handful'}
+};
+function gameFeed(i){
+  const h=H(i),want=h.feed,got={};
+  openSheet(`${h.name}'s feed`,
+   `<div class="recipe"><h4>Feed chart — ${h.name}</h4><ul>
+      ${Object.entries(want).map(([k,v])=>`<li>${v} ${ING[k].u}${v>1?'s':''} ${ING[k].n.toLowerCase()}</li>`).join('')}
+    </ul></div>
+    <div class="stage" style="border:none;margin-bottom:11px"><svg viewBox="0 0 400 170" style="max-width:280px;margin:0 auto;display:block">
+      <ellipse cx="200" cy="158" rx="96" ry="9" fill="#000" opacity=".15"/>
+      <path d="M 108,26 L 292,26 L 268,150 Q 200,166 132,150 Z" fill="#3f6b8a"/>
+      <g id="f-contents"></g>
+      <path d="M 108,26 L 292,26 L 289,44 L 111,44 Z" fill="#5686a5"/>
+      <path d="M 114,30 C 146,4 254,4 286,30" stroke="#2c4d64" stroke-width="7" fill="none"/>
+    </svg></div>
+    <div class="ingredients">${Object.entries(ING).map(([k,v])=>
+      `<button class="ing" data-k="${k}"><span class="n">${v.n}</span><span class="u">per ${v.u}</span><span class="c" id="c-${k}">0</span></button>`).join('')}</div>
+    <div class="row" style="margin-top:12px;justify-content:space-between">
+      <button class="btn btn-sm" id="f-clear">Tip it out and start again</button>
+      <button class="btn btn-go" id="f-done">Give it to ${h.name}</button></div>`,true);
+  const layers=['#c9a95f','#8a6c42','#6b4a2f','#e07a2c','#9db85a','#e8e0d0'];
+  function paint(){
+    const total=Object.values(got).reduce((a,b)=>a+b,0);
+    $('#f-contents').innerHTML=Object.entries(got).flatMap(([k,v],ix)=>
+      Array.from({length:v},(_,j)=>{
+        const idx=Object.keys(ING).indexOf(k), lvl=Object.entries(got).slice(0,ix).reduce((a,[,n])=>a+n,0)+j;
+        const y=146-lvl*11;
+        return `<path d="M ${118+ (146-y)*0.16},${y} L ${282-(146-y)*0.16},${y} L ${280-(146-y)*0.16},${y+11} L ${120+(146-y)*0.16},${y+11} Z" fill="${layers[idx]}"/>`;
+      })).join('');
+    Object.keys(ING).forEach(k=>$('#c-'+k).textContent=got[k]||0);
+  }
+  $$('.ing').forEach(b=>b.onclick=()=>{const k=b.dataset.k;got[k]=(got[k]||0)+1;if(got[k]>6)got[k]=6;paint();});
+  $('#f-clear').onclick=()=>{Object.keys(got).forEach(k=>delete got[k]);paint();};
+  $('#f-done').onclick=()=>{
+    let wrong=0,right=0;
+    const keys=new Set([...Object.keys(want),...Object.keys(got)]);
+    keys.forEach(k=>{const w=want[k]||0,g=got[k]||0;if(w===g&&w>0)right++;wrong+=Math.abs(w-g);});
+    const sugar=got.sugar||0;
+    if(wrong===0){
+      h.hunger=clamp(h.hunger+42);h.happy=clamp(h.happy+11);h.hay=clamp(h.hay+30);
+      award(8,'Feed made exactly right');
+      say(`${h.name} dives straight in. ${sugar?'':'Bucket licked clean.'}`);
+    }else{
+      h.hunger=clamp(h.hunger+Math.max(10,34-wrong*5));h.happy=clamp(h.happy+3);
+      award(2,'Feed given');
+      say(wrong>3?`Hmm. ${h.name} sniffs it and gives you a look. Check the feed chart.`:`Close enough — ${h.name} eats it, but the chart says something different.`);
+    }
+    if(sugar>(want.sugar||0)){h.happy=clamp(h.happy+4);toast('More sugar lumps than the chart says. Spoilt.');}
+    closeSheet();
+  };
+  paint();
+}
+
+/* --- 3. WATER --- */
+function gameWater(i){
+  const h=H(i);
+  const target=rnd(66,86);
+  openSheet(`Filling ${h.name}'s bucket`,
+   `<div class="hud"><span>Hold the tap. Stop on the fill line — don't slop it everywhere.</span><span>Level <b id="w-p">0%</b></span></div>
+    <div class="stage" style="border:none"><svg viewBox="0 0 420 300" style="max-width:340px;margin:0 auto;display:block">
+      <rect x="150" y="0" width="18" height="70" fill="#8d949c"/><rect x="150" y="60" width="60" height="14" rx="6" fill="#6f767e"/>
+      <circle cx="159" cy="52" r="16" fill="#c69a4c"/><circle cx="159" cy="52" r="7" fill="#9a742f"/>
+      <rect id="w-flow" x="200" y="74" width="7" height="0" fill="#8fd0e8" opacity=".85"/>
+      <ellipse cx="210" cy="288" rx="104" ry="10" fill="#000" opacity=".14"/>
+      <path d="M 128,110 L 292,110 L 272,280 Q 210,294 148,280 Z" fill="#3f6b8a"/>
+      <clipPath id="bk"><path d="M 130,112 L 290,112 L 270,278 Q 210,292 150,278 Z"/></clipPath>
+      <g clip-path="url(#bk)"><rect id="w-fill" x="120" y="280" width="180" height="0" fill="#6fb0d0" opacity=".9"/>
+        <rect id="w-top" x="120" y="280" width="180" height="5" fill="#a5d8ec"/></g>
+      <line x1="120" y1="${280-1.7*target}" x2="300" y2="${280-1.7*target}" stroke="#c69a4c" stroke-width="3" stroke-dasharray="8 6"/>
+      <text x="306" y="${284-1.7*target}" font-family="Courier New" font-size="13" fill="#5c5148">fill line</text>
+      <path d="M 128,110 L 292,110 L 290,124 L 130,124 Z" fill="#5686a5"/>
+    </svg></div>
+    <div class="center" style="margin-top:11px">
+      <button class="btn btn-lg btn-go" id="w-tap" style="width:70%">Hold to run the tap</button>
+      <p class="muted" style="margin-top:7px">Release when it reaches the dashed line.</p></div>`);
+  let lvl=0,on=false,raf;
+  const fill=$('#w-fill'),top=$('#w-top'),flow=$('#w-flow');
+  function loop(){
+    if(on){lvl=Math.min(112,lvl+0.85);
+      fill.setAttribute('height',lvl*1.7);fill.setAttribute('y',280-lvl*1.7);
+      top.setAttribute('y',280-lvl*1.7);$('#w-p').textContent=Math.round(lvl)+'%';
+      flow.setAttribute('height',36);flow.setAttribute('x',207);}
+    else flow.setAttribute('height',0);
+    if(!document.getElementById('w-fill')){cancelAnimationFrame(raf);return;}
+    raf=requestAnimationFrame(loop);
+  }
+  loop();
+  const btn=$('#w-tap');
+  const start=e=>{e.preventDefault();on=true;};
+  const stop=()=>{
+    if(!on)return;on=false;cancelAnimationFrame(raf);
+    const diff=Math.abs(lvl-target);
+    if(lvl>100){h.thirst=clamp(h.thirst+40);h.clean=clamp(h.clean-6);award(2,'Bucket filled (and the floor)');
+      say('Water everywhere. That floor will take an hour to dry.');}
+    else if(diff<5){h.thirst=clamp(h.thirst+56);h.water=clamp(h.water+58);h.happy=clamp(h.happy+6);
+      award(8,'Filled to the line');say(`${h.name} drinks half of it straight away.`);}
+    else if(diff<14){h.thirst=clamp(h.thirst+44);h.water=clamp(h.water+42);award(5,'Bucket filled');}
+    else {h.thirst=clamp(h.thirst+26);h.water=clamp(h.water+22);award(2,lvl<target?'Only half filled':'Overfilled');}
+    closeSheet();
+  };
+  btn.addEventListener('pointerdown',start);
+  btn.addEventListener('pointerup',stop);
+  btn.addEventListener('pointerleave',stop);
+}
+
+/* --- 4. GROOM --- */
+function gameGroom(i){
+  const h=H(i);
+  const n=Math.max(6,Math.round((100-h.clean)/6));
+  const DZ=BUILDS[h.build||'horse'].dirt;
+  const spots=Array.from({length:n},()=>({x:rnd(DZ.x0,DZ.x1),y:rnd(DZ.y0,DZ.y1),r:rnd(5,10)}));
+  openSheet(`Grooming ${h.name}`,
+   `<div class="hud"><span>Drag the brush over the mud. Long strokes, follow the coat.</span><span>Left <b id="g-n">${n}</b></span></div>
+    <div class="stage brushing" id="g-stage" style="background:linear-gradient(180deg,#6d4a2c 0 60%,#e8cf8e 60%)">
+      <svg viewBox="0 0 260 200" xmlns="http://www.w3.org/2000/svg" style="max-width:560px;margin:0 auto">
+        ${horseSVG(h,{pose:'stand'}).replace('<svg','<svg style="overflow:visible"').replace(/^<svg[^>]*>/,'').replace(/<\/svg>$/,'')}
+        <g id="g-dirt">${spots.map((s,k)=>`<g class="dirtspot" data-k="${k}">
+          <ellipse cx="${s.x}" cy="${s.y}" rx="${s.r}" ry="${s.r*0.72}" fill="#5b4326" opacity=".8"/>
+          <ellipse cx="${s.x-s.r*0.4}" cy="${s.y-s.r*0.3}" rx="${s.r*0.5}" ry="${s.r*0.35}" fill="#3f2f1a" opacity=".6"/></g>`).join('')}</g>
+        <g id="g-brush" style="pointer-events:none;opacity:0"><rect x="-16" y="-9" width="32" height="12" rx="4" fill="#8a5a30"/>
+          <rect x="-15" y="3" width="30" height="7" fill="#2f2a24"/><rect x="-13" y="-13" width="26" height="6" rx="3" fill="#a06f3c"/></g>
+      </svg></div>
+    <p class="muted" style="margin-top:9px">Grooming also gives you a chance to spot lumps, heat and scratches early.</p>`,true);
+  let left=n;
+  const stage=$('#g-stage'),svg=stage.querySelector('svg'),brush=$('#g-brush');
+  function pt(e){const r=svg.getBoundingClientRect();
+    return {x:(e.clientX-r.left)/r.width*260,y:(e.clientY-r.top)/r.height*200};}
+  stage.addEventListener('pointermove',e=>{
+    const p=pt(e);brush.style.opacity=1;brush.setAttribute('transform',`translate(${p.x},${p.y}) rotate(-12)`);
+    spots.forEach((s,k)=>{
+      if(s.done)return;
+      if(Math.hypot(p.x-s.x,p.y-s.y)<s.r+6){
+        s.done=true;left--;$('#g-n').textContent=left;
+        const el=stage.querySelector(`[data-k="${k}"]`);if(el){el.style.opacity=0;}
+        if(left<=0){
+          h.clean=100;h.happy=clamp(h.happy+13);award(7,'Groomed to a shine');
+          setTimeout(()=>{say(`${h.name} gleams — you can see the light move on the coat.`);closeSheet();},520);
+        }
+      }
+    });
+  });
+  stage.addEventListener('pointerleave',()=>brush.style.opacity=0);
+}
+
+/* --- 5. EXERCISE --- */
+function gameExercise(i){
+  const h=H(i);
+  if(h.energy<22){toast(h.name+' is too tired. Let them rest.');return;}
+  let gait='trot',beats=0,good=0,pos=0,dir=1,raf,running=true;
+  const SPD={walk:0.9,trot:1.6,canter:2.4},ZONE={walk:20,trot:15,canter:11};
+  openSheet(`Schooling ${h.name}`,
+   `<div class="hud"><span>Keep the rhythm — press the button (or Space) as the marker crosses the green.</span>
+      <span>Good strides <b id="e-g">0</b>/10</span></div>
+    <div class="stage" id="e-stage"><svg viewBox="0 0 860 260" xmlns="http://www.w3.org/2000/svg">
+      <rect width="860" height="260" fill="#cfe0e8"/><rect y="110" width="860" height="150" fill="#c9b48c"/>
+      <g opacity=".3">${Array.from({length:80},()=>`<line x1="${rnd(0,860)}" y1="${rnd(115,255)}" x2="${rnd(0,860)+8}" y2="${rnd(115,255)}" stroke="#8a7448" stroke-width="1.4"/>`).join('')}</g>
+      <g>${[30,170,310,450,590,730,850].map(x=>`<rect x="${x}" y="66" width="8" height="50" rx="2" fill="#f0eae0"/>`).join('')}
+        <rect x="30" y="72" width="820" height="6" rx="3" fill="#f7f3ec"/><rect x="30" y="94" width="820" height="6" rx="3" fill="#f7f3ec"/></g>
+      ${[110,300,500,700].map((x,k)=>`<g transform="translate(${x},116)"><path d="M 0,0 L 26,0 L 13,-30 Z" fill="#a8503c"/><path d="M 3,-3 L 23,-3 L 13,-27 Z" fill="#e8e2d6"/></g>`).join('')}
+      <g id="e-horse" transform="translate(298,38) scale(1.1)">${horseInner(h,'trot')}</g>
+    </svg></div>
+    <div style="margin-top:12px">
+      <div class="stage" style="border-width:2px;border-radius:8px;background:#e0d3b4">
+        <svg viewBox="0 0 800 46"><rect width="800" height="46" fill="#e0d3b4"/>
+          <rect id="e-zone" x="340" y="0" width="120" height="46" fill="#7fae60" opacity=".55"/>
+          <line x1="400" y1="0" x2="400" y2="46" stroke="#3f6b31" stroke-width="2"/>
+          <rect id="e-mark" x="0" y="4" width="9" height="38" rx="4" fill="#a8503c"/></svg></div>
+      <div class="row" style="margin-top:10px;justify-content:space-between">
+        <div class="row">${['walk','trot','canter'].map(g=>`<button class="btn btn-sm" data-g="${g}" id="gb-${g}">${g[0].toUpperCase()+g.slice(1)}</button>`).join('')}</div>
+        <button class="btn btn-lg btn-go" id="e-hit">Ride the stride</button></div>
+      <p class="muted" style="margin-top:8px">Faster gaits score more but tire ${h.name} out quicker. Energy left: <b id="e-en">${Math.round(h.energy)}%</b></p>
+    </div>`,true);
+  function setGait(g){gait=g;['walk','trot','canter'].forEach(x=>$('#gb-'+x).classList.toggle('btn-go',x===g));
+    const z=ZONE[g]*8;$('#e-zone').setAttribute('x',400-z);$('#e-zone').setAttribute('width',z*2);
+    const hs=$('#e-horse').querySelector('.horse');hs.setAttribute('class','horse pose-'+g);}
+  setGait('trot');
+  $$('[data-g]').forEach(b=>b.onclick=()=>setGait(b.dataset.g));
+  const mark=$('#e-mark');
+  function loop(){ if(!running)return;
+    pos+=dir*SPD[gait]*2.6; if(pos>791){pos=791;dir=-1}if(pos<0){pos=0;dir=1}
+    mark.setAttribute('x',pos); raf=requestAnimationFrame(loop);}
+  loop();
+  function hit(){
+    if(!running)return;
+    const z=ZONE[gait]*8, inZone=Math.abs(pos+4.5-400)<z;
+    beats++;
+    if(inZone){good++;$('#e-g').textContent=good;}
+    h.energy=clamp(h.energy-(gait==='walk'?1.5:gait==='trot'?3:4.5));
+    $('#e-en').textContent=Math.round(h.energy)+'%';
+    if(good>=10||beats>=18||h.energy<8)finish();
+  }
+  function finish(){
+    running=false;cancelAnimationFrame(raf);
+    const score=good/Math.max(1,beats);
+    const fit=Math.round(good*(gait==='canter'?2.4:gait==='trot'?1.8:1.2));
+    h.happy=clamp(h.happy+Math.round(fit*0.9));h.clean=clamp(h.clean-14);h.hunger=clamp(h.hunger-9);
+    award(Math.max(2,Math.round(fit*0.7)), score>0.75?'Lovely rhythmical work':'Schooling done');
+    say(score>0.75?`${h.name} worked beautifully — soft, even and forward.`
+      :score>0.45?`${h.name} was a bit up and down, but it's honest work.`
+      :`${h.name} never really settled. Try a slower gait and find the rhythm first.`);
+    closeSheet();
+  }
+  $('#e-hit').onclick=hit;
+  const keyh=e=>{if(e.code==='Space'){e.preventDefault();hit();}};
+  window.addEventListener('keydown',keyh);
+  const obs=new MutationObserver(()=>{if(!document.getElementById('e-stage')){
+    running=false;cancelAnimationFrame(raf);window.removeEventListener('keydown',keyh);obs.disconnect();}});
+  obs.observe($('#modal-root'),{childList:true,subtree:true});
+}
+
+/* ============================ VET MODE ============================ */
+const TOOLS={
+  observe:{n:'Stand back and watch',i:'&#128065;'},
+  temp:{n:'Take temperature',i:'&#127777;'},
+  steth:{n:'Listen to gut & heart',i:'&#129658;'},
+  pulse:{n:'Feel digital pulses',i:'&#9995;'},
+  hoof:{n:'Pick out & test feet',i:'&#128296;'},
+  gums:{n:'Check gums',i:'&#129701;'},
+  trot:{n:'Trot up in hand',i:'&#127939;'}
+};
+const CONDITIONS={
+  colic:{name:'Spasmodic colic',pose:'colic',flag:'Off the feed, keeps turning to look at the belly.',
+    call:'has left a full breakfast and keeps turning to stare at her flank.',
+    clues:{observe:'Pawing at the bed and curling the top lip. Two fresh rolling patches in the shavings. Has not touched the hay.',
+      temp:'38.1°C. Barely above normal.',
+      steth:'Almost silent. Barely a gurgle either side — the gut has gone quiet. Heart rate 52 and climbing.',
+      pulse:'Digital pulses normal. All four feet cool to the touch.',
+      hoof:'All four pick out clean. No heat, no smell, no reaction to the testers.',
+      gums:'A little tacky, refill about 2.5 seconds. Slightly darker pink than you would like.',
+      trot:'Not appropriate. Better to keep walking quietly in hand than trot up.'},
+    tx:[{t:'Take away all food, walk quietly in hand, monitor closely and re-examine within the hour.',ok:1},
+        {t:'Offer a big bucket of feed to settle the stomach.',ok:0},
+        {t:'Poultice the front feet and box rest.',ok:0}],
+    txnote:'Right. Nothing by mouth, gentle walking, and keep checking those gut sounds.'},
+  abscess:{name:'Hoof abscess',pose:'lame',flag:'Very lame on one front leg, resting the toe.',
+    call:'came in from the field this morning hopping lame on one front leg.',
+    clues:{observe:'Barely putting the near fore to the ground. Resting it with the toe pointed. Otherwise bright and eating.',
+      temp:'37.9°C. Normal.',
+      steth:'Good gut sounds all round. Heart rate 44.',
+      pulse:'A strong, bounding digital pulse in the NEAR FORE only. That hoof is noticeably warmer than the other three.',
+      hoof:'Flinches sharply when the testers press the inside heel. There is a dark tracking line in the white line at the toe.',
+      gums:'Healthy salmon pink, refill under 2 seconds.',
+      trot:'Too lame to trot up — three-legged at walk. Do not push it.'},
+    tx:[{t:'Poultice the foot, box rest on a deep bed, re-poultice daily until it bursts.',ok:1},
+        {t:'Turn out on grass to keep the leg moving.',ok:0},
+        {t:'Scrub the frog with antiseptic and keep the bed dry.',ok:0}],
+    txnote:'Exactly. Draw it out with a poultice and keep her in until it breaks.'},
+  laminitis:{name:'Laminitis',pose:'rock',flag:'Standing rocked back off the front feet.',
+    call:'has been on the spring grass and is now walking like the ground hurts.',
+    clues:{observe:'Standing rocked back on the heels with both front feet stretched forward, weight shifted onto the quarters. Very reluctant to turn.',
+      temp:'38.0°C.',
+      steth:'Gut sounds present and normal. Heart rate 48.',
+      pulse:'Bounding digital pulses in BOTH front feet. Both front hooves are hot.',
+      hoof:'Sore right across the toe of both fronts. No black spot, no smell, no single sore point.',
+      gums:'Pink, slightly congested. Refill 2 seconds.',
+      trot:'Short, pottery, walking-on-eggshells strides. Markedly worse on hard ground and on a turn.'},
+    tx:[{t:'Straight off the grass, box rest on a deep shavings bed, soaked hay, frog support.',ok:1},
+        {t:'Light exercise on the road to harden the feet up.',ok:0},
+        {t:'Barrier cream on the lower legs and keep out of the mud.',ok:0}],
+    txnote:'Yes. Off the grass immediately, deep bedding, and support those frogs.'},
+  thrush:{name:'Thrush',pose:'stand',flag:'Smelly, black discharge in the frog.',
+    call:'has been in a wet bed for a fortnight and something smells wrong.',
+    clues:{observe:'Bright, eating well, hanging over the door. Sound on a surface but picks his way on stones.',
+      temp:'37.8°C. Normal.',
+      steth:'Normal gut sounds. Heart rate 40.',
+      pulse:'Digital pulses normal. All four feet cool.',
+      hoof:'Black, foul-smelling discharge in the deep clefts either side of the frog. The frog is ragged and gives way under the pick. The bed underneath is soaked.',
+      gums:'Perfect.',
+      trot:'Sound on the surface, a touch footy on the stony track.'},
+    tx:[{t:'Pick out twice daily, scrub the frog, dry clean bed, antiseptic spray.',ok:1},
+        {t:'Box rest with frog supports and soaked hay.',ok:0},
+        {t:'Withhold all feed and walk in hand.',ok:0}],
+    txnote:'Correct — it is a management problem. Dry bed, clean feet, and it clears up.'},
+  mud:{name:'Mud fever',pose:'stand',flag:'Scabby, puffy lower legs.',
+    call:'has been out in a very wet field and both hind legs have blown up.',
+    clues:{observe:'Bright and hungry. Both hind legs are puffy from the fetlock upwards. She flinches when you touch the back of the pastern.',
+      temp:'38.4°C. A little raised.',
+      steth:'Normal gut sounds. Heart rate 44.',
+      pulse:'Hard to feel through the swelling, but the hooves themselves are cool.',
+      hoof:'Both hind feet pick out clean. No smell, no sore spots, no dark line.',
+      gums:'Pink and healthy.',
+      trot:'Stiff behind. The skin cracks and weeps as the leg flexes — crusty scabs with hair matted into them.'},
+    tx:[{t:'Clip and gently clean the legs, dry them thoroughly, barrier cream, keep out of deep mud.',ok:1},
+        {t:'Poultice both hind feet and re-poultice daily.',ok:0},
+        {t:'Walk in hand and withhold food.',ok:0}],
+    txnote:'Spot on. Clean, dry, protected — and off that wet field.'},
+  choke:{name:'Choke',pose:'cough',flag:'Neck stretched out, coughing, food at the nostrils.',
+    call:'bolted a dry feed and is now standing with his neck stretched right out, coughing.',
+    clues:{observe:'Neck stretched out and low, retching and coughing. Green-brown feed and saliva dribbling from both nostrils. Frightened. The bucket was emptied in under a minute.',
+      temp:'38.0°C.',
+      steth:'Gut sounds normal. Heart rate 60 — he is anxious rather than ill.',
+      pulse:'Normal. All four feet cool.',
+      hoof:'Nothing to find in any foot.',
+      gums:'Pink, but saliva is pouring from the mouth.',
+      trot:'No. Leave him standing quietly — moving him about will not help.'},
+    tx:[{t:'No food or water, keep him calm with the head low, vet passes a tube. Soak feeds and slow him down in future.',ok:1},
+        {t:'Offer a bucket of water to wash it down.',ok:0},
+        {t:'Turn out on grass so he keeps moving.',ok:0}],
+    txnote:'Right. Head low so it can drain, nothing by mouth, and soak his feed from now on.'}
+};
+const GUESTS=[
+  {id:'g1',name:'Marmalade',coat:'chestnut',mark:{blaze:1,socks:3},sex:'Gelding',age:9,breed:'New Forest',yard:'Hill Farm, two fields over'},
+  {id:'g2',name:'Dorothy',coat:'dun',mark:{star:1},sex:'Mare',age:17,breed:'Highland',yard:'The riding school'},
+  {id:'g3',name:'Nutmeg',coat:'black',mark:{socks:1},sex:'Gelding',age:5,breed:'Cob',yard:'Bramble Cottage'}
+];
+let vetCase=null;
+const lastCase={h:null,c:null};
+function buildCase(horse,cond,mine,created){
+  lastCase.h=horse.id; lastCase.c=cond;
+  return {horse,cond,mine,created:!!created,found:{},dx:null,done:false};
+}
+function makeCase(){
+  // a horse that is genuinely poorly always comes first
+  const sick=S.horses.find(h=>h.cond&&!h.cond.treated);
+  if(sick) return buildCase(sick,sick.cond.id,true,false);
+
+  // otherwise a routine call-out: usually one of your own, sometimes a visitor.
+  // These do NOT make the horse ill - looking at the vet screen should never
+  // take a horse away from you in the other roles.
+  const free=S.horses.filter(h=>!h.cond);
+  const pool=(free.length&&Math.random()<0.7)?free:GUESTS;
+  const conds=Object.keys(CONDITIONS);
+
+  // never the same patient or the same illness twice running
+  let horse=null,cond=null;
+  for(let i=0;i<30;i++){
+    const hh=pick(pool), cc=pick(conds);
+    if(pool.length>1 && hh.id===lastCase.h) continue;
+    if(cc===lastCase.c) continue;
+    horse=hh; cond=cc; break;
+  }
+  if(!horse){horse=pick(pool);cond=pick(conds);}
+
+  const mine=pool!==GUESTS;
+  return buildCase(mine?{...horse}:{...horse,trait:'Visiting patient from '+horse.yard},cond,mine,false);
+}
+function nextCase(){ vetCase=makeCase(); renderVet(); }
+function renderVet(){
+  const poorly=S.horses.find(x=>x.cond&&!x.cond.treated);
+  // a genuinely ill horse always jumps the queue, even mid-way through another call-out
+  if(!vetCase||vetCase.done) vetCase=makeCase();
+  else if(poorly && !(vetCase.mine && vetCase.horse.id===poorly.id && vetCase.cond===poorly.cond.id))
+    vetCase=makeCase();
+  const c=vetCase,h=c.horse,C=CONDITIONS[c.cond];
+  const found=Object.keys(c.found).length;
+  const allow=vetChecks();
+  $('#view').innerHTML=`<div class="panel">
+    <div class="panel-hd"><h2>Call-out</h2>
+      <div class="row"><span class="sub">${c.mine?'Bramblewood Yard':h.yard} · ${found}/${allow} checks used</span>
+      <button class="btn btn-sm" id="newcase">Different call-out</button></div></div>
+    <div class="panel-bd">
+      <div class="stallview">
+        <div>
+          <div class="box" style="min-height:250px"><div class="bedding"></div><div class="win"></div>
+            ${horseFigure(h,C.pose)}</div>
+          <div class="note"><b>${h.name}</b> — ${h.sex}, ${h.age}, ${h.breed}. ${h.name} ${C.call}</div>
+          <h3 style="margin:13px 0 7px;font-size:14px;letter-spacing:.04em;text-transform:uppercase">Examine</h3>
+          <div class="tools">${Object.entries(TOOLS).map(([k,t])=>
+            `<button class="tool" data-t="${k}" data-used="${c.found[k]?1:0}"
+              ${!c.found[k]&&found>=allow?'disabled':''}><span class="ti">${t.i}</span><span>${t.n}</span></button>`).join('')}</div>
+          ${allow<7?`<p class="muted" style="margin-top:8px">Yard ${S.yard}: you get ${allow} examinations, not the full seven. Choose them well.</p>`:''}
+        </div>
+        <div>
+          <div class="clip"><div class="clamp"></div><div class="sheetpaper" id="notes">
+            <h4>Clinical notes</h4>
+            <div><span class="k">Patient:</span> ${h.name}, ${h.age}yo ${h.sex.toLowerCase()}</div>
+            <div><span class="k">Yard:</span> ${c.mine?'Bramblewood':h.yard}</div>
+            <div id="findings">${found?'':'<span class="blank">— no findings recorded —</span>'}</div>
+          </div></div>
+          <button class="btn btn-red btn-lg" id="dx" style="width:100%;margin-top:11px" ${found<3?'disabled':''}>
+            ${found<3?'Examine at least 3 things first':'Make a diagnosis'}</button>
+          <p class="muted" style="margin-top:8px">A good vet gathers evidence before naming anything. Every check costs nothing but time.</p>
+        </div></div></div></div>`;
+  paintFindings();
+  $$('.tool').forEach(b=>b.onclick=()=>{
+    const k=b.dataset.t;
+    if(c.found[k])return;
+    c.found[k]=C.clues[k];
+    b.dataset.used=1;
+    paintFindings();
+    const n=Object.keys(c.found).length;
+    $('#view').querySelector('.sub').textContent=(c.mine?'Bramblewood Yard':h.yard)+' · '+n+'/'+allow+' checks used';
+    if(n>=allow)$$('.tool').forEach(t=>{if(!c.found[t.dataset.t])t.disabled=true;});
+    const d=$('#dx');
+    if(n>=3){d.disabled=false;d.textContent='Make a diagnosis';}
+  });
+  $('#dx').onclick=showDx;
+  $('#newcase').onclick=nextCase;
+}
+function paintFindings(){
+  const c=vetCase,box=$('#findings');if(!box)return;
+  const ks=Object.keys(c.found);
+  if(!ks.length){box.innerHTML='<span class="blank">— no findings recorded —</span>';return;}
+  box.innerHTML=ks.map(k=>`<div style="margin-top:9px"><span class="k">${TOOLS[k].n}:</span> ${c.found[k]}</div>`).join('');
+}
+function showDx(){
+  const c=vetCase,h=c.horse;
+  openSheet(`Diagnosis — ${h.name}`,
+    `<p class="muted" style="margin-top:0">Based on what you found, what is going on?</p>
+     <div class="dxlist">${Object.entries(CONDITIONS).map(([k,v])=>
+       `<button class="dx" data-k="${k}"><b>${v.name}</b><small>${v.flag}</small></button>`).join('')}</div>
+     <div class="note" id="dxhint" style="display:none"></div>`);
+  $$('.dx').forEach(b=>b.onclick=()=>{
+    const k=b.dataset.k;
+    if(k===c.cond){
+      b.classList.add('ok');
+      $$('.dx').forEach(x=>x.disabled=true);
+      award(12,'Correct diagnosis');
+      setTimeout(()=>showTx(),620);
+    }else{
+      b.classList.add('no');b.disabled=true;
+      S.points=Math.max(0,S.points-2);paintTally();
+      const hint=$('#dxhint');hint.style.display='block';
+      hint.innerHTML=`<b>Not that one.</b> ${dxHint(k,c.cond)} Go back and examine something else if you need to.`;
+    }
+  });
+}
+function dxHint(guess,truth){
+  const map={
+    colic:'Colic would give you silent guts and a horse looking at its own flank.',
+    abscess:'An abscess is one hot foot with a bounding pulse and a sore spot under the testers.',
+    laminitis:'Laminitis is both front feet, hot, rocked back off the toes.',
+    thrush:'Thrush is a smell and a black discharge in the frog — not much lameness.',
+    mud:'Mud fever is skin: scabs and swelling up the legs, feet themselves fine.',
+    choke:'Choke is a stretched neck, coughing, and feed coming back down the nose.'
+  };
+  return map[guess];
+}
+function showTx(){
+  const c=vetCase,h=c.horse,C=CONDITIONS[c.cond];
+  const opts=C.tx.map((t,ix)=>({...t,ix})).sort(()=>Math.random()-0.5);
+  openSheet(`${C.name} — treatment plan`,
+    `<div class="note" style="margin-top:0"><b>Diagnosis: ${C.name}.</b> Now, what do you actually do about it?</div>
+     <div class="dxlist" style="margin-top:11px">${opts.map(o=>
+       `<button class="dx" data-ok="${o.ok}"><b>${o.t}</b></button>`).join('')}</div>`);
+  $$('.dx').forEach(b=>b.onclick=()=>{
+    if(b.dataset.ok==='1'){
+      b.classList.add('ok');$$('.dx').forEach(x=>x.disabled=true);
+      award(10,'Treatment plan set');
+      if(c.mine){const mine=S.horses.find(x=>x.id===h.id);if(mine&&mine.cond){mine.cond.treated=true;mine.cond.days=2;}}
+      c.done=true;
+      setTimeout(()=>{
+        openSheet('Case closed',`<div class="center">
+          <p class="big">${h.name} — ${C.name}</p>
+          <p class="muted">${C.txnote}</p>
+          <div class="note" style="text-align:left">${!c.mine
+            ? 'You send the yard away with written instructions and a follow-up booked for the morning.'
+            : (S.horses.find(x=>x.id===h.id)||{}).cond
+              ? h.name+' is on box rest and should be back to normal in a couple of days. Keep checking.'
+              : h.name+' is comfortable and the treatment plan is written up on the board.'}</div>
+          <button class="btn btn-go btn-lg" style="margin-top:12px" onclick="closeSheet()">Next call</button></div>`);
+      },600);
+    }else{
+      b.classList.add('no');b.disabled=true;
+      S.points=Math.max(0,S.points-2);paintTally();toast('That would make things worse.');
+    }
+  });
+}
+
+/* ============================ BE A HORSE ============================ */
+function horseInner(h,pose,tack){
+  const s=horseSVG(h,{pose,tack});
+  const st=(s.match(/style="([^"]*)"/)||[,''])[1];
+  return `<g class="horse pose-${pose}" style="${st}">${s.replace(/^<svg[^>]*>/,'').replace(/<\/svg>\s*$/,'')}</g>`;
+}
+function renderHorseChoose(){
+  $('#view').innerHTML=`<div class="panel"><div class="panel-hd"><h2>Which one are you today?</h2>
+    <span class="sub">Out in the big field</span></div>
+    <div class="panel-bd"><div class="pickgrid">${S.horses.map((h,i)=>
+      `<button class="pick" data-i="${i}" ${h.cond?'disabled title="Not well enough"':''}>
+        <svg viewBox="4 0 252 192">${horseInner(h,'stand')}</svg>
+        <b>${h.name}</b><small>${COATS[h.coat].name} · ${h.breed}</small>
+        ${h.cond?'<small style="color:var(--bad)">resting up</small>':''}</button>`).join('')}</div>
+    <p class="muted" style="margin-top:11px">You'll have the run of the field. Eat, drink, canter about, jump the log, roll in the mud — whatever you fancy. Everything you do carries back to the yard.</p>
+    </div></div>`;
+  $$('.pick').forEach(b=>{if(!b.disabled)b.onclick=()=>startField(+b.dataset.i);});
+}
+
+function startField(idx){
+  const h=H(idx);
+  const WW=3200, VW=900, VH=380, GY=220;
+  const tufts=Array.from({length:46},(_,k)=>({x:180+k*63+rnd(-18,18),eaten:0}));
+  const me={x:220,vx:0,y:0,vy:0,ground:true,face:1,pose:'stand',
+    belly:h.hunger,water:h.thirst,energy:h.energy,fun:40,dirty:0,jumps:0,rolls:0,rolling:0};
+  $('#view').innerHTML=`<div class="panel"><div class="panel-hd">
+      <h2>${h.name} in the big field</h2>
+      <button class="btn btn-sm btn-dark" id="leave">Head back to the gate</button></div>
+    <div class="panel-bd">
+      <div class="world" id="world">
+        <div class="hmeters">
+          ${['Belly','Water','Energy','Fun'].map(l=>`<div class="hm"><span>${l}</span><div class="track">
+            <div class="fill" id="hm-${l}" style="width:50%;background:var(--good)"></div></div></div>`).join('')}
+        </div>
+        <svg viewBox="0 0 ${VW} ${VH}" id="wsvg" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="wsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7fb2d0"/><stop offset="1" stop-color="#dcecf2"/></linearGradient>
+            <linearGradient id="wgr" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#6f9e54"/><stop offset=".45" stop-color="#5d8f4a"/><stop offset="1" stop-color="#416f31"/></linearGradient>
+          </defs>
+          <rect width="${VW}" height="${VH}" fill="url(#wsky)"/>
+          <g id="far"></g>
+          <rect y="${GY}" width="${VW}" height="${VH-GY}" fill="url(#wgr)"/>
+          <g id="cam"></g><g id="cam2"></g><g id="near"></g>
+        </svg>
+        <div class="dpad"><div class="row"><button id="dl">←</button><button id="dr">→</button></div>
+          <div class="row"><button id="dj">⤒</button><button id="dg">≈</button></div></div>
+      </div>
+      <div class="keys">
+        <span class="key"><b>← →</b> walk</span><span class="key"><b>Shift</b> canter</span>
+        <span class="key"><b>Space</b> jump</span><span class="key"><b>R</b> roll in the mud</span>
+        <span class="key">stand still on grass to graze</span></div>
+      <p class="muted" id="hint" style="margin-top:8px">Stand still on a tuft of grass to eat it. The trough is to your right.</p>
+    </div></div>`;
+
+  const far=$('#far'),cam=$('#cam'),cam2=$('#cam2'),near=$('#near');
+  far.innerHTML=`<g>${[80,300,560,820].map(x=>`<ellipse cx="${x}" cy="${rnd(30,68)}" rx="${rnd(38,70)}" ry="${rnd(14,22)}" fill="#fff" opacity=".72"/>`).join('')}</g>
+    <path d="M 0,166 C 150,148 300,160 450,152 C 600,144 750,158 900,148 L 900,${GY} L 0,${GY} Z" fill="#7d9a68" opacity=".55"/>
+    <path d="M 0,190 C 180,180 340,192 520,185 C 680,178 800,188 900,183 L 900,${GY} L 0,${GY} Z" fill="#6d9455" opacity=".7"/>`;
+
+  cam.innerHTML=`
+    <g>${Array.from({length:260},()=>{const y=rnd(GY+8,VH-6),sz=1+(y-GY)/(VH-GY)*3.4,x=rnd(0,WW);
+      return `<path d="M ${x},${y} l ${-2*sz},${-5*sz} M ${x},${y} l 0,${-6.5*sz} M ${x},${y} l ${2.4*sz},${-5*sz}"
+        stroke="#4b7c39" stroke-width="${1.1*sz}" opacity="${.28+ (y-GY)/(VH-GY)*.3}" stroke-linecap="round"/>`}).join('')}</g>
+    <g>${[0,1,2,3,4,5,6].map(k=>`<g transform="translate(${190+k*470},${GY})">
+      <rect x="-8" y="-118" width="15" height="118" rx="4" fill="#5a3f28"/>
+      <ellipse cx="0" cy="-142" rx="58" ry="45" fill="#3f6b31"/><ellipse cx="-28" cy="-124" rx="36" ry="28" fill="#4c7c3a"/>
+      <ellipse cx="30" cy="-130" rx="33" ry="26" fill="#356028"/></g>`).join('')}</g>
+    <g>${Array.from({length:Math.ceil(WW/120)},(_,k)=>`<rect x="${k*120}" y="${GY-76}" width="9" height="76" rx="3" fill="#6b4a2f"/>`).join('')}
+      <rect x="0" y="${GY-64}" width="${WW}" height="6" rx="3" fill="#7d5836"/>
+      <rect x="0" y="${GY-44}" width="${WW}" height="6" rx="3" fill="#7d5836"/></g>
+    <g transform="translate(720,${GY})"><ellipse cx="50" cy="3" rx="62" ry="9" fill="#000" opacity=".2"/>
+      <rect x="0" y="-38" width="100" height="38" rx="7" fill="#4c6b7a"/>
+      <rect x="6" y="-32" width="88" height="21" rx="5" fill="#88b6c9"/>
+      <rect x="6" y="-32" width="88" height="7" rx="4" fill="#bfe0ec" opacity=".85"/></g>
+    <g transform="translate(1520,${GY})"><ellipse cx="0" cy="0" rx="112" ry="16" fill="#5b4426"/>
+      <ellipse cx="-34" cy="-3" rx="50" ry="9" fill="#6d5330"/><ellipse cx="40" cy="2" rx="44" ry="8" fill="#4c391f"/>
+      <text x="0" y="-24" text-anchor="middle" font-family="Courier New" font-size="13" fill="#f0e6d4" opacity=".85">mud (press R)</text></g>
+    <g transform="translate(2150,${GY})"><ellipse cx="0" cy="3" rx="78" ry="9" fill="#000" opacity=".18"/>
+      <rect x="-70" y="-14" width="140" height="14" rx="7" fill="#7d5836"/>
+      <rect x="-70" y="-14" width="140" height="5" rx="3" fill="#96703f"/>
+      <rect x="-76" y="-34" width="11" height="34" rx="4" fill="#5a3f28"/><rect x="65" y="-34" width="11" height="34" rx="4" fill="#5a3f28"/></g>
+    <g transform="translate(2980,${GY})"><rect x="-7" y="-100" width="14" height="100" rx="4" fill="#5a3f28"/>
+      <rect x="-132" y="-90" width="132" height="8" rx="4" fill="#8a6540"/><rect x="-132" y="-64" width="132" height="8" rx="4" fill="#8a6540"/>
+      <rect x="-132" y="-38" width="132" height="8" rx="4" fill="#8a6540"/>
+      <text x="-62" y="-108" text-anchor="middle" font-family="Georgia" font-size="16" fill="#3d5c2f">the gate</text></g>
+    <g id="tufts">${tufts.map((t,k)=>`<g class="tuft" data-k="${k}" transform="translate(${t.x},${GY+6})">
+      <path d="M 0,0 l -7,-16 M 0,0 l -2,-21 M 0,0 l 4,-19 M 0,0 l 9,-14" stroke="#6da156" stroke-width="3.4" stroke-linecap="round"/>
+      <path d="M 0,0 l -11,-10 M 0,0 l 12,-9" stroke="#7fb562" stroke-width="3" stroke-linecap="round"/></g>`).join('')}</g>`;
+  cam2.innerHTML=`<g id="me"></g><g id="fx"></g>`;
+  near.innerHTML=`<g>${Array.from({length:90},()=>{const y=rnd(VH-42,VH+6),x=rnd(0,WW*1.4);
+      return `<path d="M ${x},${y} l -6,-22 M ${x},${y} l -1,-30 M ${x},${y} l 7,-25 M ${x},${y} l 13,-18"
+        stroke="#2f5b26" stroke-width="4" opacity=".8" stroke-linecap="round"/>`}).join('')}</g>`;
+  const meG=$('#me'),fxG=$('#fx');
+  meG.innerHTML=horseInner(h,'stand');
+  const meWrap=meG.querySelector('.horse');
+  // Measure where the hooves actually are rather than trusting a hard-coded number.
+  let footY=176, ctrX=120;
+  try{
+    const mk=meG.querySelector('.h-hoofline');
+    if(mk){const bb=mk.getBBox(); footY=bb.y; ctrX=bb.x+bb.width/2;}
+  }catch(err){}
+
+  const K={};
+  const kd=e=>{
+    if(['ArrowLeft','ArrowRight','Space','ArrowUp','ArrowDown'].includes(e.code))e.preventDefault();
+    K[e.code]=true;K[e.key.toLowerCase()]=true;};
+  const ku=e=>{K[e.code]=false;K[e.key.toLowerCase()]=false;};
+  window.addEventListener('keydown',kd);window.addEventListener('keyup',ku);
+  const hold=(id,code)=>{const b=$('#'+id);if(!b)return;
+    b.addEventListener('pointerdown',e=>{e.preventDefault();K[code]=true;});
+    ['pointerup','pointerleave','pointercancel'].forEach(t=>b.addEventListener(t,()=>K[code]=false));};
+  hold('dl','ArrowLeft');hold('dr','ArrowRight');hold('dj','Space');hold('dg','r');
+
+  let running=true,tick=0,camX=0;
+  function setMeter(l,v,col){const el=$('#hm-'+l);if(el){el.style.width=clamp(v)+'%';el.style.background=col||needColour(v);}}
+  function hint(t){const el=$('#hint');if(el)el.textContent=t;}
+
+  function loop(){
+    if(!running)return;
+    tick++;
+    const fast=K['ShiftLeft']||K['ShiftRight']||K['shift'];
+    const maxv=fast?7.4:3.2, acc=fast?0.42:0.26;
+    if(me.rolling>0){me.rolling--;me.vx*=0.8;}
+    else{
+      if(K['ArrowLeft']||K['a']){me.vx-=acc;me.face=-1;}
+      else if(K['ArrowRight']||K['d']){me.vx+=acc;me.face=1;}
+      else me.vx*=0.86;
+    }
+    me.vx=Math.max(-maxv,Math.min(maxv,me.vx));
+    me.x=Math.max(60,Math.min(WW-60,me.x+me.vx));
+    if((K['Space']||K['ArrowUp'])&&me.ground&&me.rolling<=0){me.vy=-9.6;me.ground=false;me.jumps++;}
+    if(!me.ground){me.vy+=0.62;me.y+=me.vy;
+      if(me.y>=0){me.y=0;me.vy=0;me.ground=true;}}
+    if(Math.abs(me.vx)>0.4)me.energy=clamp(me.energy-(fast?0.075:0.028));
+    else me.energy=clamp(me.energy+0.02);
+
+    // roll in mud
+    if((K['r'])&&me.ground&&me.rolling<=0&&Math.abs(me.x-1520)<120){
+      me.rolling=80;me.rolls++;me.fun=clamp(me.fun+16);me.dirty+=26;
+      fxG.innerHTML=Array.from({length:7},()=>`<ellipse class="dust" cx="${me.x+rnd(-50,50)}" cy="${GY-rnd(4,40)}" rx="13" ry="9" fill="#7a5f38" opacity=".5"/>`).join('');
+      hint('Rolling. Absolutely filthy. Completely worth it.');
+      setTimeout(()=>{if(fxG)fxG.innerHTML='';},1400);
+    }
+    // graze
+    let grazing=false;
+    if(me.ground&&Math.abs(me.vx)<0.35&&me.rolling<=0){
+      const t=tufts.find(t=>!t.eaten&&Math.abs(t.x-me.x)<42);
+      if(t){grazing=true;me.belly=clamp(me.belly+0.42);me.fun=clamp(me.fun+0.05);
+        t.grow=(t.grow||0)+1;
+        if(t.grow>62){t.eaten=1;const el=cam.querySelector(`.tuft[data-k="${tufts.indexOf(t)}"]`);
+          if(el)el.style.opacity=.18;}
+      }
+    }
+    // drink
+    let drinking=false;
+    if(me.ground&&Math.abs(me.vx)<0.5&&Math.abs(me.x-780)<95){
+      drinking=true;me.water=clamp(me.water+0.62);}
+    // jump the log
+    if(Math.abs(me.x-2150)<70){
+      if(me.y<-34){if(!me.cleared){me.cleared=1;me.fun=clamp(me.fun+11);hint('Clear! '+h.name+' pings over the log.');}}
+      else if(me.ground&&Math.abs(me.vx)>2.5){me.vx*=-0.35;hint('Ran out at the log. Come again with more pace and jump earlier.');}
+    } else me.cleared=0;
+
+    // pose
+    const sp=Math.abs(me.vx);
+    let pose = me.rolling>0?'graze' : !me.ground?'canter' : grazing?'graze' : drinking?'graze'
+      : sp<0.35?'stand' : sp<2.4?'walk' : sp<5.2?'trot':'canter';
+    if(pose!==me.pose){me.pose=pose;meWrap.setAttribute('class','horse pose-'+pose);}
+
+    // decay
+    if(tick%60===0){me.belly=clamp(me.belly-0.5);me.water=clamp(me.water-0.45);}
+
+    camX=Math.max(0,Math.min(WW-VW,me.x-VW*0.42));
+    cam.setAttribute('transform',`translate(${-camX},0)`);
+    cam2.setAttribute('transform',`translate(${-camX},0)`);
+    far.setAttribute('transform',`translate(${-camX*0.22},0)`);
+    near.setAttribute('transform',`translate(${-camX*1.3},0)`);
+    const sc=0.75, rot=me.rolling>0?(Math.sin(tick*0.25)*9):0;
+    meG.setAttribute('transform',
+      `translate(${me.x},${GY+me.y}) rotate(${rot}) scale(${-me.face*sc},${sc}) translate(${-ctrX},${-footY})`);
+
+    if(tick%8===0){
+      setMeter('Belly',me.belly);setMeter('Water',me.water);
+      setMeter('Energy',me.energy);setMeter('Fun',me.fun,'var(--brass)');
+    }
+    if(me.x>2900&&!me.atGate){me.atGate=1;hint('You are at the gate. Press "Head back to the yard" when you have had enough.');}
+    requestAnimationFrame(loop);
+  }
+  loop();
+
+  $('#leave').onclick=()=>{
+    running=false;
+    window.removeEventListener('keydown',kd);window.removeEventListener('keyup',ku);
+    h.hunger=clamp(me.belly);h.thirst=clamp(me.water);h.energy=clamp(me.energy);
+    h.happy=clamp(h.happy+Math.round((me.fun-40)*0.5));
+    h.clean=clamp(h.clean-me.dirty);
+    h.loc='field';
+    award(Math.max(2,Math.round(me.fun/12)),'A good afternoon out');
+    openSheet(`${h.name} comes in`,`<div class="center">
+      <p class="big">${me.fun>72?'What a day.':me.fun>45?'A decent turnout.':'Bit of a dull afternoon.'}</p>
+      <div class="note" style="text-align:left">
+        Grass eaten: belly at ${Math.round(me.belly)}%<br>
+        Water drunk: ${Math.round(me.water)}%<br>
+        Jumps: ${me.jumps} · Rolls: ${me.rolls}<br>
+        ${me.dirty>20?'Absolutely caked in mud. Someone has a grooming job on.':'Reasonably clean, all things considered.'}
+      </div>
+      <button class="btn btn-go btn-lg" style="margin-top:12px" onclick="closeSheet()">Back to the yard</button></div>`);
+    S.mode='owner';syncRoles();
+  };
+}
+
+/* ============================ TRAINING & LEVELS ============================ */
+const LEVELS=[
+ {n:1, disc:'poles',    name:'Trotting Poles',      blurb:'A line of poles on the ground. Find the rhythm and keep it.', count:5,  speed:2.1, win:56},
+ {n:2, disc:'dressage', name:'Learn Your Test',     blurb:'Read the test, remember it, then ride it from memory.',       count:4},
+ {n:3, disc:'jump',     name:'First Fences',        blurb:'Four small uprights. Meet them straight.',                    count:4,  speed:2.3, win:54, gift:1},
+ {n:4, disc:'poles',    name:'Raised Poles',        blurb:'The same again, only they come up quicker.',                  count:7,  speed:2.8, win:46},
+ {n:5, disc:'dressage', name:'Preliminary Test',    blurb:'Six movements to learn by heart. No calling.',                count:6},
+ {n:6, disc:'jump',     name:'Clear Round',         blurb:'Six fences. A clear round is all you need.',                  count:6,  speed:2.8, win:46, gift:1},
+ {n:7, disc:'poles',    name:'Grid Work',           blurb:'Nine poles at a working trot. No drifting.',                  count:9,  speed:3.3, win:40},
+ {n:8, disc:'dressage', name:'Novice Test',         blurb:'Seven movements. Longer to hold in your head.',               count:7},
+ {n:9, disc:'xc',       name:'Cross-Country',       blurb:'Logs and brush out in the open field.',                       count:6,  speed:3.4, win:44, gift:1},
+ {n:10,disc:'poles',    name:'Double Poles',        blurb:'Eleven poles. Do not lose the rhythm.',                       count:11, speed:3.8, win:36},
+ {n:11,disc:'dressage', name:'Elementary Test',     blurb:'Eight movements. Learn it properly before you go in.',        count:8},
+ {n:12,disc:'xc',       name:'The Bramblewood Trophy',blurb:'Eight fences across the country. Everything you have learnt.',count:8, speed:4.0, win:38, gift:1}
+];
+const DISC={poles:{t:'Pole work',i:'&#129355;'},jump:{t:'Show jumping',i:'&#127942;'},
+            dressage:{t:'Dressage',i:'&#127901;'},xc:{t:'Cross-country',i:'&#127794;'}};
+S.levels=LEVELS.map(()=>0);        // stars earned, 0 = not yet done
+S.gifts={};                        // levels whose new horse has been claimed
+
+const starsFor=r=>r>=0.9?3:r>=0.7?2:r>=0.5?1:0;
+const diff=()=>Math.max(0,(S.yard||1)-1);        // 0 on your first yard
+const lvSpeed=L=>L.speed*(1+0.13*diff());
+const lvWin=L=>Math.max(18,L.win*(1-0.11*diff()));
+const vetChecks=()=>Math.max(3,7-diff());        // fewer examinations allowed
+const unlocked=i=>i===0||S.levels[i-1]>0;
+
+function renderTrain(){
+  const done=S.levels.filter(x=>x>0).length, total=S.levels.reduce((a,b)=>a+b,0);
+  $('#view').innerHTML=`<div class="panel">
+    <div class="panel-hd"><h2>Training</h2>
+      <span class="sub">Yard ${S.yard||1} &middot; ${done}/${LEVELS.length} levels &middot; ${total} stars &middot; ${S.horses.length} horses</span></div>
+    <div class="panel-bd">
+      <div class="levels">${LEVELS.map((L,i)=>{
+        const st=S.levels[i], open=unlocked(i);
+        return `<button class="lvl ${st?'done':''}" data-i="${i}" ${open?'':'disabled'}>
+          <span class="st">${st?'★'.repeat(st)+'☆'.repeat(3-st):(open?'':'&#128274;')}</span>
+          <span class="no">Level ${L.n}</span>
+          <b>${L.name}</b>
+          <span class="disc">${DISC[L.disc].i} ${DISC[L.disc].t}</span>
+          <p class="muted" style="margin:7px 0 0;font-size:11.5px">${L.blurb}</p>
+          ${L.gift?`<span class="gift">${S.gifts[L.n]?'&#127881; New horse claimed':'&#127881; Finish this and a new horse arrives'}</span>`:''}
+        </button>`}).join('')}</div>
+      <p class="muted" style="margin:12px 0 0">Finish a level with at least one star to unlock the next. Every third level brings a horse of your own to name.</p>
+      <div class="center" style="margin-top:14px">
+        <button class="btn btn-sm" onclick="resetYard()">Start a brand new yard &mdash; harder</button></div>
+    </div></div>`;
+  $$('.lvl').forEach(b=>{if(!b.disabled)b.onclick=()=>chooseMount(+b.dataset.i);});
+}
+
+function chooseMount(i){
+  const L=LEVELS[i], able=S.horses.filter(h=>!h.cond&&h.energy>18);
+  if(!able.length){openSheet('No one fit to work',
+    `<p class="muted" style="margin-top:0">Every horse is either unwell or too tired. Let them rest, feed them up, and come back.</p>
+     <div class="center"><button class="btn btn-go" onclick="closeSheet()">Right you are</button></div>`);return;}
+  openSheet(`Level ${L.n} — ${L.name}`,
+   `<div class="note" style="margin-top:0">${DISC[L.disc].i} <b>${DISC[L.disc].t}.</b> ${L.blurb}</div>
+    <h3 style="margin:13px 0 8px;font-size:13px;letter-spacing:.05em;text-transform:uppercase">Who are you riding?</h3>
+    <div class="pickgrid">${able.map(h=>{const i2=S.horses.indexOf(h);
+      return `<button class="pick" data-h="${i2}">
+        <svg viewBox="4 0 252 192">${horseInner(h,'stand')}</svg>
+        <b>${h.name}</b><small>Energy ${Math.round(h.energy)}%</small></button>`}).join('')}</div>`,true);
+  $$('[data-h]').forEach(b=>b.onclick=()=>{
+    const h=H(+b.dataset.h);
+    closeSheetSilent();
+    if(L.disc==='dressage')playDressage(i,h); else if(L.disc==='poles')playPoles(i,h); else playJump(i,h,L.disc==='xc');
+  });
+}
+
+/* ---------- shared arena furniture ---------- */
+const AW=880, AH=320, AG=214;
+function arenaBack(xc){
+  return xc
+   ? `<rect width="${AW}" height="${AH}" fill="#bcdcea"/>
+      <path d="M 0,150 C 160,132 320,146 480,138 C 620,131 760,144 880,136 L 880,${AG} L 0,${AG} Z" fill="#7d9a68" opacity=".6"/>
+      <rect y="${AG}" width="${AW}" height="${AH-AG}" fill="#5d8f4a"/>
+      <rect y="${AG-7}" width="${AW}" height="7" fill="#79a75c"/>`
+   : `<rect width="${AW}" height="${AH}" fill="#cfe0e8"/>
+      <rect y="${AG}" width="${AW}" height="${AH-AG}" fill="#c9b48c"/>
+      <rect y="${AG-6}" width="${AW}" height="6" fill="#d8c69f"/>
+      <g>${[20,150,280,410,540,670,800].map(x=>`<rect x="${x}" y="${AG-64}" width="7" height="64" rx="2" fill="#f0eae0"/>`).join('')}
+        <rect x="20" y="${AG-58}" width="790" height="5" rx="2" fill="#f7f3ec"/>
+        <rect x="20" y="${AG-40}" width="790" height="5" rx="2" fill="#f7f3ec"/></g>`;
+}
+function mount(h,x,pose,sc=0.78,air=0){
+  return `<g id="lv-me" transform="translate(${x},${AG-air}) scale(${-sc},${sc}) translate(-120,-176)">${horseInner(h,pose,true)}</g>`;
+}
+function lvHud(L,label){
+  return `<div class="hud"><span id="lv-tip">${label}</span>
+    <span>Level ${L.n} &middot; <b id="lv-sc">0</b>/<span id="lv-max">${L.count}</span></span></div>`;
+}
+function keyTap(fn){
+  const k=e=>{if(e.code==='Space'||e.code==='Enter'){e.preventDefault();fn();}};
+  window.addEventListener('keydown',k);return ()=>window.removeEventListener('keydown',k);
+}
+
+/* ---------- results ---------- */
+function finishLevel(i,score,max,extra){
+  const L=LEVELS[i], r=max?score/max:0, st=starsFor(r);
+  if(st>S.levels[i])S.levels[i]=st;
+  const pts=st*6;
+  if(st)award(pts,`Level ${L.n} passed`);
+  const gift=L.gift&&st>0&&!S.gifts[L.n];
+  openSheet(`Level ${L.n} — ${L.name}`,`<div class="center">
+    <div class="stars">${'★'.repeat(st)}${'☆'.repeat(3-st)}</div>
+    <p class="big" style="margin:8px 0 2px">${st===3?'Foot perfect.':st===2?'A good round.':st===1?'Round complete.':'Not this time.'}</p>
+    <p class="muted">${extra||''}</p>
+    <div class="note" style="text-align:left">${st?`Level ${L.n} passed${st<3?' — go again for three stars.':'.'}`
+      :'You need at least half of them to pass. Have another go.'}</div>
+    ${gift?`<button class="btn btn-go btn-lg" style="margin-top:12px" id="claim">&#127881; Collect your new horse</button>`
+          :`<button class="btn btn-go btn-lg" style="margin-top:12px" onclick="closeSheet()">Back to training</button>`}
+    </div>`);
+  if(gift)$('#claim').onclick=()=>{S.gifts[L.n]=1;newHorse();};
+}
+
+/* ---------- 1. POLE WORK ---------- */
+function playPoles(i,h){
+  const L=LEVELS[i], TX=300, SPD=lvSpeed(L), WIN=lvWin(L);
+  const poles=Array.from({length:L.count},(_,k)=>({x:AW+120+k*168,hit:0,done:0}));
+  openSheet(`Level ${L.n} — ${L.name}`,
+    lvHud(L,'Tap as each pole reaches the marker.')+
+   `<div class="stage" id="lv-stage" style="touch-action:manipulation"><svg viewBox="0 0 ${AW} ${AH}">
+      ${arenaBack(false)}
+      <g id="lv-poles"></g>
+      ${mount(h,TX,'trot')}
+      <rect x="${TX-2}" y="${AG}" width="4" height="${AH-AG}" fill="#a8503c" opacity=".45"/>
+      <path d="M ${TX-11},${AH-3} L ${TX+11},${AH-3} L ${TX},${AH-19} Z" fill="#a8503c"/>
+      <text x="${TX}" y="${AH-24}" text-anchor="middle" font-family="Courier New" font-size="11"
+            fill="#a8503c" letter-spacing="1">TAP HERE</text>
+    </svg></div>
+    <div class="row" style="margin-top:10px;justify-content:center">
+      <button class="btn btn-go btn-lg" id="lv-go" style="width:70%">Stride &nbsp;(or press Space)</button></div>
+    <p class="muted center" style="margin-top:8px">Green means you met it right. Keep the beat going.</p>`,true);
+  const box=$('#lv-poles');let raf,run=true,score=0;
+  function paint(){
+    box.innerHTML=poles.map(p=>`<g transform="translate(${p.x},${AG})">
+      <ellipse cx="0" cy="4" rx="30" ry="5" fill="#000" opacity=".18"/>
+      <rect x="-30" y="-9" width="60" height="10" rx="5" fill="${p.hit===1?'#5d8f4a':p.hit===2?'#b4432f':'#e3d3ae'}"/>
+      <rect x="-30" y="-9" width="60" height="4" rx="2" fill="#fff" opacity=".35"/>
+      ${[-22,-8,6,20].map(o=>`<rect x="${o}" y="-9" width="4" height="10" fill="#a8503c" opacity=".55"/>`).join('')}</g>`).join('');
+  }
+  function loop(){
+    if(!run||!document.getElementById('lv-stage'))return;
+    poles.forEach(p=>{p.x-=SPD*1.7;
+      if(!p.done&&p.x<TX-WIN){p.done=1;p.hit=p.hit||2;}});
+    paint();
+    if(poles.every(p=>p.x< -60))return end();
+    raf=requestAnimationFrame(loop);
+  }
+  function tap(){
+    if(!run)return;
+    const p=poles.find(p=>!p.done&&Math.abs(p.x-TX)<=WIN);
+    if(p){p.done=1;p.hit=1;score++;$('#lv-sc').textContent=score;$('#lv-tip').textContent='Good — keep the rhythm.';}
+    else{$('#lv-tip').textContent='Too early. Wait for the pole.';}
+  }
+  function end(){run=false;cancelAnimationFrame(raf);offKey();
+    finishLevel(i,score,L.count,`${score} of ${L.count} poles met correctly.`);
+    h.energy=clamp(h.energy-11);h.happy=clamp(h.happy+7);}
+  const offKey=keyTap(tap);
+  $('#lv-go').onclick=tap; $('#lv-stage').onclick=tap;
+  paint();loop();
+}
+
+/* ---------- 2. SHOW JUMPING & CROSS-COUNTRY ---------- */
+function playJump(i,h,xc){
+  const L=LEVELS[i], TX=250, TAKEOFF=TX+96, SPD=lvSpeed(L), WIN=lvWin(L);
+  const fences=Array.from({length:L.count},(_,k)=>({x:AW+160+k*250,done:0,ok:0,drop:0}));
+  openSheet(`Level ${L.n} — ${L.name}`,
+    lvHud(L,'Tap to take off as the fence comes up.')+
+   `<div class="stage" id="lv-stage" style="touch-action:manipulation"><svg viewBox="0 0 ${AW} ${AH}">
+      ${arenaBack(xc)}
+      <g id="lv-f"></g>
+      <g id="lv-h">${mount(h,TX,'canter')}</g>
+    </svg></div>
+    <div class="row" style="margin-top:10px;justify-content:center">
+      <button class="btn btn-go btn-lg" id="lv-go" style="width:70%">Jump &nbsp;(or press Space)</button></div>
+    <p class="muted center" style="margin-top:8px">${xc?'Solid fences — they do not fall, so meet them right.':'Knock one down and it is four faults.'}</p>`,true);
+  const box=$('#lv-f'),hg=$('#lv-h');
+  let raf,run=true,score=0,air=0,jt=-1;
+  function fenceArt(f){
+    if(xc)return `<g transform="translate(${f.x},${AG})">
+      <ellipse cx="0" cy="5" rx="46" ry="7" fill="#000" opacity=".2"/>
+      <rect x="-40" y="-30" width="80" height="30" rx="7" fill="#7d5836"/>
+      <rect x="-40" y="-30" width="80" height="9" rx="4" fill="#96703f"/>
+      <rect x="-44" y="-44" width="10" height="44" rx="4" fill="#5a3f28"/><rect x="34" y="-44" width="10" height="44" rx="4" fill="#5a3f28"/>
+      ${f.done?`<circle cx="0" cy="-58" r="9" fill="${f.ok?'#5d8f4a':'#b4432f'}"/>`:''}</g>`;
+    return `<g transform="translate(${f.x},${AG})">
+      <ellipse cx="0" cy="5" rx="44" ry="7" fill="#000" opacity=".18"/>
+      <rect x="-38" y="-62" width="8" height="62" rx="3" fill="#8a6c42"/><rect x="30" y="-62" width="8" height="62" rx="3" fill="#8a6c42"/>
+      <rect x="-36" y="${-46+f.drop*40}" width="72" height="8" rx="4" fill="#f0eae0" transform="rotate(${f.drop*9} 0 ${-46+f.drop*40})"/>
+      <rect x="-36" y="-26" width="72" height="8" rx="4" fill="#d8cab4"/>
+      ${f.done?`<circle cx="0" cy="-76" r="9" fill="${f.ok?'#5d8f4a':'#b4432f'}"/>`:''}</g>`;
+  }
+  function paint(){box.innerHTML=fences.map(fenceArt).join('');}
+  function loop(){
+    if(!run||!document.getElementById('lv-stage'))return;
+    fences.forEach(f=>{f.x-=SPD*1.7;
+      if(!f.done&&f.x<TX-40){f.done=1;f.ok=0;$('#lv-tip').textContent='Ran out at that one.';}
+      if(f.done&&!f.ok&&!xc&&f.drop<1)f.drop=Math.min(1,f.drop+0.09);});
+    if(jt>=0){jt+=0.028; air=Math.sin(Math.PI*Math.min(1,jt))*74; if(jt>=1){jt=-1;air=0;}}
+    const me=document.getElementById('lv-me');
+    if(me)me.setAttribute('transform',`translate(${TX},${AG-air}) scale(${-0.78},0.78) translate(-120,-176)`);
+    paint();
+    if(fences.every(f=>f.x< -80))return end();
+    raf=requestAnimationFrame(loop);
+  }
+  function tap(){
+    if(!run)return;
+    if(jt<0)jt=0;
+    const f=fences.find(f=>!f.done);
+    if(!f)return;
+    const d=Math.abs(f.x-TAKEOFF);
+    if(d<=WIN){f.done=1;f.ok=1;score++;$('#lv-sc').textContent=score;$('#lv-tip').textContent='Clear!';}
+    else if(f.x<TAKEOFF+WIN*3){f.done=1;f.ok=0;$('#lv-tip').textContent=f.x>TAKEOFF?'Too early — you stood off miles away.':'Too late, you got in underneath it.';}
+  }
+  function end(){run=false;cancelAnimationFrame(raf);offKey();
+    const faults=(L.count-score)*4;
+    finishLevel(i,score,L.count,`${score} clear, ${faults} faults.`);
+    h.energy=clamp(h.energy-15);h.happy=clamp(h.happy+9);}
+  const offKey=keyTap(tap);
+  $('#lv-go').onclick=tap; $('#lv-stage').onclick=tap;
+  paint();loop();
+}
+
+/* ---------- 3. DRESSAGE — learn the test, then ride it from memory ---------- */
+const MOVES=[
+ {k:'walk',  t:'Medium walk',        pose:'walk'},
+ {k:'trot',  t:'Working trot',       pose:'trot'},
+ {k:'canter',t:'Working canter',     pose:'canter'},
+ {k:'halt',  t:'Halt and salute',    pose:'stand'},
+ {k:'circle',t:'20 metre circle',    pose:'trot'},
+ {k:'rein',  t:'Change the rein',    pose:'trot'}
+];
+const ALET=['A','K','E','H','C','M','B','F'];
+function playDressage(i,h){
+  const L=LEVELS[i], N=L.count+Math.min(3,diff()), MAX=N*10;
+  const mid=MOVES.filter(m=>m.k!=='halt');
+  const test=[{m:MOVES.find(m=>m.k==='trot'),letter:'A'}];
+  for(let k=1;k<N-1;k++){
+    let m; do{m=pick(mid);}while(m.k===test[k-1].m.k);
+    test.push({m,letter:pick(ALET)});
+  }
+  test.push({m:MOVES.find(m=>m.k==='halt'),letter:'X'});
+
+  let idx=0, marks=0, wrong=0, peeked=false, face=1, over=false;
+  openSheet(`Level ${L.n} — ${L.name}`,'',true);
+  study(true);
+
+  function study(first){
+    $('#sheet-bd').innerHTML=`
+      <div class="recipe">
+        <h4>Your test &mdash; learn it by heart</h4>
+        <ol class="testlist">${test.map(t=>`<li><b>${t.letter}</b> &nbsp;${t.m.t}</li>`).join('')}</ol>
+      </div>
+      <p class="muted">There is no caller in a real test. Read it through, then ride it from memory.</p>
+      <div class="center" style="margin-top:12px">
+        <button class="btn btn-go btn-lg" id="d-ready">${first?'I know it &mdash; ride the test':'Back to the arena'}</button></div>`;
+    $('#d-ready').onclick=()=>{if(!first)peeked=true;ride();};
+  }
+
+  function ride(){
+    $('#sheet-bd').innerHTML=`
+      <div class="hud"><span id="lv-tip">Movement 1 &mdash; what comes first?</span>
+        <span>Marks <b id="lv-sc">${marks}</b>/<span id="lv-max">${MAX}</span></span></div>
+      <div class="stage" id="lv-stage"><svg viewBox="0 0 ${AW} ${AH}">
+        ${arenaBack(false)}
+        ${ALET.map((l,j)=>`<text x="${52+j*106}" y="${AG-86}" text-anchor="middle"
+           font-family="Courier New" font-size="15" fill="#8b7f72">${l}</text>`).join('')}
+        <g id="lv-h">${mount(h,200,'stand')}</g>
+      </svg></div>
+      <div class="dots" id="d-dots"></div>
+      <div class="ingredients" style="margin-top:10px">${MOVES.map(m=>
+        `<button class="ing" data-m="${m.k}"><span class="n">${m.t}</span></button>`).join('')}</div>
+      <div class="center" style="margin-top:10px">
+        <button class="btn btn-sm" id="d-peek">Forgotten it? Read the test again</button></div>`;
+    $$('[data-m]').forEach(b=>b.onclick=()=>answer(b.dataset.m));
+    $('#d-peek').onclick=()=>study(false);
+    const g0=document.getElementById('lv-me'); if(g0)g0.classList.add('glide');
+    place(); dots();
+  }
+
+  function dots(){
+    const d=$('#d-dots'); if(!d)return;
+    d.innerHTML=test.map((t,j)=>
+      `<span class="dot ${j<idx?'on':j===idx?'now':''}">${j<idx?t.letter:'&middot;'}</span>`).join('');
+  }
+  function place(pose){
+    const g=document.getElementById('lv-me');
+    if(!g)return;
+    if(pose){const hw=g.querySelector('.horse'); if(hw)hw.setAttribute('class','horse pose-'+pose);}
+    const x=180+(idx/Math.max(1,test.length-1))*500;
+    g.setAttribute('transform',`translate(${x},${AG}) scale(${-face*0.78},0.78) translate(-120,-176)`);
+  }
+  function tip(t){const e=$('#lv-tip'); if(e)e.innerHTML=t;}
+
+  function advance(t,got,msg){
+    marks+=got; const sc=$('#lv-sc'); if(sc)sc.textContent=marks;
+    if(t.m.k==='rein')face*=-1;
+    idx++; wrong=0; peeked=false;
+    place(t.m.pose); dots();
+    if(idx>=test.length){over=true;tip(msg+' &nbsp;Test finished.');setTimeout(end,1000);}
+    else tip(msg+` &nbsp;<b>Movement ${idx+1}?</b>`);
+  }
+  function answer(k){
+    if(over||idx>=test.length)return;
+    const t=test[idx];
+    if(k===t.m.k){
+      const got=wrong?4:peeked?6:10;
+      advance(t,got,`<b>${t.letter} &mdash; ${t.m.t}.</b> ${got===10?'Correct, 10 marks.':got===6?'Correct after a look, 6.':'Correct second time, 4.'}`);
+    }else if(wrong>=1){
+      advance(t,2,`It was <b>${t.letter} &mdash; ${t.m.t}</b>. 2 marks.`);
+    }else{
+      wrong=1; tip('Not that one. Have another think.');
+    }
+  }
+  function end(){
+    const pct=Math.round(marks/MAX*100);
+    finishLevel(i,marks,MAX,`${marks} marks out of ${MAX} — ${pct}%.`);
+    h.energy=clamp(h.energy-9); h.happy=clamp(h.happy+8);
+  }
+}
+
+/* ---------- NEW HORSE ---------- */
+const BREEDS={horse:['Welsh Section D','Irish Cob','Connemara','Irish Sport Horse','New Forest','Appaloosa'],
+              pony:['Shetland pony','Shetland pony','Shetland pony']};
+function newHorse(){
+  const draft={name:'',coat:'chestnut',build:'horse',mark:{blaze:1,socks:2},sex:'Mare',
+    feed:{chaff:2,nuts:1,carrot:1,beet:0,supp:0,sugar:0}};
+  const coats=['palomino','chestnut','bay','black','grey','dun','skewbald'];
+  function preview(){
+    return horseSVG({name:draft.name||'your new horse',coat:draft.coat,build:draft.build,mark:draft.mark},{pose:'stand'});
+  }
+  function body(){
+    return `<div class="creator">
+      <div>
+        <div class="box" style="min-height:230px"><div class="bedding"></div><div class="win"></div>
+          ${preview()}</div>
+        <input class="nameinput" id="nh-name" maxlength="14" placeholder="Type a name…" value="${draft.name}" style="margin-top:10px">
+      </div>
+      <div>
+        <h4 class="sect">Colour</h4>
+        <div class="swatches">${coats.map(c=>`<button class="sw" data-c="${c}" aria-pressed="${draft.coat===c}">
+          <i style="background:linear-gradient(135deg,${COATS[c].lite},${COATS[c].base} 55%,${COATS[c].dark})"></i>${COATS[c].name}</button>`).join('')}</div>
+        <h4 class="sect">Size</h4>
+        <div class="swatches" style="grid-template-columns:1fr 1fr">
+          <button class="sw" data-b="horse" aria-pressed="${draft.build==='horse'}">Horse</button>
+          <button class="sw" data-b="pony" aria-pressed="${draft.build==='pony'}">Shetland pony</button></div>
+        <h4 class="sect">Face</h4>
+        <div class="swatches">
+          <button class="sw" data-f="blaze" aria-pressed="${!!draft.mark.blaze}">Blaze</button>
+          <button class="sw" data-f="star" aria-pressed="${!!draft.mark.star}">Star</button>
+          <button class="sw" data-f="none" aria-pressed="${!draft.mark.blaze&&!draft.mark.star}">Plain</button></div>
+        <h4 class="sect">White socks</h4>
+        <div class="swatches" style="grid-template-columns:repeat(3,1fr)">
+          ${[0,2,4].map(n=>`<button class="sw" data-s="${n}" aria-pressed="${(draft.mark.socks||0)===n}">${n===0?'None':n}</button>`).join('')}</div>
+        <h4 class="sect">Mare or gelding</h4>
+        <div class="swatches" style="grid-template-columns:1fr 1fr">
+          <button class="sw" data-x="Mare" aria-pressed="${draft.sex==='Mare'}">Mare</button>
+          <button class="sw" data-x="Gelding" aria-pressed="${draft.sex==='Gelding'}">Gelding</button></div>
+      </div></div>
+      <h4 class="sect" style="margin-top:14px">Their feed chart &mdash; what goes in the bucket</h4>
+      <div class="feedpick">${Object.entries(ING).map(([k,v])=>`
+        <div class="fp">
+          <div class="fp-t"><b>${v.n}</b><small>per ${v.u}</small></div>
+          <div class="fp-s">
+            <button class="fpb" data-fp="${k}:-1">&minus;</button>
+            <span id="fp-${k}">${draft.feed[k]||0}</span>
+            <button class="fpb" data-fp="${k}:1">+</button></div>
+        </div>`).join('')}</div>
+      <p class="muted" style="margin-top:7px">This becomes their feed chart, and it is what you have to mix
+        correctly at feed time. Keep it simple and you will thank yourself later.</p>
+      <div class="center" style="margin-top:14px">
+        <button class="btn btn-go btn-lg" id="nh-go">Welcome ${draft.name||'them'} to Bramblewood</button></div>`;
+  }
+  function wire(){
+    $('#sheet-bd').innerHTML=body();
+    const nm=$('#nh-name');
+    nm.oninput=()=>{draft.name=nm.value.replace(/[<>&"]/g,'');
+      $('#nh-go').textContent='Welcome '+(draft.name||'them')+' to Bramblewood';};
+    const redraw=()=>{const keep=draft.name;wire();$('#nh-name').value=keep;};
+    $$('[data-c]').forEach(b=>b.onclick=()=>{draft.coat=b.dataset.c;redraw();});
+    $$('[data-b]').forEach(b=>b.onclick=()=>{draft.build=b.dataset.b;redraw();});
+    $$('[data-f]').forEach(b=>b.onclick=()=>{const f=b.dataset.f;
+      draft.mark={...draft.mark,blaze:f==='blaze'?1:0,star:f==='star'?1:0};redraw();});
+    $$('[data-s]').forEach(b=>b.onclick=()=>{draft.mark={...draft.mark,socks:+b.dataset.s};redraw();});
+    $$('[data-x]').forEach(b=>b.onclick=()=>{draft.sex=b.dataset.x;redraw();});
+    $$('[data-fp]').forEach(b=>b.onclick=()=>{
+      const [k,d]=b.dataset.fp.split(':');
+      draft.feed[k]=clamp((draft.feed[k]||0)+(+d),0,4);
+      const el=document.getElementById('fp-'+k); if(el)el.textContent=draft.feed[k];
+    });
+    $('#nh-go').onclick=()=>{
+      const nm2=(draft.name||'').trim();
+      if(!nm2){toast('Give them a name first.');$('#nh-name').focus();return;}
+      const breed=pick(BREEDS[draft.build]);
+      S.horses.push({id:'n'+Date.now(),name:nm2,coat:draft.coat,build:draft.build,mark:{...draft.mark},
+        sex:draft.sex,age:4+Math.floor(Math.random()*8),breed,
+        trait:`New to Bramblewood, and settling in nicely.`,
+        hunger:62,thirst:64,energy:86,happy:78,clean:70,muck:0,water:44,hay:44,loc:'stable',cond:null,care:{},
+        feed:(()=>{const f={};Object.entries(draft.feed).forEach(([k,v])=>{if(v>0)f[k]=v;});
+                return Object.keys(f).length?f:{chaff:2,nuts:1};})()});
+      award(15,nm2+' has joined the yard');
+      closeSheetSilent();
+      S.mode='owner';syncRoles();render();
+      toast(nm2+' is in the end box. Go and say hello.');
+    };
+  }
+  openSheet('A new horse for the yard','',true);
+  wire();
+}
+
+/* ============================ ROUTINE CARE & MEDICINE ============================ */
+const CARE=[
+ {k:'jab',  name:'Flu &amp; tetanus jab', every:10, verb:'Give the jab',   spot:'neck',  where:'neck',
+  done:'Vaccinated', tip:'A small injection into the muscle of the neck. Protects against flu and tetanus.'},
+ {k:'worm', name:'Worming',               every:6,  verb:'Give the wormer',spot:'mouth', where:'mouth',
+  done:'Wormed',     tip:'A syringe of paste over the back of the tongue. Not their favourite thing.'},
+ {k:'teeth',name:'Teeth rasped',          every:14, verb:'Rasp the teeth', spot:'mouth', where:'mouth',
+  done:'Teeth done', tip:'Sharp edges filed smooth so the bit sits comfortably and they can chew properly.'},
+ {k:'feet', name:'Farrier',               every:5,  verb:'Trim and shoe',  spot:'feet',  where:'four feet, one at a time',
+  done:'Shod',       tip:'Every foot picked up, trimmed and shod. Tap each one in turn.'}
+];
+function careDue(h,c){const last=(h.care&&h.care[c.k])||0;return last===0||S.day-last>=c.every;}
+function careLeft(h,c){const last=(h.care&&h.care[c.k])||0;return last===0?0:Math.max(0,c.every-(S.day-last));}
+
+/* the vet's routine visit, called from a horse's box */
+function checkup(i){
+  const h=H(i), ill=h.cond&&!h.cond.treated, resting=h.cond&&h.cond.treated;
+  const temp=(37.5+Math.random()*0.5).toFixed(1), hr=Math.round(32+Math.random()*9);
+  openSheet(`Check-up &mdash; ${h.name}`,`
+    <div class="stallview">
+      <div><div class="box" style="min-height:210px"><div class="bedding"></div><div class="win"></div>
+        ${horseFigure(h,ill?condPose(h.cond.id):'stand')}</div></div>
+      <div>
+        <div class="clip"><div class="clamp"></div><div class="sheetpaper" style="min-height:150px">
+          <h4>Routine check</h4>
+          <div><span class="k">Temperature:</span> ${ill?'38.6&deg;C &mdash; raised':temp+'&deg;C &mdash; normal'}</div>
+          ${resting?`<div><span class="k">Under treatment for:</span> ${CONDITIONS[h.cond.id].name}</div>`:''}
+          <div><span class="k">Heart rate:</span> ${ill?'54 bpm &mdash; up':hr+' bpm &mdash; normal'}</div>
+          <div><span class="k">Gut sounds:</span> ${ill?'Not as they should be':'Present on both sides'}</div>
+          <div><span class="k">Feet:</span> ${ill?'Wants a proper look':'Cool, pulses normal'}</div>
+          <div style="margin-top:9px"><span class="k">Verdict:</span> ${
+            ill?'Something is wrong here.':resting?'Treated and mending. Keep '+(h.sex==='Mare'?'her':'him')+' rested.':'Sound and well.'}</div>
+        </div></div>
+        ${ill?`<button class="btn btn-red btn-lg" id="ck-vet" style="width:100%;margin-top:11px">
+          Call the vet out to ${h.name}</button>`:''}
+      </div></div>
+    <h3 class="sect2">Medicine cabinet &amp; routine care</h3>
+    <div class="carelist">${CARE.map(c=>{
+      const due=careDue(h,c);
+      return `<div class="careitem ${due?'due':''}">
+        <div class="ci-t"><b>${c.name}</b><small>${due?'Due now':c.done+' &mdash; due again in '+careLeft(h,c)+' days'}</small></div>
+        <button class="btn btn-sm ${due?'btn-go':''}" data-care="${c.k}" ${due?'':'disabled'}>${c.verb}</button>
+      </div>`}).join('')}</div>
+    <p class="muted" style="margin-top:10px">Keeping the jabs and worming up to date makes ${h.name} far less likely to fall ill.</p>`,true);
+  if(ill)$('#ck-vet').onclick=()=>{vetCase=null;S.mode='vet';syncRoles();closeSheetSilent();render();};
+  $$('[data-care]').forEach(b=>b.onclick=()=>doCare(i,b.dataset.care));
+}
+
+/* the instrument you are actually holding, drawn tip-first at local x=-30 */
+function careTool(k){
+  if(k==='jab')return `
+    <rect x="-30" y="-1" width="16" height="2" rx="1" fill="#c6ced6"/>
+    <rect x="-15" y="-5" width="28" height="10" rx="2.5" fill="#f4f8fa" stroke="#8f98a1" stroke-width="1"/>
+    <rect x="-13" y="-3.2" width="16" height="6.4" rx="1" fill="#b9d7e6" id="cr-fluid"/>
+    <rect x="12" y="-7.5" width="3.5" height="15" rx="1.5" fill="#e3eaee" stroke="#8f98a1" stroke-width=".8"/>
+    <rect x="15" y="-2.4" width="13" height="4.8" rx="1.2" fill="#98a2ab"/>
+    <rect x="27" y="-6" width="3.5" height="12" rx="1.5" fill="#98a2ab"/>`;
+  if(k==='worm')return `
+    <rect x="-30" y="-2.6" width="16" height="5.2" rx="2.6" fill="#cdbf9f"/>
+    <rect x="-15" y="-8" width="32" height="16" rx="4" fill="#efe9dc" stroke="#9a8f7f" stroke-width="1"/>
+    <rect x="-12" y="-5.6" width="20" height="11.2" rx="2" fill="#c2a86e"/>
+    ${[-7,-1,5].map(x=>`<rect x="${x}" y="-8" width="1.2" height="16" fill="#9a8f7f" opacity=".55"/>`).join('')}
+    <rect x="16" y="-3" width="15" height="6" rx="2" fill="#8a8074"/>`;
+  if(k==='teeth')return `
+    <rect x="-34" y="-3.5" width="38" height="7" rx="1.5" fill="#c6ced6" stroke="#8f98a1" stroke-width=".8"/>
+    ${Array.from({length:9},(_,i)=>`<rect x="${-32+i*4}" y="-3" width="1.4" height="6" fill="#8f98a1" opacity=".5"/>`).join('')}
+    <rect x="3" y="-5.5" width="27" height="11" rx="4" fill="#7d5836"/>
+    <rect x="3" y="-5.5" width="27" height="3.6" rx="2" fill="#96703f"/>`;
+  return `
+    <rect x="-32" y="-4" width="34" height="8" rx="1.5" fill="#c6ced6" stroke="#8f98a1" stroke-width=".8"/>
+    ${Array.from({length:8},(_,i)=>`<rect x="${-30+i*4}" y="-3.4" width="1.4" height="6.8" fill="#8f98a1" opacity=".45"/>`).join('')}
+    <rect x="1" y="-6" width="29" height="12" rx="4" fill="#7d5836"/>
+    <rect x="1" y="-6" width="29" height="4" rx="2" fill="#96703f"/>`;
+}
+/* what gets left behind: a shoe on each foot, a tick everywhere else */
+function careMark(k,x,y){
+  if(k==='feet')return `<g transform="translate(${x},${y}) scale(.9)">
+    <path d="M -6,-6 C -10,-1 -9,6 -4,8 L -2,4.5 C -5.5,3 -6,-1 -4,-4 Z" fill="#8f98a1"/>
+    <path d="M 6,-6 C 10,-1 9,6 4,8 L 2,4.5 C 5.5,3 6,-1 4,-4 Z" fill="#8f98a1"/>
+    <path d="M -6,-6 C -2,-9 2,-9 6,-6 L 4,-3.6 C 1,-5.8 -1,-5.8 -4,-3.6 Z" fill="#8f98a1"/></g>`;
+  return `<g transform="translate(${x},${y})">
+    <circle r="8.5" fill="#5d8f4a"/>
+    <path d="M -3.6,0 L -1,3.2 L 4.2,-3.6" stroke="#fff" stroke-width="2.4" fill="none"
+          stroke-linecap="round" stroke-linejoin="round"/></g>`;
+}
+
+/* giving the treatment: the instrument follows your hand, tap the right place */
+function doCare(i,ck){
+  const h=H(i), c=CARE.find(x=>x.k===ck), B=BUILDS[h.build||'horse'];
+  const spots=(c.spot==='feet'?B.spots.feet:[B.spots[c.spot]]).map(s=>({x:s[0],y:s[1],done:0}));
+  let left=spots.length, busy=false;
+  openSheet(`${c.name} &mdash; ${h.name}`,`
+    <p class="muted" style="margin-top:0">${c.tip}</p>
+    <div class="stage" id="cr-stage" style="cursor:none;touch-action:manipulation;
+         background:linear-gradient(180deg,#6d4a2c 0 56%,#e8cf8e 56%)">
+      <svg viewBox="0 0 260 200" style="max-width:560px;margin:0 auto;display:block" id="cr-svg">
+        ${horseInner(h,'stand')}
+        <g id="cr-spots">${spots.map((s,k)=>`<g class="tapspot" data-s="${k}">
+          <circle cx="${s.x}" cy="${s.y}" r="14" fill="#c69a4c" opacity=".38"/>
+          <circle cx="${s.x}" cy="${s.y}" r="7.5" fill="#a8503c"/>
+          <circle cx="${s.x}" cy="${s.y}" r="3" fill="#fff" opacity=".85"/></g>`).join('')}</g>
+        <g id="cr-done"></g>
+        <g id="cr-tool" transform="translate(210,180) rotate(-18)" pointer-events="none">${careTool(ck)}</g>
+      </svg></div>
+    <p class="muted center" style="margin-top:9px" id="cr-tip">
+      Tap the ${c.where}. <b id="cr-n">${left}</b> to go.</p>`,true);
+
+  const stage=$('#cr-stage'), svg=$('#cr-svg'), tool=$('#cr-tool'), doneG=$('#cr-done');
+  const P=e=>{const r=svg.getBoundingClientRect();
+    return{x:(e.clientX-r.left)/r.width*260,y:(e.clientY-r.top)/r.height*200};};
+  const put=(x,y)=>tool.setAttribute('transform',`translate(${x+30},${y}) rotate(-18)`);
+
+  stage.addEventListener('pointermove',e=>{if(!busy){const p=P(e);put(p.x,p.y);}});
+  stage.addEventListener('pointerdown',e=>{
+    e.preventDefault(); if(busy)return;
+    const p=P(e);
+    let best=-1,bd=30;
+    spots.forEach((s,k)=>{if(s.done)return;const d=Math.hypot(p.x-s.x,p.y-s.y);if(d<bd){bd=d;best=k;}});
+    if(best<0){put(p.x,p.y);return;}
+    const s=spots[best]; busy=true;
+    const t0=performance.now();
+    (function push(){
+      const k=(performance.now()-t0)/420;
+      if(k>=1){
+        s.done=1; left--; busy=false;
+        const g=svg.querySelector(`.tapspot[data-s="${best}"]`); if(g)g.style.opacity=0;
+        doneG.insertAdjacentHTML('beforeend',careMark(ck,s.x,s.y));
+        const n=$('#cr-n'); if(n)n.textContent=left;
+        if(left<=0){
+          h.care=h.care||{}; h.care[c.k]=S.day; h.happy=clamp(h.happy+4);
+          award(6,c.name.replace('&amp;','&')+' done');
+          setTimeout(()=>{closeSheetSilent();checkup(i);},520);
+        }
+        return;
+      }
+      const d=Math.sin(Math.PI*k)*10;      // press in and back out
+      tool.setAttribute('transform',`translate(${s.x+30-d},${s.y}) rotate(-18)`);
+      const fl=document.getElementById('cr-fluid');
+      if(fl)fl.setAttribute('width',String(16*(1-0.85*Math.min(1,k*1.2))));
+      requestAnimationFrame(push);
+    })();
+  });
+  stage.addEventListener('pointerleave',()=>{if(!busy)put(215,182);});
+}
+
+/* ============================ SAVING ============================ */
+const SAVE_KEY='bramblewood-yard-v1';
+let saveOn=false, saveTimer=null;
+function canSave(){return !!(window.storage&&window.storage.set&&window.storage.get);}
+async function saveGame(){
+  if(!saveOn)return;
+  try{
+    // photos are the person's own uploads and can be huge - keep them out of the save
+    const horses=S.horses.map(h=>{const c={...h};delete c.photo;return c;});
+    await window.storage.set(SAVE_KEY,JSON.stringify({v:1,day:S.day,tod:S.tod,
+      points:S.points,jobs:S.jobs,horses,levels:S.levels,gifts:S.gifts,yard:S.yard||1}));
+  }catch(e){}
+}
+function markDirty(){if(!saveOn)return;clearTimeout(saveTimer);saveTimer=setTimeout(saveGame,700);}
+async function loadGame(){
+  if(!canSave())return false;
+  saveOn=true;
+  try{
+    const r=await window.storage.get(SAVE_KEY);
+    if(!r||!r.value)return false;
+    const d=JSON.parse(r.value);
+    if(!d||d.v!==1||!Array.isArray(d.horses)||!d.horses.length)return false;
+    S.day=d.day||1; S.tod=d.tod||0; S.points=d.points||0; S.jobs=d.jobs||0;
+    S.horses=d.horses;
+    S.horses.forEach(h=>{if(!h.care)h.care={};});
+    if(Array.isArray(d.levels)&&d.levels.length===LEVELS.length)S.levels=d.levels;
+    S.gifts=d.gifts||{};
+    S.yard=d.yard||1;
+    return true;
+  }catch(e){return false;}
+}
+function resetYard(){
+  const next=(S.yard||1)+1;
+  openSheet('Start a brand new yard?',`
+    <p class="muted" style="margin-top:0">You would begin again as <b>Yard ${next}</b> with Lemon, Oakley and Rollo,
+      just as you started the first time.</p>
+    <div class="note" style="text-align:left">
+      <b>What changes on Yard ${next}:</b><br>
+      &bull; Training is faster and the timing windows are tighter<br>
+      &bull; Dressage tests are longer to learn by heart<br>
+      &bull; The vet only gets <b>${Math.max(3,7-(next-1))} examinations</b> instead of seven<br>
+      &bull; Running the yard and being a horse stay exactly the same
+    </div>
+    <div class="note" style="text-align:left;border-color:var(--rug);background:#f6ddd6">
+      Every horse you have made and every level you have passed will be lost.
+    </div>
+    <div class="row" style="margin-top:14px;justify-content:center">
+      <button class="btn" onclick="closeSheet()">No, keep this yard</button>
+      <button class="btn btn-red btn-lg" id="rs-go">Yes, start Yard ${next}</button></div>`);
+  $('#rs-go').onclick=doReset;
+}
+async function doReset(){
+  const next=(S.yard||1)+1;
+  try{if(canSave())await window.storage.delete(SAVE_KEY);}catch(e){}
+  S.day=1;S.tod=0;S.points=0;S.jobs=0;S.sel=0;S.view='stables';S.mode='owner';
+  S.horses=freshHorses();
+  S.levels=LEVELS.map(()=>0);S.gifts={};S.yard=next;
+  vetCase=null;
+  closeSheetSilent();syncRoles();render();saveGame();
+  toast('Yard '+next+' — the work gets harder from here');
+}
+window.doReset=doReset;
+window.resetYard=resetYard;
+
+/* ============================ BOOT ============================ */
+function syncRoles(){$$('#roles .role').forEach(b=>b.setAttribute('aria-pressed',b.dataset.mode===S.mode));}
+$$('#roles .role').forEach(b=>b.onclick=()=>{
+  S.mode=b.dataset.mode;syncRoles();closeSheetSilent();render();
+  if(S.mode==='vet')say('Bag, thermometer, stethoscope. Take your time over the examination.');
+  if(S.mode==='horse')say('Out to the field. Eat, drink, and have a good gallop.');
+});
+function closeSheetSilent(){$('#modal-root').innerHTML='';}
+window.closeSheet=closeSheet;
+(async()=>{
+  const restored=await loadGame();
+  paintTally();
+  render();
+  if(restored)toast('Your yard is just as you left it');
+  else if(!canSave())setTimeout(()=>toast('Heads up: this copy cannot save your yard'),1200);
+})();
+</script>
+</body>
+</html>
