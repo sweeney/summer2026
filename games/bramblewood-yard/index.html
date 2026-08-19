@@ -442,6 +442,27 @@ h3.sect2{font-size:13px;letter-spacing:.05em;text-transform:uppercase;margin:15p
 <div class="toast" id="toast"></div>
 <script>
 "use strict";
+
+/* ---------------------------------------------------------------
+   The yard was built against a host that provides window.storage.
+   On the website there is no such host, so stand one up over
+   localStorage with the same async shape: get -> {value}, set,
+   delete. If localStorage itself is unavailable (private windows,
+   file:// in some browsers) we leave window.storage undefined and
+   the game correctly says it cannot save.
+   --------------------------------------------------------------- */
+if(!(window.storage&&window.storage.get&&window.storage.set)){
+  try{
+    const probe='bramblewood-probe';
+    localStorage.setItem(probe,'1');localStorage.removeItem(probe);
+    window.storage={
+      async get(k){const v=localStorage.getItem(k);return v===null?null:{value:v};},
+      async set(k,v){localStorage.setItem(k,String(v));},
+      async delete(k){localStorage.removeItem(k);}
+    };
+  }catch(e){/* no storage available - the game warns and plays unsaved */}
+}
+
 const $ = (s,r=document)=>r.querySelector(s);
 const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
 const clamp=(v,a=0,b=100)=>Math.max(a,Math.min(b,v));
