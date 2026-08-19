@@ -262,8 +262,8 @@ const LEVELS = [
           {t:'hammer',x:1180,len:120,push:5},{t:'rock',x:2050,r:15}] },
 
   { name:"Tightrope", hint:"Rope bridges. They sag and swing — don't dawdle.",
-    spec:[{t:'f',w:400},{t:'g',w:300,drop:0},{t:'f',w:220},{t:'g',w:300,drop:0},{t:'f',w:380}],
-    objs:[{t:'bridge',x:550,w:320,n:9},{t:'bridge',x:1070,w:320,n:9}] },
+    spec:[{t:'f',w:400},{t:'g',w:280,drop:0},{t:'f',w:220},{t:'g',w:280,drop:0},{t:'f',w:380}],
+    objs:[{t:'bridge',x:540,w:300,n:7},{t:'bridge',x:1040,w:300,n:7}] },
 
   { name:"Chain Gang", hint:"Three hammers, all out of step. Read the rhythm.",
     spec:[{t:'f',w:420},{t:'f',w:300},{t:'f',w:300},{t:'s',w:220,r:60},{t:'f',w:380}],
@@ -293,11 +293,11 @@ const LEVELS = [
 
   { name:"The Long Haul", hint:"Crate, tiles, then a swinging hammer over a rope bridge.",
     spec:[{t:'f',w:360},{t:'p',w:158,d:118},{t:'f',w:240},{t:'g',w:240,drop:0},{t:'f',w:200},{t:'s',w:240,r:80},{t:'f',w:220},{t:'g',w:250,drop:0},{t:'f',w:260},{t:'s',w:320,r:95},{t:'g',w:230,drop:185},{t:'f',w:250},{t:'s',w:260,r:78},{t:'g',w:240,drop:200},{t:'s',w:300,r:-80},{t:'f',w:420}],
-    objs:[{t:'block',x:200},{t:'crumble',x:790,y:0,n:3,tw:88},{t:'bridge',x:1783,w:290,n:9},{t:'hammer',x:1783,len:118,push:7},{t:'rock',x:1980,r:15}] },
+    objs:[{t:'block',x:200},{t:'crumble',x:790,y:0,n:3,tw:88},{t:'bridge',x:1783,w:290,n:7},{t:'hammer',x:1783,len:118,push:7},{t:'rock',x:1980,r:15}] },
 
   { name:"Rope Walk", hint:"Three bridges. Steady throttle beats a mad dash.",
     spec:[{t:'f',w:380},{t:'g',w:260,drop:0},{t:'f',w:180},{t:'g',w:260,drop:0},{t:'f',w:180},{t:'g',w:260,drop:0},{t:'f',w:380}],
-    objs:[{t:'bridge',x:510,w:280,n:8},{t:'bridge',x:950,w:280,n:8},{t:'bridge',x:1390,w:280,n:8}] },
+    objs:[{t:'bridge',x:510,w:290,n:7},{t:'bridge',x:950,w:290,n:7},{t:'bridge',x:1390,w:290,n:7}] },
 
   { name:"Pivot Practice", hint:"A plank, a hole and a crate. In that order.",
     spec:[{t:'f',w:420},{t:'f',w:320},{t:'f',w:240},{t:'p',w:158,d:118},{t:'f',w:400}],
@@ -324,7 +324,7 @@ const LEVELS = [
           {t:'g',w:280,drop:0},{t:'f',w:200},{t:'s',w:300,r:90},{t:'g',w:230,drop:185},
           {t:'f',w:250},{t:'s',w:260,r:78},{t:'g',w:240,drop:200},{t:'s',w:300,r:-80},{t:'f',w:420}],
     objs:[{t:'block',x:210},{t:'seesaw',x:940,y:0,len:320},
-          {t:'bridge',x:1438,w:320,n:9},{t:'hammer',x:1438,len:124,push:8},
+          {t:'bridge',x:1438,w:320,n:8},{t:'hammer',x:1438,len:124,push:8},
           {t:'boulder',x:2320,r:24},{t:'barrel',x:2500},{t:'barrel',x:2536}] }
 ];
 
@@ -659,30 +659,42 @@ function buildLevel(idx){
       lifts.push(p); Composite.add(world, p);
 
     } else if(o.t === 'bridge'){
-      /* A chain of planks anchored at both ends. It sags under the jeep and
-         swings — unlike a narrow beam, which in 2D is just flat road. */
-      const n = o.n || 9, span = o.w || 300, segW = span / n;
+      /* A chain of planks alone just folds into a V under a jeep ten times
+         its weight, so each plank also gets a slack suspension cable to both
+         anchor towers. The deck flexes and swings but can't collapse. */
+      const n = o.n || 7, span = o.w || 300, segW = span / n;
       const by = sy - 4, GRP = Body.nextGroup(true);
+      const aL = { x:o.x - span/2, y:by }, aR = { x:o.x + span/2, y:by };
       let prev = null;
+      const deck = [];
       for(let i = 0; i < n; i++){
         const px = o.x - span/2 + segW * (i + .5);
-        const seg = Bodies.rectangle(px, by, segW * .92, 9, {
-          density:.0009, friction:.95, frictionAir:.02,
+        const seg = Bodies.rectangle(px, by, segW * .96, 12, {
+          density:.006, friction:.95, frictionStatic:1.2, frictionAir:.03,
           collisionFilter:{ group:GRP }, label:"bridge" });
-        seg.drawW = segW * .92;
+        seg.drawW = segW * .96;
         Composite.add(world, seg);
-        bridges.push(seg);
+        bridges.push(seg); deck.push(seg);
+
+        /* plank-to-plank, rigid */
         Composite.add(world, Constraint.create(prev
           ? { bodyA:prev, pointA:{x:segW/2,y:0}, bodyB:seg, pointB:{x:-segW/2,y:0},
-              length:0, stiffness:.85, damping:.1 }
-          : { pointA:{x:o.x - span/2, y:by}, bodyB:seg, pointB:{x:-segW/2,y:0},
-              length:0, stiffness:1 }));
+              length:0, stiffness:1, damping:.2 }
+          : { pointA:aL, bodyB:seg, pointB:{x:-segW/2,y:0},
+              length:0, stiffness:1, damping:.2 }));
+
+        /* suspension cables to each tower, at their natural length */
+        for(const a of [aL, aR]){
+          Composite.add(world, Constraint.create({
+            pointA:a, bodyB:seg, pointB:{x:0,y:0},
+            length:Math.abs(px - a.x), stiffness:.28, damping:.3 }));
+        }
         prev = seg;
       }
       Composite.add(world, Constraint.create({
-        pointA:{ x:o.x + span/2, y:by }, bodyB:prev, pointB:{ x:segW/2, y:0 },
-        length:0, stiffness:1 }));
-      bridgeAnchors.push({ x:o.x, y:by, w:span });
+        pointA:aR, bodyB:prev, pointB:{ x:segW/2, y:0 },
+        length:0, stiffness:1, damping:.2 }));
+      bridgeAnchors.push({ x:o.x, y:by, w:span, deck:deck });
 
     } else if(o.t === 'beam'){
       /* Narrow beam: thin, and no margin either side */
@@ -1311,6 +1323,21 @@ function drawBridges(ph){
       inkStroke(ctx, [{x:px,y:a.y-40},{x:px - sgn*16,y:a.y+14}], 801, { amp:1.2, w:1.6 });
     }
   }
+  /* suspension cables from the towers */
+  for(const a of bridgeAnchors){
+    if(!a.deck) continue;
+    ctx.globalAlpha = .5;
+    for(const sgn of [-1, 1]){
+      const px = a.x + sgn * a.w/2;
+      for(let i = 0; i < a.deck.length; i += 2){
+        const d = a.deck[i];
+        inkStroke(ctx, [{x:px,y:a.y-38},{x:d.position.x,y:d.position.y-6}],
+          810 + i, { amp:.9, w:1.1, col:"#8a7a60" });
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+
   /* rope along the tops of the planks */
   if(bridges.length > 1){
     const rope = bridges.map(b => ({ x:b.position.x, y:b.position.y - 7 }));
