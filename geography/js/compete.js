@@ -2,10 +2,10 @@
 // Easy = 3-way multiple choice; Hard = fuzzy text entry. Question types are mixed
 // by default, or locked to one via the setup toggle.
 
-import { pool, TIERS, flagUrl } from "./data.js";
-import { createMap } from "./map.js";
-import { fuzzyMatch } from "./fuzzy.js";
-import * as store from "./store.js";
+import { pool, TIERS, flagUrl } from "./data.js?v=1";
+import { createMap } from "./map.js?v=1";
+import { fuzzyMatch } from "./fuzzy.js?v=1";
+import * as store from "./store.js?v=1";
 
 // prompt: what we show. target: what they guess (always text-answerable).
 const TYPES = [

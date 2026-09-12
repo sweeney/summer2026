@@ -12,10 +12,10 @@
 // and whenever the answer is missed, or the country is a speck, the map zooms
 // in on the reveal so you actually see where it was.
 
-import { pool, TIERS } from "./data.js";
-import { createMap } from "./map.js";
-import { distanceKm } from "./geo.js";
-import * as store from "./store.js";
+import { pool, TIERS } from "./data.js?v=1";
+import { createMap } from "./map.js?v=1";
+import { distanceKm } from "./geo.js?v=1";
+import * as store from "./store.js?v=1";
 
 const SCORINGS = [
   { key: "hotcold", label: "Hot & cold", tries: 3, max: 3,

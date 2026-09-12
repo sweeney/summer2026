@@ -1,8 +1,8 @@
 // Learn mode: browse countries, hide chosen attributes, reveal on click/keypress.
 
-import { pool, TIERS, flagUrl } from "./data.js";
-import { createMap } from "./map.js";
-import * as store from "./store.js";
+import { pool, TIERS, flagUrl } from "./data.js?v=1";
+import { createMap } from "./map.js?v=1";
+import * as store from "./store.js?v=1";
 
 const FIELDS = ["flag", "name", "capital"]; // hideable attributes (map stays visible)
 const REVEAL_LABEL = { flag: "Flag", name: "Country", capital: "Capital" }; // shown on the reveal button
