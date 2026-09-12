@@ -1,11 +1,11 @@
 // Entry point: loads data, renders the mode switcher, mounts the active mode.
 
-import { loadData } from "./data.js?v=2";
-import { initLearn } from "./learn.js?v=2";
-import { initCompete } from "./compete.js?v=2";
-import { initLocate } from "./locate.js?v=2";
-import { initMapView } from "./mapview.js?v=2";
-import * as store from "./store.js?v=2";
+import { loadData } from "./data.js?v=3";
+import { initLearn } from "./learn.js?v=3";
+import { initCompete } from "./compete.js?v=3";
+import { initLocate } from "./locate.js?v=3";
+import { initMapView } from "./mapview.js?v=3";
+import * as store from "./store.js?v=3";
 
 const MODES = [
   { id: "learn", label: "Learn", init: initLearn },

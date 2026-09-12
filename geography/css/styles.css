@@ -29,6 +29,8 @@
   --ctx-faint: #e4e4e4; /* neighbours behind a Locate silhouette */
   --found: #62ab63;      /* a country filled in during Locate's Fill mode */
   --found-line: #3d7a41;
+  --missed: #dd9384;     /* and one that got away */
+  --missed-line: #b0563f;
   --active: var(--teal);
   --active-line: var(--teal-dark);
 
@@ -318,10 +320,13 @@ body {
 .map.silhouette .country.active { fill: var(--active); stroke: var(--active); }
 /* Filled-in countries keep an outline of their own: the continent gets its
    borders back one country at a time, instead of merging into a green blob. */
-.map.silhouette .country.found {
-  fill: var(--found); stroke: var(--found-line); stroke-width: 0.9;
+.map.silhouette .country.found,
+.map.silhouette .country.missed {
+  stroke-width: 0.9;
   transition: fill 0.25s ease-out;
 }
+.map.silhouette .country.found { fill: var(--found); stroke: var(--found-line); }
+.map.silhouette .country.missed { fill: var(--missed); stroke: var(--missed-line); }
 /* Locate draws its own ping so it can stay the same size on screen as the
    reveal zooms in; the shared one would balloon. */
 .map.silhouette .marker, .map.silhouette .marker-dot { display: none; }
@@ -340,6 +345,7 @@ body {
 /* A find in Fill mode pings once and goes; it must follow .locate-ping to
    override the colour and the endless pulse. */
 .found-ping { stroke: var(--found-line); animation: pulse 0.7s ease-out 1 forwards; }
+.missed-ping { stroke: var(--missed-line); animation: pulse 0.7s ease-out 1 forwards; }
 .locate-name {
   fill: var(--ink); stroke: var(--white); stroke-width: 0.28em;
   paint-order: stroke; stroke-linejoin: round;
@@ -357,6 +363,10 @@ body {
 .locate .map { max-height: 62vh; max-height: 62dvh; }
 .locate-feedback { display: flex; flex-direction: column; gap: 12px; align-items: flex-start; min-height: 44px; }
 .locate-feedback .results-actions { margin-top: 0; }
+/* Lives sit between the counter and the clock; spent ones stay on as ghosts
+   so the row doesn't reflow every time one goes. */
+.locate-lives { color: var(--missed-line); font-size: 0.95rem; letter-spacing: 3px; }
+.locate-lives .lost { color: var(--rule); }
 .locate-points { font-family: var(--font-mono); color: var(--teal-dark); }
 .setup-note { margin: -12px 0 0; color: var(--muted); font-size: 0.9rem; }
 
