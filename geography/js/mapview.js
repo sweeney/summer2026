@@ -1,8 +1,8 @@
 // Map mode: a full-page, printable map of one region, with country names
 // optionally overlaid. Everything outside the sheet is hidden when printing.
 
-import { createMap } from "./map.js";
-import * as store from "./store.js";
+import { createMap } from "./map.js?v=2";
+import * as store from "./store.js?v=2";
 
 export function initMapView(container, data) {
   const state = {
