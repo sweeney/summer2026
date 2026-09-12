@@ -26,6 +26,7 @@
   --land: #fbfbfb;
   --land-line: #c4c4c4;
   --ctx: #e3e3e3;
+  --ctx-faint: #e4e4e4; /* neighbours behind a Locate silhouette */
   --active: var(--teal);
   --active-line: var(--teal-dark);
 
@@ -301,6 +302,52 @@ body {
 .feedback.bad { color: var(--body); }
 .next-btn { align-self: flex-start; }
 
+/* ---- locate: tap the borderless continent ----
+   The member countries keep their own paths (that's what makes the tap
+   testable) but share a fill and stroke, so the internal borders vanish and
+   the group composites into one landmass. The shadow then falls on the
+   coastline only. */
+.map.silhouette { cursor: crosshair; user-select: none; touch-action: manipulation; }
+.map.silhouette .ctx { fill: var(--ctx-faint); stroke: none; }
+.map.silhouette .country {
+  fill: var(--land); stroke: var(--land); stroke-width: 1; transition: none;
+}
+.map.silhouette .land-layer { filter: drop-shadow(0 2px 2.5px rgba(0, 0, 0, 0.22)); }
+.map.silhouette .country.active { fill: var(--active); stroke: var(--active); }
+/* Locate draws its own ping so it can stay the same size on screen as the
+   reveal zooms in; the shared one would balloon. */
+.map.silhouette .marker, .map.silhouette .marker-dot { display: none; }
+
+.locate-layer { pointer-events: none; }
+.locate-pin { fill: none; stroke: var(--muted); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+.locate-pin.final { stroke: var(--ink); stroke-width: 2; }
+.locate-pin-dot { fill: var(--ink); }
+.locate-trail { stroke: var(--muted); stroke-width: 1.2; stroke-dasharray: 5 5; vector-effect: non-scaling-stroke; }
+.locate-ping {
+  fill: none; stroke: var(--active-line); stroke-width: 2.5;
+  vector-effect: non-scaling-stroke;
+  transform-box: fill-box; transform-origin: center;
+  animation: pulse 1.4s ease-out infinite;
+}
+.locate-name {
+  fill: var(--ink); stroke: var(--white); stroke-width: 0.28em;
+  paint-order: stroke; stroke-linejoin: round;
+  font-family: var(--font-serif); text-anchor: middle;
+  transform: translateY(-1.4em);
+}
+
+.locate { max-width: 1040px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+.locate-ask { display: flex; flex-direction: column; gap: 4px; }
+.locate-sub { font: 0.8rem/1.4 var(--font-mono); color: var(--muted); }
+.locate-map { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+.locate-caption { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.locate-continent { font: normal 1.25rem/1 var(--font-serif); color: var(--ink); }
+.locate-hint { font: 0.7rem/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); }
+.locate .map { max-height: 62vh; max-height: 62dvh; }
+.locate-feedback { display: flex; flex-direction: column; gap: 12px; align-items: flex-start; min-height: 44px; }
+.locate-points { font-family: var(--font-mono); color: var(--teal-dark); }
+.setup-note { margin: -12px 0 0; color: var(--muted); font-size: 0.9rem; }
+
 /* ---- compete: results ---- */
 .results { max-width: 640px; margin: 0 auto; text-align: center; display: flex; flex-direction: column; gap: 8px; }
 .results-title { font: normal 3rem/1 var(--font-serif); color: var(--ink); margin: 8px 0 0; }
@@ -351,6 +398,7 @@ body {
   /* keep the map from eating the whole screen when stacked */
   .map { max-height: 44vh; max-height: 44dvh; }
   .quiz-prompt .map { max-height: 44vh; max-height: 44dvh; }
+  .locate .map { max-height: 52vh; max-height: 52dvh; }
   .name { font-size: 1.6rem; }
   .attr-value { font-size: 1.3rem; }
   .recap-row { grid-template-columns: 22px 1fr; }
