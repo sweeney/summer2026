@@ -2,16 +2,19 @@
 // (from the data pipeline), so shapes look natural rather than stretched.
 // setRegion(key) rebuilds the SVG for that region ("all" = the world view);
 // highlight(cca3) spotlights one country with a marker for tiny ones;
-// setNames(bool) overlays country names (used by the printable Map mode).
+// setNames(bool) overlays country names (used by the printable Map mode);
+// `silhouette` merges the member countries into one borderless landmass
+// (used by Locate) — same fill and stroke, so the internal seams disappear
+// and only the coastline reads.
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const el = (name) => document.createElementNS(SVG_NS, name);
 
 // `sea` paints the water inside the SVG rather than via CSS, so it survives
 // printing (browsers drop CSS backgrounds unless the user opts in).
-export function createMap(data, { onPick = null, sea = false, names = false } = {}) {
+export function createMap(data, { onPick = null, sea = false, names = false, silhouette = false } = {}) {
   const svg = el("svg");
-  svg.setAttribute("class", "map");
+  svg.setAttribute("class", "map" + (silhouette ? " silhouette" : ""));
   svg.setAttribute("role", "img");
   svg.setAttribute("aria-label", "Map");
 
@@ -19,6 +22,14 @@ export function createMap(data, { onPick = null, sea = false, names = false } = 
 
   const seaRect = sea ? el("rect") : null;
   if (seaRect) seaRect.setAttribute("class", "sea-rect");
+
+  // Context and member countries live in their own groups: silhouette mode
+  // needs the landmass to composite as a single shape before the coastline
+  // shadow is applied to it.
+  const ctxLayer = el("g");
+  ctxLayer.setAttribute("class", "ctx-layer");
+  const landLayer = el("g");
+  landLayer.setAttribute("class", "land-layer");
 
   const labelLayer = el("g");
   labelLayer.setAttribute("class", "labels");
@@ -33,6 +44,7 @@ export function createMap(data, { onPick = null, sea = false, names = false } = 
   let currentRegion = null;
   let showNames = names;
   let unitWidth = 1000; // viewBox width — label sizes scale off it
+  let baseBox = null; // the region's own viewBox, before any zoom
 
   function drawCountry(cca3, d, cls) {
     const p = el("path");
@@ -46,16 +58,19 @@ export function createMap(data, { onPick = null, sea = false, names = false } = 
       }
       members.set(cca3, p);
     }
-    svg.appendChild(p);
+    (cls === "country" ? landLayer : ctxLayer).appendChild(p);
   }
 
   function setRegion(key) {
     if (key === currentRegion) return;
     currentRegion = key;
     svg.replaceChildren();
+    ctxLayer.replaceChildren();
+    landLayer.replaceChildren();
     members = new Map();
     labels = new Map();
     if (seaRect) svg.appendChild(seaRect);
+    svg.append(ctxLayer, landLayer);
 
     let viewBox;
     if (key === "all") {
@@ -79,8 +94,9 @@ export function createMap(data, { onPick = null, sea = false, names = false } = 
     svg.appendChild(labelLayer);
     svg.appendChild(marker);
     svg.appendChild(markerDot);
+    baseBox = viewBox.split(/[\s,]+/).map(Number);
     svg.setAttribute("viewBox", viewBox);
-    const [vx, vy, w, h] = viewBox.split(/[\s,]+/).map(Number);
+    const [vx, vy, w, h] = baseBox;
     unitWidth = w || 1000;
     if (seaRect) {
       seaRect.setAttribute("x", vx);
@@ -186,7 +202,18 @@ export function createMap(data, { onPick = null, sea = false, names = false } = 
     }
   }
 
-  return { svg, setRegion, highlight, setNames };
+  // Locate zooms in on the answer, so it needs the untouched viewBox to come
+  // back to, plus the on-map geometry of a single country.
+  const baseView = () => (baseBox ? baseBox.slice() : null);
+  const setView = (box) => svg.setAttribute("viewBox", box.join(" "));
+  const bboxOf = (cca3) => {
+    const p = members.get(cca3);
+    if (!p) return null;
+    const b = p.getBBox();
+    return [b.x, b.y, b.width, b.height];
+  };
+
+  return { svg, setRegion, highlight, setNames, baseView, setView, bboxOf };
 }
 
 const overlaps = (a, b) =>
