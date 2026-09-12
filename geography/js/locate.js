@@ -6,22 +6,28 @@
 //                   and a direction; 3 points for a first-try find, then 2, 1.
 //   Distance points one tap, 100 points for landing on the country and fewer
 //                   the further out you are.
+//   Fill the map    every country in the continent, one tap each and no second
+//                   chances. Right ones stay coloured in — and gain their
+//                   borders — so the continent assembles itself as you go. A
+//                   single miss ends the run; the clock is the score.
 //
 // Tiny countries (Andorra, Malta, Singapore) can't be hit reliably at continent
 // zoom, so a tap within a fingertip's radius of the country's centre counts —
 // and whenever the answer is missed, or the country is a speck, the map zooms
 // in on the reveal so you actually see where it was.
 
-import { pool, TIERS } from "./data.js?v=1";
-import { createMap } from "./map.js?v=1";
-import { distanceKm } from "./geo.js?v=1";
-import * as store from "./store.js?v=1";
+import { pool, TIERS } from "./data.js?v=2";
+import { createMap } from "./map.js?v=2";
+import { distanceKm } from "./geo.js?v=2";
+import * as store from "./store.js?v=2";
 
 const SCORINGS = [
   { key: "hotcold", label: "Hot & cold", tries: 3, max: 3,
     blurb: "Three tries. Each miss tells you how warm you are and which way to go." },
   { key: "distance", label: "Distance points", tries: 1, max: 100,
     blurb: "One tap. The closer you land, the more of the 100 points you keep." },
+  { key: "fill", label: "Fill the map", tries: 1, max: 1, all: true, timed: true,
+    blurb: "Every country in the continent, one tap each. Right ones stay coloured in — one miss and you start again." },
 ];
 
 const COUNTS = [5, 10, 15, 20];
@@ -56,14 +62,18 @@ export function initLocate(container, data) {
     qIndex: 0,
     score: 0,
     startTime: 0,
+    over: null, // Fill mode ends on the map, not a results screen: "dead" | "complete"
+    lastFound: null,
   };
 
   let ui = null; // the playing screen's live nodes, so the map isn't rebuilt
   let view = null; // viewBox currently on screen, [x, y, w, h]
   let anim = 0; // in-flight zoom animation frame
   let scaled = []; // overlay shapes whose size must track the zoom
+  let clock = 0; // Fill mode's running timer
 
   const scoringDef = () => SCORINGS.find((s) => s.key === state.scoring) || SCORINGS[0];
+  const isFill = () => scoringDef().key === "fill";
   const regionMeta = () =>
     data.meta.regions.find((r) => r.key === state.region) || data.meta.regions[0];
 
@@ -76,7 +86,10 @@ export function initLocate(container, data) {
   // ---- round setup --------------------------------------------------------
   function buildRound() {
     const available = pool(data, state.region, state.maxTier).filter(pointFor);
-    const picks = sample(available, Math.min(state.count, available.length));
+    // Fill mode asks for the whole continent; the others take a sample.
+    const picks = scoringDef().all
+      ? shuffle(available)
+      : sample(available, Math.min(state.count, available.length));
     state.questions = picks.map((c) => ({
       country: c,
       taps: [], // { p, hit, dist, km }
@@ -85,8 +98,11 @@ export function initLocate(container, data) {
     }));
     state.qIndex = 0;
     state.score = 0;
+    state.over = null;
+    state.lastFound = null;
     state.startTime = Date.now();
     state.phase = "playing";
+    if (scoringDef().timed) startClock();
   }
 
   const current = () => state.questions[state.qIndex];
@@ -112,6 +128,12 @@ export function initLocate(container, data) {
 
     q.taps.push({ p, hit, dist, km: distanceKm(data, state.region, p, target), hitCode });
 
+    if (scoring.key === "fill") {
+      if (hit) fillHit(q, target);
+      else fillMiss(q);
+      return;
+    }
+
     if (hit) {
       q.points = scoring.key === "hotcold" ? Math.max(1, scoring.max - (q.taps.length - 1)) : scoring.max;
       finishQuestion(q);
@@ -122,6 +144,43 @@ export function initLocate(container, data) {
       drawPin(p, false);
       updatePlay();
     }
+  }
+
+  // A find colours the country in for good and moves straight on — with a
+  // continent to get through, a Next button between every one would be all
+  // anybody remembered about this mode.
+  function fillHit(q, target) {
+    q.done = true;
+    q.points = 1;
+    state.score++;
+    state.lastFound = q.country.name;
+    map.setFound(q.country.cca3, true);
+    flashAt(target); // specks turn green invisibly; the ping says where
+    if (state.qIndex < state.questions.length - 1) {
+      state.qIndex++;
+      updatePlay();
+    } else {
+      endFill("complete");
+    }
+  }
+
+  function fillMiss(q) {
+    q.done = true;
+    // Stay at continent scale unless the country is too small to see there —
+    // the filled-in map is the thing worth looking at once the run is over.
+    revealAnswer(q, false);
+    endFill("dead");
+  }
+
+  function endFill(kind) {
+    state.over = kind;
+    stopClock();
+    state.lastElapsed = Date.now() - state.startTime;
+    recordFill();
+    // A completed continent earns its names back. Only at the All level, where
+    // the countries asked for are every country drawn.
+    if (kind === "complete" && state.maxTier >= 3) map.setNames(true);
+    updatePlay();
   }
 
   function distancePoints(dist) {
@@ -136,6 +195,17 @@ export function initLocate(container, data) {
     updatePlay();
   }
 
+  function startClock() {
+    stopClock();
+    clock = setInterval(() => {
+      if (ui && !state.over) ui.score.textContent = "⏱ " + fmtTime(Date.now() - state.startTime);
+    }, 250);
+  }
+  function stopClock() {
+    clearInterval(clock);
+    clock = 0;
+  }
+
   function next() {
     if (state.qIndex < state.questions.length - 1) {
       state.qIndex++;
@@ -148,7 +218,31 @@ export function initLocate(container, data) {
     }
   }
 
-  const bestKey = () => `${state.region}-${state.maxTier}-${state.scoring}-${state.count}`;
+  const bestKey = () =>
+    `${state.region}-${state.maxTier}-${state.scoring}-${scoringDef().all ? "all" : state.count}`;
+
+  // Fill mode's record is the time to finish a continent. A completed run
+  // always beats an unfinished one however far the unfinished one got.
+  function recordFill() {
+    const best = store.get("locateBest", {}) || {};
+    const prev = best[bestKey()];
+    const run = {
+      filled: state.score,
+      total: state.questions.length,
+      timeMs: state.lastElapsed,
+      complete: state.over === "complete",
+    };
+    // A run that ended on its first tap isn't a record of anything.
+    const beat =
+      (run.complete || run.filled > 0) &&
+      (!prev ||
+        (run.complete && !prev.complete) ||
+        (run.complete === prev.complete &&
+          (run.complete ? run.timeMs < prev.timeMs : run.filled > prev.filled)));
+    if (beat) best[bestKey()] = run;
+    store.set("locateBest", best);
+    state.wasBest = beat;
+  }
 
   function finish() {
     state.phase = "done";
@@ -202,7 +296,7 @@ export function initLocate(container, data) {
     applyScale();
   }
 
-  function revealAnswer(q) {
+  function revealAnswer(q, zoomOnMiss = true) {
     const target = pointFor(q.country);
     const last = q.taps[q.taps.length - 1];
     map.highlight(q.country.cca3);
@@ -231,16 +325,33 @@ export function initLocate(container, data) {
     label.textContent = q.country.name;
     overlay.append(label);
 
-    zoomForReveal(q, target, last);
+    zoomForReveal(q, target, last, zoomOnMiss);
+  }
+
+  // A find in Fill mode gets a ping that fades: at continent scale a green
+  // speck is no confirmation at all.
+  function flashAt(p) {
+    const ping = svgEl("circle");
+    ping.setAttribute("class", "locate-ping found-ping");
+    ping.setAttribute("cx", p[0]);
+    ping.setAttribute("cy", p[1]);
+    overlay.append(ping);
+    const entry = [ping, 0.014];
+    scaled.push(entry);
+    applyScale();
+    setTimeout(() => {
+      ping.remove();
+      scaled = scaled.filter((e) => e !== entry);
+    }, 750);
   }
 
   // Zoom in when the answer was missed, or when the country is too small to
   // make out at continent scale — otherwise the reveal teaches nothing.
-  function zoomForReveal(q, target, last) {
+  function zoomForReveal(q, target, last, zoomOnMiss = true) {
     const [, , bw, bh] = baseView();
     const box = map.bboxOf(q.country.cca3);
     const speck = box ? box[2] < bw * 0.035 && box[3] < bh * 0.035 : true;
-    if (last.hit && !speck) return;
+    if ((last.hit || !zoomOnMiss) && !speck) return;
 
     let [x0, y0, x1, y1] = box
       ? [box[0], box[1], box[0] + box[2], box[1] + box[3]]
@@ -346,25 +457,30 @@ export function initLocate(container, data) {
     );
     wrap.append(el("p", "setup-note", scoringDef().blurb));
 
-    wrap.append(
-      segRow("Countries", COUNTS.map((n) => ({
-        label: String(n),
-        on: state.count === n,
-        onClick: () => { state.count = n; store.set("locateCount", n); render(); },
-      })))
-    );
+    // Fill mode always asks for the lot, so there's nothing to choose here.
+    if (!scoringDef().all) {
+      wrap.append(
+        segRow("Countries", COUNTS.map((n) => ({
+          label: String(n),
+          on: state.count === n,
+          onClick: () => { state.count = n; store.set("locateCount", n); render(); },
+        })))
+      );
+    }
 
     const available = pool(data, state.region, state.maxTier).filter(pointFor).length;
     const start = el("button", "start-btn", "▶ Start");
     start.disabled = available === 0;
     start.onclick = () => { buildRound(); render(); };
     wrap.append(start);
-    if (available < state.count) {
+    if (scoringDef().all) {
+      wrap.append(el("p", "best-note", `${regionMeta().label} at this level: ${available} countries to fill.`));
+    } else if (available < state.count) {
       wrap.append(el("p", "best-note", `${regionMeta().label} at this level has ${available} countries — you'll be asked for all of them.`));
     }
 
     const best = (store.get("locateBest", {}) || {})[bestKey()];
-    if (best) wrap.append(el("p", "best-note", `Best for this setup: ${best.score}/${best.total} in ${fmtTime(best.timeMs)}`));
+    if (best) wrap.append(el("p", "best-note", bestNote(best)));
     return wrap;
   }
 
@@ -398,6 +514,7 @@ export function initLocate(container, data) {
     map.setRegion(state.region);
     map.setNames(false);
     map.highlight(null);
+    map.clearFound();
     map.svg.append(overlay); // setRegion may have rebuilt the SVG's children
     clearOverlay();
     view = null;
@@ -409,6 +526,7 @@ export function initLocate(container, data) {
 
   function updatePlay() {
     if (!ui) return;
+    if (isFill()) return updateFill();
     const q = current();
     const scoring = scoringDef();
     ui.progress.textContent = `Country ${state.qIndex + 1} / ${state.questions.length}`;
@@ -433,6 +551,53 @@ export function initLocate(container, data) {
       btn.onclick = next;
       ui.feedback.append(btn);
     }
+  }
+
+  // Fill mode's head is a counter and a clock, and the run ends on the map
+  // rather than a results screen — the filled-in continent is the result.
+  function updateFill() {
+    const q = current();
+    const total = state.questions.length;
+    ui.progress.textContent = `${state.score} / ${total} filled`;
+    // Draw the clock here too, so it reads 0:00 from the off rather than
+    // waiting for the interval's first tick.
+    ui.score.textContent =
+      "⏱ " + fmtTime(state.over ? state.lastElapsed : Date.now() - state.startTime);
+    ui.askText.innerHTML = state.over ? "" : `Find <strong>${q.country.name}</strong>`;
+    ui.askSub.textContent = state.over ? "" : "One tap each — a miss ends the run";
+
+    ui.feedback.replaceChildren();
+    if (!state.over) {
+      if (state.lastFound) ui.feedback.append(el("div", "feedback ok", `✅ ${state.lastFound}`));
+      return;
+    }
+
+    const won = state.over === "complete";
+    ui.feedback.append(
+      el("div", "feedback " + (won ? "ok" : "bad"),
+        won
+          ? `🏆 <strong>${regionMeta().label}</strong> filled — all ${total} in ${fmtTime(state.lastElapsed)}.`
+          : `❌ That was <strong>${q.country.name}</strong> — ${state.score} of ${total} filled in ${fmtTime(state.lastElapsed)}.`)
+    );
+    if (state.wasBest) {
+      ui.feedback.append(el("div", "results-best", won ? "New best time!" : "Furthest yet."));
+    }
+    const again = el("button", "nav-btn primary", won ? "↺ Play again" : "↺ Try again");
+    again.onclick = () => { buildRound(); render(); };
+    const back = el("button", "nav-btn", "Change setup");
+    back.onclick = () => { stopClock(); state.phase = "setup"; render(); };
+    const actions = el("div", "results-actions");
+    actions.append(again, back);
+    ui.feedback.append(actions);
+  }
+
+  function bestNote(best) {
+    if (best.complete != null) {
+      return best.complete
+        ? `Best: the whole of ${regionMeta().label} in ${fmtTime(best.timeMs)}`
+        : `Furthest so far: ${best.filled} of ${best.total} filled`;
+    }
+    return `Best for this setup: ${best.score}/${best.total} in ${fmtTime(best.timeMs)}`;
   }
 
   function hintNode(q) {
@@ -533,6 +698,10 @@ export function initLocate(container, data) {
       if (e.key === "Enter") { buildRound(); render(); }
       return;
     }
+    if (state.over) {
+      if (e.key === "Enter") { buildRound(); render(); }
+      return;
+    }
     if (current()?.done && (e.key === "Enter" || e.key === " ")) {
       if (e.target && e.target.tagName === "BUTTON") return;
       e.preventDefault();
@@ -546,6 +715,7 @@ export function initLocate(container, data) {
 
   return {
     destroy() {
+      stopClock();
       cancelAnimationFrame(anim);
       map.svg.removeEventListener("click", onTap);
       document.removeEventListener("keydown", onKey);

@@ -27,6 +27,8 @@
   --land-line: #c4c4c4;
   --ctx: #e3e3e3;
   --ctx-faint: #e4e4e4; /* neighbours behind a Locate silhouette */
+  --found: #62ab63;      /* a country filled in during Locate's Fill mode */
+  --found-line: #3d7a41;
   --active: var(--teal);
   --active-line: var(--teal-dark);
 
@@ -314,6 +316,12 @@ body {
 }
 .map.silhouette .land-layer { filter: drop-shadow(0 2px 2.5px rgba(0, 0, 0, 0.22)); }
 .map.silhouette .country.active { fill: var(--active); stroke: var(--active); }
+/* Filled-in countries keep an outline of their own: the continent gets its
+   borders back one country at a time, instead of merging into a green blob. */
+.map.silhouette .country.found {
+  fill: var(--found); stroke: var(--found-line); stroke-width: 0.9;
+  transition: fill 0.25s ease-out;
+}
 /* Locate draws its own ping so it can stay the same size on screen as the
    reveal zooms in; the shared one would balloon. */
 .map.silhouette .marker, .map.silhouette .marker-dot { display: none; }
@@ -329,6 +337,9 @@ body {
   transform-box: fill-box; transform-origin: center;
   animation: pulse 1.4s ease-out infinite;
 }
+/* A find in Fill mode pings once and goes; it must follow .locate-ping to
+   override the colour and the endless pulse. */
+.found-ping { stroke: var(--found-line); animation: pulse 0.7s ease-out 1 forwards; }
 .locate-name {
   fill: var(--ink); stroke: var(--white); stroke-width: 0.28em;
   paint-order: stroke; stroke-linejoin: round;
@@ -345,6 +356,7 @@ body {
 .locate-hint { font: 0.7rem/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); }
 .locate .map { max-height: 62vh; max-height: 62dvh; }
 .locate-feedback { display: flex; flex-direction: column; gap: 12px; align-items: flex-start; min-height: 44px; }
+.locate-feedback .results-actions { margin-top: 0; }
 .locate-points { font-family: var(--font-mono); color: var(--teal-dark); }
 .setup-note { margin: -12px 0 0; color: var(--muted); font-size: 0.9rem; }
 

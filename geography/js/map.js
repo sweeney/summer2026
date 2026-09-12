@@ -202,6 +202,11 @@ export function createMap(data, { onPick = null, sea = false, names = false, sil
     }
   }
 
+  // Locate's Fill mode colours in every country as it's found, so it marks
+  // them one at a time and clears the lot on a restart.
+  const setFound = (cca3, on) => { members.get(cca3)?.classList.toggle("found", !!on); };
+  const clearFound = () => { for (const p of members.values()) p.classList.remove("found"); };
+
   // Locate zooms in on the answer, so it needs the untouched viewBox to come
   // back to, plus the on-map geometry of a single country.
   const baseView = () => (baseBox ? baseBox.slice() : null);
@@ -213,7 +218,7 @@ export function createMap(data, { onPick = null, sea = false, names = false, sil
     return [b.x, b.y, b.width, b.height];
   };
 
-  return { svg, setRegion, highlight, setNames, baseView, setView, bboxOf };
+  return { svg, setRegion, highlight, setNames, setFound, clearFound, baseView, setView, bboxOf };
 }
 
 const overlaps = (a, b) =>
