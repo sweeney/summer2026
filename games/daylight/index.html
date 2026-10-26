@@ -1,0 +1,816 @@
+<title>Daylight Ledger</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one column ledger. Place controls, today's reading, a year scrubber, then three stacked year charts sharing one time axis. */
+:root{
+  --bg:#f1f3f8; --surface:#ffffff; --fg:#1a2133; --muted:#5b6377; --line:#dbe0ea; --line-strong:#b9c1d2;
+  --day:#e09a2b; --day-soft:#f7dca8; --night-soft:#e2e6f1;
+  --gain:#e09a2b; --gain-ink:#9a5f06; --loss:#4b60a8; --loss-ink:#3a4f96;
+  --compare:#b2447a; --accent:#2c3a66; --accent-fg:#ffffff;
+  --font-display:"Instrument Serif","Iowan Old Style",Georgia,serif;
+  --font-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-data:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0c1120; --surface:#141b2d; --fg:#e7eaf3; --muted:#9aa3ba; --line:#253049; --line-strong:#3a4663;
+  --day:#f2b54d; --day-soft:#5c4721; --night-soft:#1a2238;
+  --gain:#f2b54d; --gain-ink:#f5c46c; --loss:#7f95e6; --loss-ink:#a3b4f2;
+  --compare:#e77fb0; --accent:#f2b54d; --accent-fg:#1a1406; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0c1120; --surface:#141b2d; --fg:#e7eaf3; --muted:#9aa3ba; --line:#253049; --line-strong:#3a4663;
+  --day:#f2b54d; --day-soft:#5c4721; --night-soft:#1a2238;
+  --gain:#f2b54d; --gain-ink:#f5c46c; --loss:#7f95e6; --loss-ink:#a3b4f2;
+  --compare:#e77fb0; --accent:#f2b54d; --accent-fg:#1a1406; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:15px;line-height:1.5}
+.wrap{max-width:1080px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:18px}
+h1,h2,h3{margin:0;font-weight:400;text-wrap:balance}
+.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px}
+.brand h1{font-family:var(--font-display);font-size:2.3rem;line-height:1}
+.brand p{margin:4px 0 0;color:var(--muted);font-size:.9rem}
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
+label.f{display:grid;gap:3px;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+select,input{font:inherit;font-size:.95rem;color:var(--fg);background:var(--surface);border:1px solid var(--line-strong);border-radius:6px;padding:7px 9px;min-width:0}
+select:focus-visible,input:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button{font:inherit;font-size:.9rem;cursor:pointer;border-radius:6px;border:1px solid var(--line-strong);background:var(--surface);color:var(--fg);padding:7px 12px}
+button:hover{border-color:var(--fg)}
+button.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px}
+details.add{padding:0}
+details.add summary{cursor:pointer;padding:10px 14px;font-size:.9rem;color:var(--muted);list-style:none}
+details.add summary::before{content:"+ ";font-family:var(--font-data)}
+details.add[open] summary::before{content:"− "}
+.addform{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;padding:0 14px 14px;align-items:end}
+.addform .msg{grid-column:1/-1;margin:0;font-size:.85rem;color:var(--loss-ink)}
+.addform .hint{grid-column:1/-1;margin:0;font-size:.82rem;color:var(--muted)}
+
+/* Readout */
+.readout{padding:20px 22px;display:grid;gap:16px}
+.where{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;color:var(--muted);font-size:.85rem}
+.where strong{color:var(--fg);font-weight:600;font-size:1rem}
+.where .coords{font-family:var(--font-data);font-size:.8rem}
+.headline{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:18px 32px;align-items:end}
+@media (max-width:720px){.headline{grid-template-columns:1fr}}
+.date{font-family:var(--font-display);font-size:1.6rem;line-height:1.1}
+.delta{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px;margin-top:6px}
+.delta .big{font-family:var(--font-display);font-size:clamp(3rem,9vw,4.6rem);line-height:.95;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.delta .big.gain{color:var(--gain-ink)} .delta .big.loss{color:var(--loss-ink)}
+.delta .cap{color:var(--muted);font-size:.95rem;max-width:22ch}
+.pace{display:grid;gap:6px}
+.pace .lbl{display:flex;justify-content:space-between;gap:10px;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.pace .lbl span:last-child{font-family:var(--font-data);letter-spacing:0;text-transform:none;color:var(--fg)}
+.meter{height:10px;border-radius:5px;background:var(--night-soft);overflow:hidden}
+.meter i{display:block;height:100%;width:0;border-radius:5px;background:var(--loss);transition:width .15s}
+.meter i.gain{background:var(--gain)}
+.pace p{margin:0;font-size:.85rem;color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:0;margin:0;border-top:1px solid var(--line)}
+.stats div{padding:12px 12px 2px 0;display:grid;gap:2px}
+.stats dt{font-size:.7rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.stats dd{margin:0;font-family:var(--font-data);font-size:1.15rem;font-variant-numeric:tabular-nums}
+.stats dd small{font-size:.7rem;color:var(--muted);margin-left:3px}
+.insight{margin:0;max-width:72ch;font-size:.95rem}
+.cmpline{margin:0;font-size:.85rem;color:var(--muted)}
+.cmpline b{color:var(--compare);font-weight:600}
+
+/* Scrubber */
+.scrub{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;padding:12px 14px;display:grid;gap:8px;box-shadow:0 6px 18px -14px rgba(10,20,40,.5)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.scrubrow{display:flex;align-items:center;gap:8px}
+.scrubrow input[type=range]{flex:1;min-width:0;accent-color:var(--accent);padding:0;border:0;background:transparent;height:28px}
+.scrubrow button{padding:6px 10px;font-family:var(--font-data)}
+.scrubmeta{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 14px;font-size:.82rem;color:var(--muted)}
+.scrubmeta .d{font-family:var(--font-data);color:var(--fg)}
+.btns{display:flex;gap:6px;flex-wrap:wrap}
+
+/* Charts */
+.chart{padding:16px 16px 10px;display:grid;gap:6px;min-width:0}
+.chart header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:4px 16px}
+.chart h3{font-family:var(--font-display);font-size:1.35rem}
+.chart header p{margin:0;font-size:.82rem;color:var(--muted);max-width:60ch}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.78rem;color:var(--muted)}
+.legend span::before{content:"";display:inline-block;width:12px;height:3px;vertical-align:middle;margin-right:5px;background:var(--c)}
+.legend .dash::before{background:none;border-top:2px dashed var(--c);height:0}
+.legend .blk::before{height:10px;border-radius:2px}
+svg.plot{display:block;width:100%;touch-action:pan-y;cursor:crosshair;user-select:none}
+svg.plot text{fill:var(--muted);font-family:var(--font-data);font-size:10.5px}
+svg.plot text.lab{fill:var(--fg);paint-order:stroke;stroke:var(--surface);stroke-width:3.5px;stroke-linejoin:round}
+svg.plot .grid{stroke:var(--line);stroke-width:1}
+svg.plot .mtick{stroke:var(--line);stroke-width:1}
+svg.plot .night{fill:var(--night-soft)}
+svg.plot .dayarea{fill:var(--day-soft)}
+svg.plot .dayline{fill:none;stroke:var(--day);stroke-width:2}
+svg.plot .gainarea{fill:var(--gain);fill-opacity:.8}
+svg.plot .lossarea{fill:var(--loss);fill-opacity:.8}
+svg.plot .zero{stroke:var(--line-strong);stroke-width:1}
+svg.plot .cmp{fill:none;stroke:var(--compare);stroke-width:1.6;stroke-dasharray:5 4}
+svg.plot .noon{fill:none;stroke:var(--muted);stroke-width:1;stroke-dasharray:2 3}
+svg.plot .selline{stroke:var(--fg);stroke-width:1.2}
+svg.plot .seldot{fill:var(--fg);stroke:var(--surface);stroke-width:2}
+svg.plot .ext{fill:var(--surface);stroke:var(--muted);stroke-width:1.5}
+svg.plot text.strong{fill:var(--fg);font-weight:500;font-size:11.5px}
+svg.plot text.dst{fill:var(--muted);font-size:9.5px}
+svg.plot .dstline{stroke:var(--muted);stroke-width:1;stroke-dasharray:1 3}
+.foot{font-size:.8rem;color:var(--muted);margin:0;max-width:80ch}
+@media (prefers-reduced-motion:reduce){.meter i{transition:none}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1>Daylight Ledger</h1>
+      <p>How fast the days are drawing in, or out, wherever you are.</p>
+    </div>
+    <div class="controls">
+      <label class="f" for="place">Place
+        <select id="place"></select>
+      </label>
+      <label class="f" for="year">Year
+        <select id="year"></select>
+      </label>
+      <button id="removePlace" type="button" hidden>Remove this place</button>
+    </div>
+  </header>
+
+  <details class="add card" id="addBox">
+    <summary>Add your own place (latitude and longitude)</summary>
+    <form class="addform" id="addForm" novalidate>
+      <label class="f" for="cName">Name
+        <input id="cName" type="text" placeholder="e.g. Grandma's house" autocomplete="off">
+      </label>
+      <label class="f" for="cLat">Latitude
+        <input id="cLat" type="text" inputmode="decimal" placeholder="55.95 (south is negative)">
+      </label>
+      <label class="f" for="cLon">Longitude
+        <input id="cLon" type="text" inputmode="decimal" placeholder="-3.19 (west is negative)">
+      </label>
+      <label class="f" for="cTz">Time zone
+        <select id="cTz"></select>
+      </label>
+      <button class="primary" type="submit">Add and show</button>
+      <p class="hint" id="tzHint">The time zone is guessed from the nearest city once you enter coordinates. Change it if the guess is wrong.</p>
+      <p class="msg" id="addMsg" hidden></p>
+    </form>
+  </details>
+
+  <section class="readout card" aria-live="polite">
+    <div class="where"><strong id="rName">Edinburgh</strong><span class="coords" id="rCoords"></span><span id="rTz"></span></div>
+    <div class="headline">
+      <div>
+        <h2 class="date" id="rDate"></h2>
+        <div class="delta"><span class="big" id="rDelta"></span><span class="cap" id="rDeltaCap"></span></div>
+      </div>
+      <div class="pace">
+        <div class="lbl"><span id="paceLbl">Pace of change</span><span id="pacePct"></span></div>
+        <div class="meter"><i id="paceBar"></i></div>
+        <p id="paceTxt"></p>
+      </div>
+    </div>
+    <dl class="stats">
+      <div><dt>Sunrise</dt><dd id="sRise"></dd></div>
+      <div><dt>Sunset</dt><dd id="sSet"></dd></div>
+      <div><dt>Daylight</dt><dd id="sLen"></dd></div>
+      <div><dt>Darkness</dt><dd id="sNight"></dd></div>
+      <div><dt>Solar noon</dt><dd id="sNoon"></dd></div>
+      <div><dt>Next 7 days</dt><dd id="sWeek"></dd></div>
+    </dl>
+    <p class="insight" id="insight"></p>
+    <p class="cmpline" id="cmpLine" hidden></p>
+  </section>
+
+  <section class="scrub card" aria-label="Choose a day">
+    <div class="scrubrow">
+      <button type="button" id="prev" aria-label="Previous day">◀</button>
+      <input type="range" id="day" min="0" max="364" step="1" value="0" aria-label="Day of the year">
+      <button type="button" id="next" aria-label="Next day">▶</button>
+    </div>
+    <div class="scrubmeta">
+      <span>Day <span class="d" id="dayNum"></span> · <span class="d" id="dayShort"></span></span>
+      <div class="btns">
+        <button type="button" id="today">Today</button>
+        <button type="button" id="play">Play the year</button>
+        <label class="f" for="compare" style="grid-auto-flow:column;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:.82rem">Compare with
+          <select id="compare" style="padding:4px 6px;font-size:.85rem"></select>
+        </label>
+      </div>
+    </div>
+  </section>
+
+  <section class="chart card">
+    <header>
+      <h3>Length of day</h3>
+      <p>Hours of daylight for every day of the year. The pale band above is darkness.</p>
+    </header>
+    <div class="legend" id="lgLen"></div>
+    <svg class="plot" id="chLen" role="img" aria-label="Day length across the year"></svg>
+  </section>
+
+  <section class="chart card">
+    <header>
+      <h3>Daylight gained or lost per day</h3>
+      <p>Change from the day before. The further from the line, the faster the days are changing.</p>
+    </header>
+    <div class="legend" id="lgChg"></div>
+    <svg class="plot" id="chChg" role="img" aria-label="Daily change in day length"></svg>
+  </section>
+
+  <section class="chart card">
+    <header>
+      <h3>Sunrise and sunset on the clock</h3>
+      <p>Local clock time, including daylight saving. Steps in the band are the clocks changing.</p>
+    </header>
+    <div class="legend" id="lgClk"></div>
+    <svg class="plot" id="chClk" role="img" aria-label="Sunrise and sunset clock times"></svg>
+  </section>
+
+  <p class="foot">Times are calculated in your browser with the NOAA solar position method, using the standard definition of sunrise and sunset (upper edge of the sun on the horizon, with atmospheric refraction). Expect agreement with published tables to within about a minute; hills, buildings and weather are not included.</p>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $=s=>document.querySelector(s);
+const RAD=Math.PI/180;
+
+/* ---------- Places ---------- */
+const PRESETS=[
+ {g:"United Kingdom",list:[
+  ["Lerwick",60.1546,-1.1494,"Europe/London"],
+  ["Inverness",57.4778,-4.2247,"Europe/London"],
+  ["Edinburgh",55.9533,-3.1883,"Europe/London"],
+  ["Glasgow",55.8642,-4.2518,"Europe/London"],
+  ["Belfast",54.5973,-5.9301,"Europe/London"],
+  ["Manchester",53.4808,-2.2426,"Europe/London"],
+  ["Birmingham",52.4862,-1.8904,"Europe/London"],
+  ["Cardiff",51.4816,-3.1791,"Europe/London"],
+  ["London",51.5074,-0.1278,"Europe/London"],
+  ["Penzance",50.1186,-5.5372,"Europe/London"]]},
+ {g:"Europe",list:[
+  ["Longyearbyen",78.2232,15.6267,"Arctic/Longyearbyen"],
+  ["Tromsø",69.6492,18.9553,"Europe/Oslo"],
+  ["Reykjavík",64.1466,-21.9426,"Atlantic/Reykjavik"],
+  ["Helsinki",60.1699,24.9384,"Europe/Helsinki"],
+  ["Oslo",59.9139,10.7522,"Europe/Oslo"],
+  ["Stockholm",59.3293,18.0686,"Europe/Stockholm"],
+  ["Copenhagen",55.6761,12.5683,"Europe/Copenhagen"],
+  ["Moscow",55.7558,37.6173,"Europe/Moscow"],
+  ["Dublin",53.3498,-6.2603,"Europe/Dublin"],
+  ["Amsterdam",52.3676,4.9041,"Europe/Amsterdam"],
+  ["Berlin",52.5200,13.4050,"Europe/Berlin"],
+  ["Paris",48.8566,2.3522,"Europe/Paris"],
+  ["Vienna",48.2082,16.3738,"Europe/Vienna"],
+  ["Rome",41.9028,12.4964,"Europe/Rome"],
+  ["Madrid",40.4168,-3.7038,"Europe/Madrid"],
+  ["Lisbon",38.7223,-9.1393,"Europe/Lisbon"],
+  ["Athens",37.9838,23.7275,"Europe/Athens"]]},
+ {g:"Rest of the world",list:[
+  ["Anchorage",61.2181,-149.9003,"America/Anchorage"],
+  ["Vancouver",49.2827,-123.1207,"America/Vancouver"],
+  ["New York",40.7128,-74.0060,"America/New_York"],
+  ["Tokyo",35.6762,139.6503,"Asia/Tokyo"],
+  ["Cairo",30.0444,31.2357,"Africa/Cairo"],
+  ["Dubai",25.2048,55.2708,"Asia/Dubai"],
+  ["Mexico City",19.4326,-99.1332,"America/Mexico_City"],
+  ["Mumbai",19.0760,72.8777,"Asia/Kolkata"],
+  ["Singapore",1.3521,103.8198,"Asia/Singapore"],
+  ["Quito",-0.1807,-78.4678,"America/Guayaquil"],
+  ["Nairobi",-1.2921,36.8219,"Africa/Nairobi"],
+  ["São Paulo",-23.5505,-46.6333,"America/Sao_Paulo"],
+  ["Cape Town",-33.9249,18.4241,"Africa/Johannesburg"],
+  ["Sydney",-33.8688,151.2093,"Australia/Sydney"],
+  ["Buenos Aires",-34.6037,-58.3816,"America/Argentina/Buenos_Aires"],
+  ["Auckland",-36.8485,174.7633,"Pacific/Auckland"],
+  ["Ushuaia",-54.8019,-68.3030,"America/Argentina/Ushuaia"]]}
+];
+const places=new Map();
+PRESETS.forEach(g=>g.list.forEach(([name,lat,lon,tz])=>{places.set("p:"+name,{id:"p:"+name,name,lat,lon,tz,group:g.g})}));
+
+const STORE="daylight-ledger-places";
+let custom=[];
+try{custom=JSON.parse(localStorage.getItem(STORE)||"[]")||[]}catch(e){custom=[]}
+custom=custom.filter(p=>p&&isFinite(p.lat)&&isFinite(p.lon)&&p.tz&&validTz(p.tz));
+custom.forEach(p=>places.set(p.id,p));
+function saveCustom(){try{localStorage.setItem(STORE,JSON.stringify(custom))}catch(e){}}
+function validTz(tz){try{new Intl.DateTimeFormat("en-GB",{timeZone:tz});return true}catch(e){return false}}
+
+/* ---------- Solar maths (NOAA) ---------- */
+function solar(jc){
+  const L0=((280.46646+jc*(36000.76983+jc*0.0003032))%360+360)%360;
+  const M=357.52911+jc*(35999.05029-0.0001537*jc);
+  const e=0.016708634-jc*(0.000042037+0.0000001267*jc);
+  const Mr=M*RAD;
+  const C=Math.sin(Mr)*(1.914602-jc*(0.004817+0.000014*jc))+Math.sin(2*Mr)*(0.019993-0.000101*jc)+Math.sin(3*Mr)*0.000289;
+  const omega=(125.04-1934.136*jc)*RAD;
+  const lambda=(L0+C-0.00569-0.00478*Math.sin(omega))*RAD;
+  const eps0=23+(26+(21.448-jc*(46.815+jc*(0.00059-jc*0.001813)))/60)/60;
+  const eps=(eps0+0.00256*Math.cos(omega))*RAD;
+  const decl=Math.asin(Math.sin(eps)*Math.sin(lambda));
+  let y=Math.tan(eps/2);y*=y;
+  const L=L0*RAD;
+  const eqt=4/RAD*(y*Math.sin(2*L)-2*e*Math.sin(Mr)+4*e*y*Math.sin(Mr)*Math.cos(2*L)-0.5*y*y*Math.sin(4*L)-1.25*e*e*Math.sin(2*Mr));
+  return {decl,eqt};
+}
+const H0=Math.sin(-0.833*RAD);
+function cosH(lat,decl){const p=lat*RAD;return (H0-Math.sin(p)*Math.sin(decl))/(Math.cos(p)*Math.cos(decl))}
+/* ms = UTC midnight of the date. Returns minutes after that midnight (UTC). */
+function sunDay(ms,lat,lon){
+  lat=Math.max(-89.99,Math.min(89.99,lat));
+  const jc=t=>(ms/86400000+2440587.5+t/1440-2451545)/36525;
+  let s=solar(jc(720-4*lon)); let noon=720-4*lon-s.eqt;
+  s=solar(jc(noon)); noon=720-4*lon-s.eqt;
+  const c0=cosH(lat,s.decl);
+  if(c0>1) return {polar:"night",len:0,noon};
+  if(c0<-1) return {polar:"day",len:1440,noon};
+  const H=Math.acos(c0)/RAD;
+  const ev=sign=>{
+    let t=noon-sign*4*H;
+    for(let k=0;k<2;k++){
+      const ss=solar(jc(t)); const c=cosH(lat,ss.decl);
+      if(c>1||c<-1) return noon-sign*4*H;
+      t=720-4*(lon+sign*Math.acos(c)/RAD)-ss.eqt;
+    }
+    return t;
+  };
+  const rise=ev(1),set=ev(-1);
+  return {polar:null,rise,set,noon,len:set-rise};
+}
+
+/* ---------- Time zones ---------- */
+const fmtCache=new Map();
+function partsFmt(tz){
+  let f=fmtCache.get(tz);
+  if(!f){f=new Intl.DateTimeFormat("en-GB",{timeZone:tz,hourCycle:"h23",year:"numeric",month:"numeric",day:"numeric",hour:"numeric",minute:"numeric"});fmtCache.set(tz,f)}
+  return f;
+}
+function tzOffset(ms,tz){
+  const p={};partsFmt(tz).formatToParts(new Date(ms)).forEach(x=>p[x.type]=x.value);
+  const asUTC=Date.UTC(+p.year,+p.month-1,+p.day,+p.hour%24,+p.minute);
+  return Math.round((asUTC-Math.floor(ms/60000)*60000)/60000);
+}
+const abbrCache=new Map();
+function tzAbbr(ms,tz){
+  let f=abbrCache.get(tz);
+  if(!f){f=new Intl.DateTimeFormat("en-GB",{timeZone:tz,timeZoneName:"short"});abbrCache.set(tz,f)}
+  const p=f.formatToParts(new Date(ms)).find(x=>x.type==="timeZoneName");
+  return p?p.value:"";
+}
+
+/* ---------- Year model ---------- */
+const modelCache=new Map();
+function daysIn(y){return (y%4===0&&y%100!==0)||y%400===0?366:365}
+function model(p,year){
+  const key=p.lat+","+p.lon+","+p.tz+","+year;
+  if(modelCache.has(key)) return modelCache.get(key);
+  const N=daysIn(year),rows=[];
+  for(let i=-1;i<N+8;i++){
+    const ms=Date.UTC(year,0,1+i);
+    const r=sunDay(ms,p.lat,p.lon);
+    const off=tzOffset(ms+r.noon*60000,p.tz);
+    const row={ms,len:r.len,polar:r.polar,noonL:r.noon+off,off,noonUTC:ms+r.noon*60000};
+    if(!r.polar){
+      row.riseL=r.rise+tzOffset(ms+r.rise*60000,p.tz);
+      row.setL=r.set+tzOffset(ms+r.set*60000,p.tz);
+    }
+    rows.push(row);
+  }
+  const at=i=>rows[i+1];
+  const len=[],chg=[],edge=[];
+  for(let i=0;i<N;i++){len.push(at(i).len);chg.push(at(i).len-at(i-1).len);edge.push(!!(at(i).polar||at(i-1).polar))}
+  let iMax=0,iMin=0,iGain=-1,iLoss=-1;
+  for(let i=0;i<N;i++){
+    if(len[i]>len[iMax]) iMax=i;
+    if(len[i]<len[iMin]) iMin=i;
+    if(edge[i]) continue;
+    if(iGain<0||chg[i]>chg[iGain]) iGain=i;
+    if(iLoss<0||chg[i]<chg[iLoss]) iLoss=i;
+  }
+  if(iGain<0) iGain=0; if(iLoss<0) iLoss=0;
+  // typical scale for the change chart, ignoring the jumps where the sun starts or stops setting
+  let scale=0;for(let i=0;i<N;i++) if(!edge[i]) scale=Math.max(scale,Math.abs(chg[i]));
+  const m={N,year,at,len,chg,edge,scale,iMax,iMin,iGain,iLoss};
+  modelCache.set(key,m);
+  return m;
+}
+
+/* ---------- Formatting ---------- */
+const pad=n=>String(n).padStart(2,"0");
+function clock(mins){const t=((Math.round(mins)%1440)+1440)%1440;return pad(Math.floor(t/60))+":"+pad(t%60)}
+function dur(mins){const t=Math.round(mins);return Math.floor(t/60)+"h "+pad(t%60)+"m"}
+function delta(mins,sign=true){
+  const s=Math.round(Math.abs(mins)*60);
+  const h=Math.floor(s/3600),m=Math.floor(s%3600/60),sec=s%60;
+  let out=h?h+"h "+pad(m)+"m":(m?m+"m "+pad(sec)+"s":sec+"s");
+  if(!sign) return out;
+  return (s===0?"±":(mins<0?"−":"+"))+out;
+}
+const fDateLong=new Intl.DateTimeFormat("en-GB",{timeZone:"UTC",weekday:"long",day:"numeric",month:"long",year:"numeric"});
+const fDateShort=new Intl.DateTimeFormat("en-GB",{timeZone:"UTC",day:"numeric",month:"short"});
+const fDayMonth=new Intl.DateTimeFormat("en-GB",{timeZone:"UTC",day:"numeric",month:"long"});
+const fMonth=new Intl.DateTimeFormat("en-GB",{timeZone:"UTC",month:"short"});
+function coords(p){return Math.abs(p.lat).toFixed(2)+"°"+(p.lat>=0?"N":"S")+"  "+Math.abs(p.lon).toFixed(2)+"°"+(p.lon>=0?"E":"W")}
+
+/* ---------- State ---------- */
+const now=new Date();
+const thisYear=now.getFullYear();
+const state={placeId:"p:Edinburgh",compareId:"",year:thisYear,day:0};
+try{const s=JSON.parse(localStorage.getItem("daylight-ledger-state")||"{}");if(s.placeId&&places.has(s.placeId))state.placeId=s.placeId;if(s.compareId&&places.has(s.compareId))state.compareId=s.compareId}catch(e){}
+function saveState(){try{localStorage.setItem("daylight-ledger-state",JSON.stringify({placeId:state.placeId,compareId:state.compareId}))}catch(e){}}
+function todayIndex(year){
+  const t=Date.UTC(now.getFullYear(),now.getMonth(),now.getDate());
+  const i=Math.round((t-Date.UTC(year,0,1))/86400000);
+  return Math.max(0,Math.min(daysIn(year)-1,i));
+}
+state.day=todayIndex(state.year);
+
+/* ---------- Controls ---------- */
+const placeSel=$("#place"),cmpSel=$("#compare"),yearSel=$("#year"),range=$("#day");
+function fillPlaceSelects(){
+  const build=(sel,withNone)=>{
+    sel.innerHTML="";
+    if(withNone){const o=new Option("Nobody","");sel.add(o)}
+    if(custom.length){
+      const og=document.createElement("optgroup");og.label="Your places";
+      custom.forEach(p=>og.appendChild(new Option(p.name+"  ("+fmtLat(p.lat)+")",p.id)));
+      sel.appendChild(og);
+    }
+    PRESETS.forEach(g=>{
+      const og=document.createElement("optgroup");og.label=g.g;
+      g.list.forEach(([name,lat])=>og.appendChild(new Option(name+"  ("+fmtLat(lat)+")","p:"+name)));
+      sel.appendChild(og);
+    });
+  };
+  build(placeSel,false);build(cmpSel,true);
+  placeSel.value=state.placeId;cmpSel.value=state.compareId;
+}
+function fmtLat(l){return Math.abs(l).toFixed(1)+"°"+(l>=0?"N":"S")}
+for(let y=thisYear-6;y<=thisYear+6;y++) yearSel.add(new Option(String(y),String(y)));
+yearSel.value=String(state.year);
+
+placeSel.addEventListener("change",()=>{state.placeId=placeSel.value;saveState();redraw()});
+cmpSel.addEventListener("change",()=>{state.compareId=cmpSel.value;saveState();redraw()});
+yearSel.addEventListener("change",()=>{
+  state.year=+yearSel.value;
+  state.day=state.year===thisYear?todayIndex(thisYear):Math.min(state.day,daysIn(state.year)-1);
+  redraw();
+});
+range.addEventListener("input",()=>setDay(+range.value));
+$("#prev").addEventListener("click",()=>setDay(state.day-1));
+$("#next").addEventListener("click",()=>setDay(state.day+1));
+$("#today").addEventListener("click",()=>{
+  if(state.year!==thisYear){state.year=thisYear;yearSel.value=String(thisYear);state.day=todayIndex(thisYear);redraw()}
+  else setDay(todayIndex(thisYear));
+});
+let timer=null;
+$("#play").addEventListener("click",()=>{
+  if(timer){stopPlay();return}
+  $("#play").textContent="Pause";
+  timer=setInterval(()=>{const N=daysIn(state.year);setDay((state.day+1)%N)},90);
+});
+function stopPlay(){clearInterval(timer);timer=null;$("#play").textContent="Play the year"}
+$("#removePlace").addEventListener("click",()=>{
+  custom=custom.filter(p=>p.id!==state.placeId);places.delete(state.placeId);saveCustom();
+  if(state.compareId===state.placeId) state.compareId="";
+  state.placeId="p:Edinburgh";saveState();fillPlaceSelects();redraw();
+});
+
+/* Custom place form */
+const tzSel=$("#cTz");
+(function fillTz(){
+  let zones=[];
+  try{zones=Intl.supportedValuesOf("timeZone")}catch(e){}
+  const set=new Set(zones);
+  places.forEach(p=>set.add(p.tz));
+  set.add("UTC");
+  for(let h=-12;h<=14;h++){if(h!==0)set.add("Etc/GMT"+(h>0?"-":"+")+Math.abs(h))}
+  [...set].filter(validTz).sort().forEach(z=>tzSel.add(new Option(z.replace(/_/g," "),z)));
+  tzSel.value="Europe/London";
+})();
+function haversine(a,b,c,d){const p1=a*RAD,p2=c*RAD,dp=(c-a)*RAD,dl=(d-b)*RAD;const h=Math.sin(dp/2)**2+Math.cos(p1)*Math.cos(p2)*Math.sin(dl/2)**2;return 12742*Math.asin(Math.sqrt(h))}
+let tzTouched=false;
+tzSel.addEventListener("change",()=>{tzTouched=true});
+function parseNum(v){v=String(v).trim().replace(",",".").replace(/[°\s]/g,"");if(v==="")return NaN;const n=Number(v);return n}
+function guessTz(){
+  if(tzTouched) return;
+  const lat=parseNum($("#cLat").value),lon=parseNum($("#cLon").value);
+  if(!isFinite(lat)||!isFinite(lon)) return;
+  let best=null,bd=1e9;
+  places.forEach(p=>{if(!p.id.startsWith("p:"))return;const d=haversine(lat,lon,p.lat,p.lon);if(d<bd){bd=d;best=p}});
+  let tz,why;
+  if(best&&bd<900){tz=best.tz;why="Guessed "+tz.replace(/_/g," ")+" from the nearest city, "+best.name+" ("+Math.round(bd)+" km away)."}
+  else{const h=Math.round(lon/15);tz=h===0?"UTC":"Etc/GMT"+(h>0?"-":"+")+Math.abs(h);why="No listed city nearby, so this uses a fixed offset of UTC"+(h>=0?"+":"−")+Math.abs(h)+" from the longitude, with no daylight saving. Pick the real zone if you know it."}
+  if([...tzSel.options].some(o=>o.value===tz)){tzSel.value=tz;$("#tzHint").textContent=why}
+}
+$("#cLat").addEventListener("input",guessTz);
+$("#cLon").addEventListener("input",guessTz);
+$("#addForm").addEventListener("submit",e=>{
+  e.preventDefault();
+  const msg=$("#addMsg");
+  const lat=parseNum($("#cLat").value),lon=parseNum($("#cLon").value);
+  const errs=[];
+  if(!isFinite(lat)||lat<-90||lat>90) errs.push("Latitude must be a number between −90 and 90 (use a minus sign for south).");
+  if(!isFinite(lon)||lon<-180||lon>180) errs.push("Longitude must be a number between −180 and 180 (use a minus sign for west).");
+  if(errs.length){msg.textContent=errs.join(" ");msg.hidden=false;return}
+  msg.hidden=true;
+  const name=$("#cName").value.trim()||coords({lat,lon}).replace("  ",", ");
+  const p={id:"c:"+Date.now().toString(36),name,lat,lon,tz:tzSel.value};
+  custom.push(p);places.set(p.id,p);saveCustom();
+  state.placeId=p.id;saveState();fillPlaceSelects();
+  $("#addForm").reset();tzTouched=false;tzSel.value="Europe/London";
+  $("#tzHint").textContent="Added "+name+". Add another, or close this panel.";
+  redraw();
+});
+
+/* ---------- Readout ---------- */
+function setDay(i){
+  const N=daysIn(state.year);
+  state.day=Math.max(0,Math.min(N-1,i));
+  range.value=state.day;
+  updateReadout();drawMarkers();
+}
+function findTurn(m,kind,i,forward){
+  // nearest day (ahead or behind, wrapping across the year) that reaches the year's longest or shortest length
+  const val=kind==="max"?m.len[m.iMax]:m.len[m.iMin];
+  for(let k=1;k<=m.N;k++){
+    const idx=forward?(i+k)%m.N:((i-k)%m.N+m.N)%m.N;
+    if(Math.abs(m.len[idx]-val)<1e-6) return {k,idx,label:fDayMonth.format(new Date(m.at(idx).ms))};
+  }
+  return {k:0,idx:i,label:""};
+}
+function updateReadout(){
+  const p=places.get(state.placeId),m=model(p,state.year),i=state.day,r=m.at(i);
+  $("#rName").textContent=p.name;
+  $("#rCoords").textContent=coords(p);
+  $("#rTz").textContent=p.tz.replace(/_/g," ");
+  $("#rDate").textContent=fDateLong.format(new Date(r.ms));
+  $("#dayNum").textContent=(i+1)+" of "+m.N;
+  $("#dayShort").textContent=fDateShort.format(new Date(r.ms));
+
+  const c=m.chg[i];
+  const big=$("#rDelta"),cap=$("#rDeltaCap");
+  big.textContent=delta(c);
+  big.className="big "+(c<0?"loss":"gain");
+  const quiet=Math.abs(c)<1/60;
+  cap.textContent=r.polar==="night"&&m.at(i-1).polar==="night"?"no sunrise today: polar night":
+    r.polar==="day"&&m.at(i-1).polar==="day"?"no sunset today: midnight sun":
+    quiet?"day length is barely changing":(c<0?"less daylight than yesterday":"more daylight than yesterday");
+
+  const ab=r.noonUTC;
+  const abbr=tzAbbr(ab,p.tz);
+  const small=s=>'<small>'+s+'</small>';
+  if(r.polar){
+    $("#sRise").innerHTML="—"+small(r.polar==="day"?"sun up all day":"sun stays down");
+    $("#sSet").innerHTML="—";
+  }else{
+    $("#sRise").innerHTML=clock(r.riseL)+small(abbr);
+    $("#sSet").innerHTML=clock(r.setL)+small(abbr);
+  }
+  $("#sLen").textContent=dur(r.len);
+  $("#sNight").textContent=dur(1440-r.len);
+  $("#sNoon").innerHTML=clock(r.noonL)+small(abbr);
+  const wk=m.at(i+7).len-r.len;
+  $("#sWeek").textContent=delta(wk);
+
+  // Pace meter
+  const bar=$("#paceBar");
+  const ref=c<0?m.chg[m.iLoss]:m.chg[m.iGain];
+  const pct=m.edge[i]?100:ref!==0?Math.min(100,Math.abs(c)/Math.abs(ref)*100):0;
+  bar.style.width=pct.toFixed(1)+"%";
+  bar.className=c<0?"":"gain";
+  $("#pacePct").textContent=Math.round(pct)+"%";
+  $("#paceLbl").textContent=c<0?"Pace of loss":"Pace of gain";
+  const refIdx=c<0?m.iLoss:m.iGain;
+  $("#paceTxt").textContent="Compared with this year's fastest "+(c<0?"loss":"gain")+": "+delta(m.chg[refIdx])+" a day, around "+fDayMonth.format(new Date(m.at(refIdx).ms))+".";
+
+  // Insight sentence
+  let txt="";
+  const days=n=>n===1?"1 day":n+" days";
+  if(r.len===0||r.len===1440){
+    const want=r.len===0?(x=>x>0):(x=>x<1440);
+    let j=-1;for(let k=1;k<=m.N;k++){const idx=(i+k)%m.N;if(want(m.len[idx])){j=k;break}}
+    txt=r.len===0?"The sun stays below the horizon all day. ":"The sun stays above the horizon all day. ";
+    if(j>0){const idx=(i+j)%m.N;txt+=(r.len===0?"It rises again ":"It first sets again ")+"in "+days(j)+", around "+fDayMonth.format(new Date(m.at(idx).ms))+"."}
+  }else if(m.len[m.iMax]-m.len[m.iMin]<1){
+    txt="Close to the equator, day length hardly changes through the year: it stays near "+dur(r.len)+".";
+  }else if(c<0){
+    const a=findTurn(m,"max",i,false),b=findTurn(m,"min",i,true);
+    const lost=m.len[m.iMax]-r.len;
+    txt="You've lost "+delta(lost,false)+" of daylight in the "+days(a.k)+" since the longest day ("+a.label+", "+dur(m.len[m.iMax])+"). "+
+      "The shortest day is "+days(b.k)+" away ("+b.label+", "+dur(m.len[m.iMin])+"), so there's "+delta(r.len-m.len[m.iMin],false)+" more to lose.";
+  }else{
+    const a=findTurn(m,"min",i,false),b=findTurn(m,"max",i,true);
+    const gained=r.len-m.len[m.iMin];
+    txt="You've gained "+delta(gained,false)+" of daylight in the "+days(a.k)+" since the shortest day ("+a.label+", "+dur(m.len[m.iMin])+"). "+
+      "The longest day is "+days(b.k)+" away ("+b.label+", "+dur(m.len[m.iMax])+"), with "+delta(m.len[m.iMax]-r.len,false)+" still to come.";
+  }
+  $("#insight").textContent=txt;
+
+  // Compare
+  const cl=$("#cmpLine");
+  const cp=state.compareId&&places.get(state.compareId);
+  if(cp&&cp.id!==p.id){
+    const cm=model(cp,state.year),cr=cm.at(i);
+    const diff=cr.len-r.len;
+    cl.innerHTML="<b></b>";
+    cl.firstChild.textContent=cp.name;
+    cl.append(": "+dur(cr.len)+" of daylight today, "+delta(cm.chg[i])+" on yesterday. That's "+delta(Math.abs(diff),false)+(diff>=0?" more":" less")+" than "+p.name+".");
+    cl.hidden=false;
+  }else cl.hidden=true;
+  $("#removePlace").hidden=!p.id.startsWith("c:");
+}
+
+/* ---------- Charts ---------- */
+const charts={
+  len:{svg:$("#chLen"),H:240},
+  chg:{svg:$("#chChg"),H:210},
+  clk:{svg:$("#chClk"),H:250}
+};
+const NS="http://www.w3.org/2000/svg";
+function frame(W,H,N){
+  const m={l:46,r:14,t:26,b:24};
+  const pw=Math.max(10,W-m.l-m.r),ph=H-m.t-m.b;
+  return {W,H,N,m,pw,ph,x:i=>m.l+i*pw/(N-1)};
+}
+function months(f,year){
+  let s="";const narrow=f.W<560;
+  for(let mo=0;mo<12;mo++){
+    const i=Math.round((Date.UTC(year,mo,1)-Date.UTC(year,0,1))/86400000);
+    const j=Math.round((Date.UTC(year,mo+1,1)-Date.UTC(year,0,1))/86400000);
+    const x=f.x(i);
+    if(mo>0) s+=`<line class="mtick" x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${f.m.t}" y2="${f.m.t+f.ph}"/>`;
+    const mid=f.x(Math.min(f.N-1,(i+j)/2));
+    const lab=fMonth.format(new Date(Date.UTC(year,mo,1)));
+    s+=`<text x="${mid.toFixed(1)}" y="${f.H-7}" text-anchor="middle">${narrow?lab[0]:lab}</text>`;
+  }
+  return s;
+}
+function path(vals,x,y){
+  let d="",pen=false;
+  for(let i=0;i<vals.length;i++){
+    const v=vals[i];
+    if(v==null){pen=false;continue}
+    d+=(pen?"L":"M")+x(i).toFixed(1)+" "+y(v).toFixed(1);pen=true;
+  }
+  return d;
+}
+function area(top,bot,x,y){
+  let d="";
+  for(let i=0;i<top.length;i++) d+=(i?"L":"M")+x(i).toFixed(1)+" "+y(top[i]).toFixed(1);
+  for(let i=bot.length-1;i>=0;i--) d+="L"+x(i).toFixed(1)+" "+y(bot[i]).toFixed(1);
+  return d+"Z";
+}
+function anchorFor(f,x){return x<f.m.l+60?"start":x>f.W-f.m.r-60?"end":"middle"}
+function niceStep(maxSec){
+  const steps=[5,10,15,20,30,60,120,180,240,300,600,900,1200,1800,3600,7200];
+  for(const s of steps) if(maxSec/s<=2.6) return s;
+  return 7200;
+}
+function secLabel(s){
+  const a=Math.abs(s),sign=s>0?"+":s<0?"−":"";
+  if(a>=3600) return sign+(a/3600)+"h";
+  if(a>=60) return sign+(a%60?(a/60).toFixed(1):a/60)+"m";
+  return sign+a+"s";
+}
+
+function drawStatic(){
+  const p=places.get(state.placeId),m=model(p,state.year);
+  const cp=state.compareId&&state.compareId!==state.placeId?places.get(state.compareId):null;
+  const cm=cp?model(cp,state.year):null;
+  for(const k in charts){
+    const c=charts[k],W=Math.max(300,Math.round(c.svg.parentNode.clientWidth-32));
+    c.svg.setAttribute("viewBox",`0 0 ${W} ${c.H}`);
+    c.svg.setAttribute("height",c.H);
+    c.f=frame(W,c.H,m.N);
+  }
+  const legend=(el,items)=>{el.innerHTML=items.map(([cls,col,t])=>`<span class="${cls}" style="--c:var(${col})"></span>`).join("");[...el.children].forEach((s,j)=>s.textContent=items[j][2])};
+
+  /* Day length */
+  {
+    const c=charts.len,f=c.f,y=v=>f.m.t+f.ph-(v/1440)*f.ph;
+    let s=`<rect class="night" x="${f.m.l}" y="${f.m.t}" width="${f.pw}" height="${f.ph}"/>`;
+    for(let h=0;h<=24;h+=6){const yy=y(h*60);s+=`<line class="grid" x1="${f.m.l}" x2="${f.m.l+f.pw}" y1="${yy}" y2="${yy}"/><text x="${f.m.l-6}" y="${yy+3.5}" text-anchor="end">${h}h</text>`}
+    s+=months(f,m.year);
+    s+=`<path class="dayarea" d="${area(m.len,m.len.map(()=>0),f.x,y)}"/>`;
+    s+=`<path class="dayline" d="${path(m.len,f.x,y)}"/>`;
+    if(cm) s+=`<path class="cmp" d="${path(cm.len,f.x,y)}"/>`;
+    const ext=(i,lab,below)=>{const x=f.x(i),yy=y(m.len[i]);const a=anchorFor(f,x);
+      return `<circle class="ext" cx="${x}" cy="${yy}" r="3.5"/><text class="lab" x="${x}" y="${below?yy+17:yy-9}" text-anchor="${a}">${lab}</text>`};
+    if(m.len[m.iMax]-m.len[m.iMin]>=1){
+      if(m.len[m.iMax]<1440) s+=ext(m.iMax,"Longest "+dur(m.len[m.iMax]),true);
+      if(m.len[m.iMin]>0) s+=ext(m.iMin,"Shortest "+dur(m.len[m.iMin]),false);
+    }
+    s+=`<g class="mk"></g>`;
+    c.svg.innerHTML=s;c.y=y;
+    legend($("#lgLen"),[["blk","--day-soft",p.name+" daylight"],["blk","--night-soft","Darkness"]].concat(cm?[["dash","--compare",cp.name]]:[]));
+  }
+
+  /* Daily change */
+  {
+    const c=charts.chg,f=c.f;
+    const maxAbs=Math.max(m.scale,cm?cm.scale:0);
+    const step=niceStep(Math.max(maxAbs*60,4));
+    const lim=Math.ceil(Math.max(maxAbs*60,1)/step)*step/60;
+    const y=v=>f.m.t+f.ph/2-(v/lim)*(f.ph/2);
+    let s="";
+    for(let v=-lim*60;v<=lim*60+0.001;v+=step){const yy=y(v/60);s+=`<line class="${v===0?"zero":"grid"}" x1="${f.m.l}" x2="${f.m.l+f.pw}" y1="${yy}" y2="${yy}"/><text x="${f.m.l-6}" y="${yy+3.5}" text-anchor="end">${v===0?"0":secLabel(v)}</text>`}
+    s+=months(f,m.year);
+    s+=`<clipPath id="chgClip"><rect x="${f.m.l}" y="${f.m.t}" width="${f.pw}" height="${f.ph}"/></clipPath><g clip-path="url(#chgClip)">`;
+    s+=`<path class="gainarea" d="${area(m.chg.map(v=>Math.max(0,v)),m.chg.map(()=>0),f.x,y)}"/>`;
+    s+=`<path class="lossarea" d="${area(m.chg.map(v=>Math.min(0,v)),m.chg.map(()=>0),f.x,y)}"/>`;
+    s+=`<line class="zero" x1="${f.m.l}" x2="${f.m.l+f.pw}" y1="${y(0)}" y2="${y(0)}"/>`;
+    if(cm) s+=`<path class="cmp" d="${path(cm.chg,f.x,y)}"/>`;
+    s+=`</g>`;
+    const ext=(i,lab,below)=>{const x=f.x(i),yy=y(m.chg[i]);const a=anchorFor(f,x);
+      return `<circle class="ext" cx="${x}" cy="${yy}" r="3.5"/><text class="lab" x="${x}" y="${below?yy+17:yy-9}" text-anchor="${a}">${lab}</text>`};
+    if(Math.abs(m.chg[m.iGain])>=1/60){
+      s+=ext(m.iGain,"Fastest gain "+delta(m.chg[m.iGain]),true);
+      s+=ext(m.iLoss,"Fastest loss "+delta(m.chg[m.iLoss]),false);
+    }
+    s+=`<g class="mk"></g>`;
+    c.svg.innerHTML=s;c.y=y;c.lim=lim;
+    legend($("#lgChg"),[["blk","--gain","Gaining"],["blk","--loss","Losing"]].concat(cm?[["dash","--compare",cp.name]]:[]));
+  }
+
+  /* Clock */
+  {
+    const c=charts.clk,f=c.f,y=v=>f.m.t+f.ph-(Math.max(0,Math.min(1440,v))/1440)*f.ph;
+    let s=`<rect class="night" x="${f.m.l}" y="${f.m.t}" width="${f.pw}" height="${f.ph}"/>`;
+    for(let h=0;h<=24;h+=3){const yy=y(h*60);s+=`<line class="grid" x1="${f.m.l}" x2="${f.m.l+f.pw}" y1="${yy}" y2="${yy}"/>`;if(h%6===0)s+=`<text x="${f.m.l-6}" y="${yy+3.5}" text-anchor="end">${pad(h)}:00</text>`}
+    s+=months(f,m.year);
+    const lo=[],hi=[],rise=[],set=[],noon=[];
+    for(let i=0;i<m.N;i++){
+      const r=m.at(i);
+      noon.push(r.noonL);
+      if(r.polar==="day"){lo.push(0);hi.push(1440);rise.push(null);set.push(null)}
+      else if(r.polar==="night"){lo.push(r.noonL);hi.push(r.noonL);rise.push(null);set.push(null)}
+      else{lo.push(r.riseL);hi.push(r.setL);rise.push(r.riseL);set.push(r.setL)}
+    }
+    s+=`<path class="dayarea" d="${area(hi,lo,f.x,y)}"/>`;
+    s+=`<path class="dayline" d="${path(rise,f.x,y)}"/><path class="dayline" d="${path(set,f.x,y)}"/>`;
+    s+=`<path class="noon" d="${path(noon,f.x,y)}"/>`;
+    // clock changes
+    for(let i=1;i<m.N;i++){
+      const d=m.at(i).off-m.at(i-1).off;
+      if(d!==0){
+        const x=f.x(i);
+        s+=`<line class="dstline" x1="${x}" x2="${x}" y1="${f.m.t}" y2="${f.m.t+f.ph}"/><text class="dst lab" x="${x+(anchorFor(f,x)==="end"?-4:4)}" y="${f.m.t+f.ph-8}" text-anchor="${anchorFor(f,x)==="end"?"end":"start"}">Clocks ${d>0?"forward":"back"}</text>`;
+      }
+    }
+    s+=`<g class="mk"></g>`;
+    c.svg.innerHTML=s;c.y=y;
+    legend($("#lgClk"),[["blk","--day-soft","Sun above horizon"],["dash","--muted","Solar noon"]]);
+  }
+}
+
+function drawMarkers(){
+  const p=places.get(state.placeId),m=model(p,state.year),i=state.day,r=m.at(i);
+  const put=(c,html)=>{const g=c.svg.querySelector("g.mk");if(g)g.innerHTML=html};
+  const vline=(f,x)=>`<line class="selline" x1="${x}" x2="${x}" y1="${f.m.t}" y2="${f.m.t+f.ph}"/>`;
+  const tag=(f,x,t)=>`<text class="strong" x="${x}" y="${f.m.t-9}" text-anchor="${anchorFor(f,x)}">${t}</text>`;
+  {const c=charts.len,f=c.f,x=f.x(i);put(c,vline(f,x)+`<circle class="seldot" cx="${x}" cy="${c.y(r.len)}" r="5"/>`+tag(f,x,fDateShort.format(new Date(r.ms))+" · "+dur(r.len)))}
+  {const c=charts.chg,f=c.f,x=f.x(i);put(c,vline(f,x)+`<circle class="seldot" cx="${x}" cy="${c.y(Math.max(-c.lim,Math.min(c.lim,m.chg[i])))}" r="5"/>`+tag(f,x,delta(m.chg[i])+" a day"))}
+  {const c=charts.clk,f=c.f,x=f.x(i);
+    let h=vline(f,x);
+    if(!r.polar){h+=`<circle class="seldot" cx="${x}" cy="${c.y(r.riseL)}" r="4.5"/><circle class="seldot" cx="${x}" cy="${c.y(r.setL)}" r="4.5"/>`;h+=tag(f,x,"↑ "+clock(r.riseL)+"   ↓ "+clock(r.setL))}
+    else h+=tag(f,x,r.polar==="day"?"Sun up all day":"Sun stays down");
+    put(c,h);
+  }
+}
+
+/* drag on charts */
+Object.values(charts).forEach(c=>{
+  let down=false;
+  const pick=e=>{
+    const f=c.f;if(!f)return;
+    const rect=c.svg.getBoundingClientRect();
+    const px=(e.clientX-rect.left)*(f.W/rect.width);
+    setDay(Math.round((px-f.m.l)/f.pw*(f.N-1)));
+  };
+  c.svg.addEventListener("pointerdown",e=>{down=true;stopPlay();try{c.svg.setPointerCapture(e.pointerId)}catch(_){ }pick(e)});
+  c.svg.addEventListener("pointermove",e=>{if(down)pick(e)});
+  const up=()=>{down=false};
+  c.svg.addEventListener("pointerup",up);c.svg.addEventListener("pointercancel",up);
+});
+document.addEventListener("keydown",e=>{
+  if(e.target.closest("input,select,textarea"))return;
+  if(e.key==="ArrowLeft"){setDay(state.day-1);e.preventDefault()}
+  if(e.key==="ArrowRight"){setDay(state.day+1);e.preventDefault()}
+});
+
+function redraw(){
+  const N=daysIn(state.year);
+  range.max=N-1;state.day=Math.min(state.day,N-1);range.value=state.day;
+  placeSel.value=state.placeId;cmpSel.value=state.compareId;
+  drawStatic();updateReadout();drawMarkers();
+}
+let rz=null,lastW=0;
+new ResizeObserver(()=>{const w=document.querySelector(".wrap").clientWidth;if(w===lastW)return;lastW=w;clearTimeout(rz);rz=setTimeout(()=>{drawStatic();drawMarkers()},60)}).observe(document.querySelector(".wrap"));
+
+fillPlaceSelects();
+redraw();
+window.__ledger={model,places,sunDay};
+})();
+</script>
